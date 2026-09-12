@@ -93,13 +93,13 @@ namespace Toolsmith.Utils {
             return 0.0f;
         }
 
-        //Since this can be called or used before
+        //Asks whether the head recorded on this tool is the placeholder Candle, and only asks - GetToolheadForData
+        //reads the attribute where GetToolhead would reset a missing one, which would have this question writing to
+        //the stack it is asking about. No head recorded at all is not a placeholder head: it is a tool that has not
+        //been initialized yet, which the callers reach only after something else has already done that.
         public static bool HasPlaceholderHead(this ItemStack itemStack) {
-            if (itemStack.GetToolhead().Collectible.Code == ToolsmithConstants.FallbackHeadCode) {
-                return true;
-            } else {
-                return false;
-            }
+            var head = itemStack.GetToolheadForData();
+            return head != null && head.Collectible.Code == ToolsmithConstants.FallbackHeadCode;
         }
 
         //Checks for the old attributes, updates the tool by setting the vanilla durability to the old current and then removes the attributes. Should cause all tools to transfer seemlessly over!
@@ -578,14 +578,8 @@ namespace Toolsmith.Utils {
                 treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.Get(ToolsmithConstants.DefaultTreatmentTag);
             }
 
-            var handleDur = baseDur * handleStats.baseHPfactor; //Starting with the handle: Account for baseHPfactor first in the handle...
-            handleDur = handleDur + (handleDur * handleStats.selfHPBonus); //plus the selfDurabilityBonus
-            handleDur = handleDur + (handleDur * treatmentStats.handleHPbonus); //Then any treatment bonus
-            handleDur = handleDur + (handleDur * bindingStats.handleHPBonus); //Finally the Binding bonus, and all this should be multiplicitive, cause why not haha
-
-            var bindingDur = baseDur * bindingStats.baseHPfactor; //Now for the binding, but this has fewer parts.
-            bindingDur = bindingDur + (bindingDur * bindingStats.selfHPBonus);
-            bindingDur = bindingDur + (bindingDur * handleStats.bindingHPBonus);
+            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(baseDur, handleStats, treatmentStats, bindingStats);
+            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(baseDur, handleStats, bindingStats);
 
             if (maxHandleDur < 0) {
                 handle.SetPartCurrentDurability((int)handleDur);
@@ -604,9 +598,8 @@ namespace Toolsmith.Utils {
                 itemStack.SetToolbindingMaxDurability((int)bindingDur);
             }
 
-            var speedBonus = handleStats.speedBonus + gripStats.speedBonus;
-            itemStack.SetSpeedBonus(speedBonus);
-            itemStack.SetGripChanceToDamage(gripStats.chanceToDamage);
+            itemStack.SetSpeedBonus(ToolsmithPartStatsHelpers.CalculateSpeedBonus(handleStats, gripStats));
+            itemStack.SetGripChanceToDamage(ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(gripStats));
         }
 
         //The Attribute Flags for tools! These will all be similar except for their intended use and name.

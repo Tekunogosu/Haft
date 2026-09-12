@@ -50,6 +50,7 @@ namespace Toolsmith {
         public const string ToolTinkeringRenderPatchCategory = "toolTinkeringRender";
         public const string ToolTinkeringGuiElementPatchCategory = "toolTinkeringGuiElement";
         public const string ToolTinkeringItemAxePatchCategory = "itemAxeOnBrokenWith";
+        public const string ToolTinkeringProjectilePatchCategory = "toolTinkeringProjectile";
 
         public const string ToolRenderingPatchCategory = "toolPartRendering";
 
@@ -700,6 +701,7 @@ namespace Toolsmith {
             HarmonyInstance.PatchCategory(ToolTinkeringRenderPatchCategory);
             HarmonyInstance.PatchCategory(ToolTinkeringGuiElementPatchCategory);
             HarmonyInstance.PatchCategory(ToolTinkeringItemAxePatchCategory);
+            HarmonyInstance.PatchCategory(ToolTinkeringProjectilePatchCategory);
             Logger.VerboseDebug("Patched functions for Tool Tinkering purposes.");
             HarmonyInstance.PatchCategory(OffhandDominantInteractionUsePatchCategory);
             Logger.VerboseDebug("Patched functions for Offhand Dominant Interaction purposes.");

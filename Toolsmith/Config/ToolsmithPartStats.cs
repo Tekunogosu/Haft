@@ -24,6 +24,45 @@ namespace Toolsmith.Config {
 
     public static class ToolsmithPartStatsHelpers {
 
+        //The four values a finished tool inherits from its handle, treatment, grip and binding. Both the crafting
+        //path and the repair path that rebuilds a tool missing its stats have to arrive at the same numbers, so the
+        //math lives here once rather than in each of them - tuning a bonus in one place and not the other would
+        //otherwise ship a game where a crafted handle and a repaired one wear out at different rates.
+        //
+        //Returned as float because callers scale by a remaining-HP percent before rounding; returning int here
+        //would round twice and lose durability on every repair.
+
+        //Starts from the tool's own base durability and takes each bonus in turn - the handle's own, the treatment
+        //on it, then the binding holding it - each applied to the running total rather than to the base, so they
+        //compound rather than simply adding up.
+        public static float CalculateHandleDurability(int baseDur, HandleStatDefines handleStats, TreatmentStatDefines treatmentStats, BindingStatDefines bindingStats) {
+            var handleDur = baseDur * handleStats.baseHPfactor;
+            handleDur += handleDur * handleStats.selfHPBonus;
+            handleDur += handleDur * treatmentStats.handleHPbonus;
+            handleDur += handleDur * bindingStats.handleHPBonus;
+            return handleDur;
+        }
+
+        //The binding has fewer terms than the handle: its own factor and bonus, plus whatever support the handle
+        //lends it. Nothing a treatment does reaches the binding.
+        public static float CalculateBindingDurability(int baseDur, HandleStatDefines handleStats, BindingStatDefines bindingStats) {
+            var bindingDur = baseDur * bindingStats.baseHPfactor;
+            bindingDur += bindingDur * bindingStats.selfHPBonus;
+            bindingDur += bindingDur * handleStats.bindingHPBonus;
+            return bindingDur;
+        }
+
+        //A better handle and a better grip both make the tool quicker to swing, and the two stack.
+        public static float CalculateSpeedBonus(HandleStatDefines handleStats, GripStatDefines gripStats) {
+            return handleStats.speedBonus + gripStats.speedBonus;
+        }
+
+        //The chance the handle takes damage at all comes from the grip alone - a hand that does not slip is the
+        //whole of it. Here so every caller reads the stat through the same name as the durability math above.
+        public static float CalculateGripChanceToDamage(GripStatDefines gripStats) {
+            return gripStats.chanceToDamage;
+        }
+
         public static void VerifyAndStoreDefinesInDict(List<HandlePartDefines> list, bool runFullCheck, ref Dictionary<string, HandlePartDefines> targetDict) {
             foreach (var entry in list) {
                 if (entry.id == null) {

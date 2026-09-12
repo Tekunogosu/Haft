@@ -241,14 +241,8 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 maxSharpness = (int)(baseDur * ToolsmithModSystem.Config.SharpnessMult);//Calculate the sharpness next similarly to the durability.
             }
 
-            var handleDur = baseDur * handleStats.baseHPfactor; //Starting with the handle: Account for baseHPfactor first in the handle...
-            handleDur = handleDur + handleDur * handleStats.selfHPBonus; //plus the selfDurabilityBonus
-            handleDur = handleDur + handleDur * treatmentStats.handleHPbonus; //Then any treatment bonus
-            handleDur = handleDur + handleDur * bindingStats.handleHPBonus; //Finally the Binding bonus, and all this should be multiplicitive, cause why not haha
-
-            var bindingDur = baseDur * bindingStats.baseHPfactor; //Now for the binding, but this has fewer parts.
-            bindingDur = bindingDur + bindingDur * bindingStats.selfHPBonus;
-            bindingDur = bindingDur + bindingDur * handleStats.bindingHPBonus;
+            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(baseDur, handleStats, treatmentStats, bindingStats);
+            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(baseDur, handleStats, bindingStats);
 
             //Apply the end results of that to the tool/parts. Could the parts themselves actually hold the stats...? Eh. Might be faster to just directly apply them to the tool and then update the current HP when it breaks.
             var currentHeadPer = headStack.GetPartRemainingHPPercent(); //If this returns 0, then assume it's full durability since something is unset. Keep this assumption in mind!!!
@@ -287,8 +281,8 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             outputSlot.Itemstack.SetToolbindingMaxDurability((int)bindingDur);
             outputSlot.Itemstack.SetToolbindingCurrentDurability((int)bindingDur);
 
-            var speedBonus = handleStats.speedBonus + gripStats.speedBonus;
-            var gripChanceDamage = gripStats.chanceToDamage;
+            var speedBonus = ToolsmithPartStatsHelpers.CalculateSpeedBonus(handleStats, gripStats);
+            var gripChanceDamage = ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(gripStats);
             outputSlot.Itemstack.SetSpeedBonus(speedBonus);
             outputSlot.Itemstack.SetGripChanceToDamage(gripChanceDamage);
 
@@ -453,7 +447,18 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 //Check each part and see if the health of any of them is <= 0, thus the tool broke, handle it
                 //Any or all parts COULD hit 0 at the same time, technically. I'd love to see it though, but it needs to be possible!
                 bool toolNeedsDestroying = false;
-                if (remainingBindingDur <= 0 || remainingHandleDur <= 0 || remainingHeadDur <= 0) {
+                bool anyPartBroke = (remainingBindingDur <= 0 || remainingHandleDur <= 0 || remainingHeadDur <= 0);
+
+                //Logged before the branch rather than inside it, so a damage event that breaks nothing still shows up.
+                //Vanilla's own durability write never runs for a tinkered tool - bhHandling is PreventDefault above -
+                //so the vanilla durability logged here is only ever changed by Toolsmith itself.
+                if (ToolsmithModSystem.Config.DebugMessages) {
+                    ToolsmithModSystem.Logger.Debug("[BreakTrace] OnDamageItem on " + itemStack.Collectible.Code + ", amount " + amount + ", slot " + itemslot.GetType().Name + ", inventory " + (itemslot.Inventory == null ? "NULL (projectile or dummy)" : itemslot.Inventory.GetType().Name));
+                    ToolsmithModSystem.Logger.Debug("[BreakTrace] post-damage head/handle/binding: " + remainingHeadDur + " / " + remainingHandleDur + " / " + remainingBindingDur + ", headBroke: " + headBroke + ", anyPartBroke: " + anyPartBroke);
+                    ToolsmithModSystem.Logger.Debug("[BreakTrace] vanilla durability reads " + itemStack.Collectible.GetRemainingDurability(itemStack) + " (never decremented by vanilla here - PreventDefault is set)");
+                }
+
+                if (anyPartBroke) {
                     toolNeedsDestroying = TinkeringUtility.HandleBrokenTinkeredTool(world, byEntity, itemslot, remainingHeadDur, currentSharpness, remainingHandleDur, remainingBindingDur, headBroke, !headBroke);
                 }
 

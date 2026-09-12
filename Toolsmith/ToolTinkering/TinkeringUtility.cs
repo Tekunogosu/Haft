@@ -244,6 +244,19 @@ namespace Toolsmith.ToolTinkering {
             //head that actually broke has a head worth accounting for.
             bool headIsPlaceholder = brokenToolStack.HasPlaceholderHead();
 
+            //A tool damaged through a slot with no inventory is not in anyone's hands - a thrown spear is damaged
+            //through a DummySlot the projectile wraps around its own ProjectileStack. The projectile decides whether
+            //to despawn by reading GetRemainingDurability on that same stack afterwards, so the value logged here is
+            //what it will see, and the one logged on exit is what it actually gets.
+            if (ToolsmithModSystem.Config.DebugMessages && world.Api.Side.IsServer()) {
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] --- HandleBrokenTinkeredTool entry for " + toolObject.Code + " ---");
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] slot is " + itemslot.GetType().Name + ", inventory is " + (itemslot.Inventory == null ? "NULL (not held - projectile or dummy)" : itemslot.Inventory.GetType().Name));
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] byEntity is " + (byEntity == null ? "null" : byEntity.GetType().Name + " (" + byEntity.Code + ")"));
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] incoming head/handle/binding durability: " + remainingHeadDur + " / " + remainingHandleDur + " / " + remainingBindingDur);
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] incoming headBroke: " + headBroke + ", refillSlot: " + refillSlot + ", headIsPlaceholder: " + headIsPlaceholder);
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] vanilla durability on the stack right now: " + toolObject.GetRemainingDurability(brokenToolStack) + " (this is what a projectile reads to decide whether to despawn)");
+            }
+
             toolHead = brokenToolStack.GetToolhead();
             if (remainingHeadDur > 0 && !headIsPlaceholder) {
                 toolHead.SetPartCurrentDurability(remainingHeadDur);
@@ -322,6 +335,17 @@ namespace Toolsmith.ToolTinkering {
             //out on their own schedule and a head reaching zero is no reason to lose a treated handle with it.
             bool toolFellApart = !headBroke && !headIsPlaceholder;
 
+            //toolFellApart decides everything below: it empties the slot and returns the head, and it is also what
+            //gates the durability zeroing at the end. A tool that fell apart skips that zeroing, so if this is true
+            //on a slot with no inventory, the projectile is about to read a durability nobody decremented.
+            if (ToolsmithModSystem.Config.DebugMessages && world.Api.Side.IsServer()) {
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] headBroke is now " + headBroke + " (set true above if head durability hit 0)");
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] toolFellApart = !headBroke && !headIsPlaceholder = " + toolFellApart);
+                if (toolFellApart && itemslot.Inventory == null) {
+                    ToolsmithModSystem.Logger.Debug("[BreakTrace] WARNING: fell apart on a slot with no inventory. The zeroing at the end is skipped in this case, so whatever holds this stack keeps it.");
+                }
+            }
+
             EntityPlayer player = byEntity as EntityPlayer;
             if (player != null) {
                 //Try to give the player each part, if given successfully, set the stack to null again to represent this
@@ -390,7 +414,19 @@ namespace Toolsmith.ToolTinkering {
             //Toolsmith's own head durability is stored in, so it sees a spent item and despawns itself.
             if (!toolFellApart && itemslot.Inventory == null) {
                 toolObject.SetDurability(brokenToolStack, 0);
+
+                if (ToolsmithModSystem.Config.DebugMessages && world.Api.Side.IsServer()) {
+                    ToolsmithModSystem.Logger.Debug("[BreakTrace] exit: zeroed the stack (no inventory, did not fall apart). Returning false.");
+                    ToolsmithModSystem.Logger.Debug("[BreakTrace] vanilla durability after zeroing: " + toolObject.GetRemainingDurability(brokenToolStack) + " - a projectile despawns only if this reads 0.");
+                }
+
                 return false;
+            }
+
+            if (ToolsmithModSystem.Config.DebugMessages && world.Api.Side.IsServer()) {
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] exit: no zeroing done. toolFellApart=" + toolFellApart + ", inventory " + (itemslot.Inventory == null ? "NULL" : "present") + ", slot now holds " + (itemslot.Itemstack == null ? "nothing" : itemslot.Itemstack.Collectible.Code.ToString()));
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] vanilla durability on the stack at exit: " + toolObject.GetRemainingDurability(brokenToolStack) + " - a projectile despawns only if this reads 0.");
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] returning " + (!toolFellApart) + " (true means the caller destroys the slot).");
             }
 
             return !toolFellApart;

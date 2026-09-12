@@ -422,6 +422,85 @@ namespace Toolsmith.ToolTinkering {
         }
     }
 
+    //A thrown tinkered tool is damaged through a DummySlot the projectile wraps around its own ProjectileStack, so
+    //nothing Toolsmith does to that slot reaches the projectile. The projectile decides whether to despawn by reading
+    //GetRemainingDurability on the stack afterwards - and Toolsmith sets PreventDefault on OnDamageItem, which
+    //suppresses the vanilla write that would have decremented it. The value therefore never falls, the projectile
+    //never despawns, and every further impact re-runs the break and drops another set of parts.
+    //
+    //These postfixes close that gap: after the parts have been handed out, a projectile whose tool has ended is told
+    //to die, and its stack is cleared first so it cannot be picked back up whole. A held tool that falls apart has
+    //its slot emptied for the same reason - this is the projectile's equivalent of that.
+    [HarmonyPatch(typeof(EntityProjectileBase))]
+    [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringProjectilePatchCategory)]
+    public class ToolTinkeringProjectileBasePatches {
+
+        //Runs when a projectile hits an entity. DamageProjectile has already called DamageItem, so by now any parts
+        //have been dropped at the target's position by HandleBrokenTinkeredTool.
+        [HarmonyPostfix]
+        [HarmonyPatch("DamageProjectile")]
+        private static void DamageProjectilePostfix(EntityProjectileBase __instance) {
+            ToolTinkeringProjectileHelper.EndProjectileIfToolIsSpent(__instance, "DamageProjectile");
+        }
+    }
+
+    //IsColliding is declared on EntityProjectile rather than the base, so it needs its own patch target. This is the
+    //block-collision path: a spear that runs out mid-flight and hits the ground rather than a creature.
+    [HarmonyPatch(typeof(EntityProjectile))]
+    [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringProjectilePatchCategory)]
+    public class ToolTinkeringProjectilePatches {
+
+        [HarmonyPostfix]
+        [HarmonyPatch("IsColliding")]
+        private static void IsCollidingPostfix(EntityProjectile __instance) {
+            ToolTinkeringProjectileHelper.EndProjectileIfToolIsSpent(__instance, "IsColliding");
+        }
+    }
+
+    public static class ToolTinkeringProjectileHelper {
+
+        //Both impact paths end the same way, so the decision lives here once rather than in each postfix.
+        //
+        //"Spent" is any part at or below zero, matching the condition OnDamageItem uses to decide whether to run the
+        //break at all. A tool that merely fell apart - head intact, handle gone - is as finished as one whose head
+        //broke: the held-tool path empties the slot for both, and the parts have already been handed back either way.
+        public static void EndProjectileIfToolIsSpent(EntityProjectileBase projectile, string source) {
+            if (projectile?.World == null || !projectile.World.Side.IsServer() || !projectile.Alive) {
+                return;
+            }
+
+            var stack = projectile.ProjectileStack;
+            if (stack?.Collectible == null || !stack.Collectible.HasBehavior<CollectibleBehaviorTinkeredTools>()) {
+                return;
+            }
+
+            //Read the parts straight off the stack rather than trusting the vanilla durability, which is exactly the
+            //value PreventDefault stopped anyone from decrementing.
+            var headDur = stack.GetToolheadCurrentDurability();
+            var handleDur = stack.GetToolhandleCurrentDurability();
+            var bindingDur = stack.GetToolbindingCurrentDurability();
+            var spent = (headDur <= 0 || handleDur <= 0 || bindingDur <= 0);
+
+            if (ToolsmithModSystem.Config.DebugMessages) {
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] projectile postfix (" + source + ") on " + stack.Collectible.Code + ": head/handle/binding " + headDur + " / " + handleDur + " / " + bindingDur + ", spent: " + spent + ", vanilla durability reads " + stack.Collectible.GetRemainingDurability(stack));
+            }
+
+            if (!spent) {
+                return;
+            }
+
+            //Clear the stack before dying. OnCollected hands ProjectileStack back to whoever picks the projectile up
+            //and CanCollect only asks whether it is still alive, so a spear left in place here returns whole on top of
+            //the parts already dropped.
+            projectile.ProjectileStack = null;
+            projectile.Die();
+
+            if (ToolsmithModSystem.Config.DebugMessages) {
+                ToolsmithModSystem.Logger.Debug("[BreakTrace] projectile postfix (" + source + "): cleared ProjectileStack and killed the projectile.");
+            }
+        }
+    }
+
     //Patching ItemAxe to ideally keep marking all Wood Blocks as Dirty to send them to the client, hopefully solving the Ghost Trees once and for all and not causing an RNG desync in the process.
     [HarmonyPatch(typeof(ItemAxe))]
     [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringItemAxePatchCategory)]
