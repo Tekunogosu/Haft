@@ -55,7 +55,7 @@ namespace Toolsmith {
 
         public const string OffhandDominantInteractionUsePatchCategory = "offhandDominantInteractionUse";
 
-        public static List<string> IgnoreCodes;
+        public static HashSet<string> IgnoreCodes;
         public static List<string> ToolsWithWoodInBindingShapes; //Used on both sides - since Grid Crafting is clientside.
         public static Dictionary<string, int> BindingTiers; //This is only initialized on the Client side! Used for just generating and storing the various bindings tier levels to display on their tooltips.
 
@@ -71,7 +71,7 @@ namespace Toolsmith {
             TryToLoadConfig(api);
             TryToLoadClientConfig(api);
             TryToLoadStats(api);
-            IgnoreCodes = new List<string>();
+            IgnoreCodes = new HashSet<string>();
             ToolsWithWoodInBindingShapes = new List<string>();
 
             ConfigUtility.PrepareAndSplitConfigStrings(); //After this point, mods and anyone can add to the config strings!
@@ -497,10 +497,12 @@ namespace Toolsmith {
                     if (Config.AutoUpdateConfigsOnVersionChange) {
                         DoesConfigNeedRegen = (Config.ModVersionNumber != ModVersion);
                         if (DoesConfigNeedRegen) {
+                            ConfigUtility.BackupConfigFile(api, ConfigUtility.ConfigFilename, "mod version changed from " + Config.ModVersionNumber + " to " + ModVersion);
                             Config = new ToolsmithConfigs();
                         }
                     }
                     if (!DoesConfigNeedRegen && !Config.EnableEditsForRegex) {
+                        ConfigUtility.BackupConfigFile(api, ConfigUtility.ConfigFilename, "EnableEditsForRegex is false, so the regex strings are rebuilt from the shipped defaults");
                         ToolsmithConfigsHelpers.ResetRegexStrings(ref Config);
                     }
                 }

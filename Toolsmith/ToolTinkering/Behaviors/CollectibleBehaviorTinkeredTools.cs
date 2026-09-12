@@ -452,12 +452,16 @@ namespace Toolsmith.ToolTinkering.Behaviors {
 
                 //Check each part and see if the health of any of them is <= 0, thus the tool broke, handle it
                 //Any or all parts COULD hit 0 at the same time, technically. I'd love to see it though, but it needs to be possible!
+                bool toolNeedsDestroying = false;
                 if (remainingBindingDur <= 0 || remainingHandleDur <= 0 || remainingHeadDur <= 0) {
-                    TinkeringUtility.HandleBrokenTinkeredTool(world, byEntity, itemslot, remainingHeadDur, currentSharpness, remainingHandleDur, remainingBindingDur, headBroke, !headBroke);
+                    toolNeedsDestroying = TinkeringUtility.HandleBrokenTinkeredTool(world, byEntity, itemslot, remainingHeadDur, currentSharpness, remainingHandleDur, remainingBindingDur, headBroke, !headBroke);
                 }
 
                 itemslot.MarkDirty();
-                if (headBroke) { //If the head did not break, then don't run everything!
+                //Exactly one of the two empties the slot, and the helper says which. Destroying a slot it already
+                //emptied would refill it from the inventory a second time, handing back a whole tool alongside the
+                //parts that were just returned.
+                if (toolNeedsDestroying) {
                     itemStack.Collectible.DestroyItem(world, byEntity, itemslot);
                 }
             } else if (!world.Side.IsServer()) {

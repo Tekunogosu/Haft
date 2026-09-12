@@ -259,11 +259,26 @@ namespace Toolsmith.ToolTinkering.Blocks {
                 return true;
             } else {
                 ResetCraftingAttempt();
+
+                ItemSlot[] craftingSlots = Inventory.GetFullCraftingSlots();
+
+                //Both sides run the same check so the player is told why the hammer did nothing. Only the client can
+                //raise the message, and only the server may decide the craft, so the check runs twice rather than
+                //the refusal being sent back from the server.
+                if (craftingSlots.Length > 0 && !ReforgingUtility.CheckForPossibleMerger(craftingSlots)) {
+                    var refusal = TinkeringUtility.WhyCannotCraftTool(craftingSlots);
+                    if (refusal != TinkeringUtility.EnumCraftRefusal.None) {
+                        if (world.Side.IsClient() && byPlayer is IClientPlayer) {
+                            (world.Api as ICoreClientAPI)?.TriggerIngameError(this, "workbenchcraft", TinkeringUtility.GetCraftRefusalMessage(refusal));
+                        }
+                        return false;
+                    }
+                }
+
                 if (world.Side.IsClient()) {
                     return true;
                 }
 
-                ItemSlot[] craftingSlots = Inventory.GetFullCraftingSlots();
                 if (craftingSlots.Count() > 1) {
                     if (ReforgingUtility.CheckForPossibleMerger(craftingSlots)) {
                         var combinedStack = ReforgingUtility.MergeDupesAndReturn(craftingSlots);

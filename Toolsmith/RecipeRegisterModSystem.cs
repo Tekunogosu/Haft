@@ -62,6 +62,9 @@ namespace Toolsmith {
             }
             //Oh god this pains me. This does NOT feel optimal at all. But it works?
             List<GridRecipe> toolRecipes = new List<GridRecipe>();
+            //Every recipe this loop learns a head from, kept so they can be dropped once the loop is done. The
+            //list cannot be touched while it is being walked, so the removal waits until after.
+            List<GridRecipe> recipesReadForTools = new List<GridRecipe>();
             foreach (var recipe in api.World.GridRecipes) { //Check each recipe...
                 foreach (var tool in TinkerableToolsList.Where(t => recipe.Output.Code.Equals(t.Code))) { //Where the output code matches anything on the Tinkered Tool List (from the configs)...
                     foreach (var ingredient in recipe.Ingredients.Where(i => (i.Value != null) && (i.Value.Code != null) && (i.Value.ResolvedItemStack != null) && (ConfigUtility.IsToolHead(i.Value.Code.ToString())))) { //And the recipe in question has a Tool Head item that is on the Tool Head Config List
@@ -122,8 +125,29 @@ namespace Toolsmith {
                                 ToolsmithModSystem.Logger.Debug(ingredient.Value.Code.ToString());
                             }
                         }
+
+                        if (!recipesReadForTools.Contains(recipe)) {
+                            recipesReadForTools.Add(recipe);
+                        }
                     }
                 }
+            }
+
+            //This removal does not work and cannot be fixed by changing when it runs. GridRecipes is reached
+            //through a property getter, and survival re-resolves recipes into resolvedGridRecipes afterwards, so
+            //by the time a player opens a crafting grid or the handbook, neither is matched against the list
+            //edited here. The count logged below is nonzero while nothing observable changes.
+            //
+            //The supported way to hide a recipe is "enabled": false in a JSON patch: RecipeLoader consumes the
+            //flag and never registers the recipe, which is why that works where this does not. Vanilla ships 15
+            //recipe files using it, and this mod already does the same in
+            //patches/compatability/in-dappled-groves-disable-supportbeam-patch.json.
+            //
+            //Removing recipes here would also have to wait until after the loop above, which reads the same list
+            //to populate TinkerToolGridRecipes - the head-to-tool map the workbench builds a tool from.
+            if (ToolsmithModSystem.Config.HideVanillaToolGridRecipes) {
+                int hidden = api.World.GridRecipes.RemoveAll(recipe => recipesReadForTools.Contains(recipe));
+                ToolsmithModSystem.Logger.Notification("Hid " + hidden + " grid recipe(s) that crafted a tinkerable tool, leaving the workbench as the way to make them.");
             }
 
             var handleRecipes = GenerateHandleRecipes(api);

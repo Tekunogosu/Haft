@@ -426,6 +426,20 @@ namespace Toolsmith.Utils {
                 itemStack.Attributes = new TreeAttribute();
             }
 
+            //Both ways of failing to resolve a head end the same way: say what went wrong, stop treating this
+            //collectible as tinkerable, and leave placeholder values behind so the tool reverts to vanilla
+            //behaviour instead of erroring again on every access. Only the diagnosis differs, so only the message
+            //is passed in - the two callers describe different problems the user has to fix differently.
+            void FallBackToVanilla(string reason) {
+                ToolsmithModSystem.Logger.Error(reason);
+                ToolsmithModSystem.IgnoreCodes.Add(itemStack.Collectible.Code.ToString());
+                var headStackBackup = new ItemStack(world.GetItem(new AssetLocation(ToolsmithConstants.FallbackHeadCode)), 1); //Placeholder Candle! It'll be something so it actually _has_ something in there. No more nulls.
+                itemStack.SetToolhead(headStackBackup);
+                itemStack.SetToolheadCurrentDurability(1); //Set these to just 1 so that something is set. Since this code should be ignored everywhere, this might help prevent re-checking it as well.
+                itemStack.SetToolCurrentSharpness(1);
+                itemStack.SetToolMaxSharpness(1);
+            }
+
             //Figure out the Tool Head and add the missing stats and ItemStack!
             if (RecipeRegisterModSystem.TinkerToolGridRecipes?.Count > 0) { //If this is being ran on the server-side or it is singleplayer, then RecipeRegisterModSystem will have actually booted and everything!
                 string headCode = null;
@@ -438,16 +452,7 @@ namespace Toolsmith.Utils {
 
                 if (headCode == null) { //If headCode is still null at this point, it never found a proper key. Is something wrong with the configs, or is something getting improperly registered through a wildcard?
                                         //Either way, this needs an error printed and it has to be accounted for at any point.
-                    ToolsmithModSystem.Logger.Error("Ran into a tool without an entry in the GridRecipes Dictionary! Something might be wrong with your configs, or something is getting improperly given the behaviors?\nThe Itemstack in question is: " + itemStack.ToString() + "\nAdding it to the Ignore list to revert to vanilla behaviors when encountered again, and assigning placeholder values to hopefully prevent this from being run again. If you get a Candle when this breaks somehow, this is why!");
-                    ToolsmithModSystem.IgnoreCodes.Add(itemStack.Collectible.Code.ToString());
-                    var headStackBackup = new ItemStack(world.GetItem(new AssetLocation(ToolsmithConstants.FallbackHeadCode)), 1); //Placeholder Candle! Wow! It'll be something so it actually _have_ something in there. No more nulls.
-                    var curHeadDurBackup = 1; //Set these to just 1 so that something is set. Since this code should be ignored everywhere, this might help prevent re-checking it as well.
-                    var sharpnessBackup = 1;
-
-                    itemStack.SetToolhead(headStackBackup);
-                    itemStack.SetToolheadCurrentDurability(curHeadDurBackup);
-                    itemStack.SetToolCurrentSharpness(sharpnessBackup);
-                    itemStack.SetToolMaxSharpness(sharpnessBackup);
+                    FallBackToVanilla("Ran into a tool without an entry in the GridRecipes Dictionary! Something might be wrong with your configs, or something is getting improperly given the behaviors?\nThe Itemstack in question is: " + itemStack.ToString() + "\nAdding it to the Ignore list to revert to vanilla behaviors when encountered again, and assigning placeholder values to hopefully prevent this from being run again. If you get a Candle when this breaks somehow, this is why!");
                     return;
                 }
 
@@ -461,13 +466,7 @@ namespace Toolsmith.Utils {
                     //Head code resolved from the GridRecipes dictionary but no item with that code is registered
                     //in the current load (mod uninstalled, modid renamed in a takeover, or wildcard resolved
                     //without a backing item). Route through the same fallback the "headCode is null" path above uses.
-                    ToolsmithModSystem.Logger.Error("Tool head code '" + headCode + "' resolved from the GridRecipes Dictionary but no item with that code is registered. The mod that provided it is likely uninstalled or has been renamed. Adding " + itemStack.Collectible.Code + " to the ignore list and assigning placeholder values.");
-                    ToolsmithModSystem.IgnoreCodes.Add(itemStack.Collectible.Code.ToString());
-                    var headStackBackup = new ItemStack(world.GetItem(new AssetLocation(ToolsmithConstants.FallbackHeadCode)), 1);
-                    itemStack.SetToolhead(headStackBackup);
-                    itemStack.SetToolheadCurrentDurability(1);
-                    itemStack.SetToolCurrentSharpness(1);
-                    itemStack.SetToolMaxSharpness(1);
+                    FallBackToVanilla("Tool head code '" + headCode + "' resolved from the GridRecipes Dictionary but no item with that code is registered. The mod that provided it is likely uninstalled or has been renamed. Adding " + itemStack.Collectible.Code + " to the ignore list and assigning placeholder values.");
                     return;
                 }
                 var headStack = new ItemStack(headItem, 1);

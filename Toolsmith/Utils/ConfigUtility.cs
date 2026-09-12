@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -238,6 +239,31 @@ namespace Toolsmith.Utils {
 
         public static void AddEntryToBlacklistConfig(string entry) {
             SplitBlacklistConfig.Add(entry);
+        }
+
+        //Copies a mod config file aside before something is about to overwrite it. A version bump or a
+        //disabled-edits flag resets the config back to the shipped defaults, which silently discards every
+        //hand-made change in it - so take a copy first and say so in the log, otherwise the only sign that
+        //edits are gone is a player noticing a tool stopped working days later.
+        //A failed backup must never stop the mod from loading: the config reset still happens, it just
+        //happens unprotected, and that is strictly better than refusing to start.
+        public static void BackupConfigFile(ICoreAPI api, string filename, string reason) {
+            try {
+                string configPath = Path.Combine(api.GetOrCreateDataPath("ModConfig"), filename);
+                if (!File.Exists(configPath)) { //Nothing written yet - a first run has no edits to lose.
+                    return;
+                }
+
+                string backupPath = configPath + ".bak-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                if (File.Exists(backupPath)) { //Two resets inside the same second, so keep both rather than clobbering the first.
+                    backupPath = configPath + ".bak-" + DateTime.Now.ToString("yyyyMMdd-HHmmss-fff");
+                }
+
+                File.Copy(configPath, backupPath);
+                ToolsmithModSystem.Logger.Notification("Backed up " + filename + " to " + Path.GetFileName(backupPath) + " before resetting it to defaults (" + reason + "). Any hand-made edits to the config are in that file.");
+            } catch (Exception e) {
+                ToolsmithModSystem.Logger.Warning("Could not back up " + filename + " before resetting it to defaults (" + reason + "). The reset will still happen, so any edits in it are about to be lost. Reason: " + e.Message);
+            }
         }
     }
 }

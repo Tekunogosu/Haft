@@ -36,15 +36,15 @@ namespace Toolsmith.ToolTinkering.Blocks {
 
         public bool IsSelectSlotEmpty(int slotID) {
             var slot = GetSlotFromSelectionID(slotID);
-            if (slot == null) {
-                return false;
+            if (slot == null) { //An id that maps to no slot holds nothing, so callers must not go on to take an item out of it.
+                return true;
             }
 
             return slot.Empty;
         }
 
         public bool AllSlotsEmpty() {
-            return !slots.Any(x => x.Empty);
+            return slots.All(x => x.Empty);
         }
 
         public string GetIDFromSlots() {

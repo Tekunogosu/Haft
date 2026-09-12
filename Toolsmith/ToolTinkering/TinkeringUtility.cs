@@ -218,7 +218,17 @@ namespace Toolsmith.ToolTinkering {
             return false;
         }
 
-        public static void HandleBrokenTinkeredTool(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, int remainingHeadDur, int remainingSharpness, int remainingHandleDur, int remainingBindingDur, bool headBroke, bool refillSlot) {
+        /// <summary>
+        /// Hands a broken tool's surviving parts back and decides what becomes of the stack that held them.
+        /// Returns true when the slot still holds a tool that has ended and the caller must destroy, and false
+        /// when this call already emptied the slot itself.
+        /// </summary>
+        /// <remarks>
+        /// The slot is not always a player's. A thrown spear is damaged through a DummySlot wrapping the
+        /// projectile's own stack, with the projectile (or the entity it struck) passed as byEntity, so nothing
+        /// here may assume an inventory to give to or a player to give to.
+        /// </remarks>
+        public static bool HandleBrokenTinkeredTool(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, int remainingHeadDur, int remainingSharpness, int remainingHandleDur, int remainingBindingDur, bool headBroke, bool refillSlot) {
             ItemStack brokenToolStack = itemslot.Itemstack;
             CollectibleObject toolObject = brokenToolStack.Collectible;
             ItemStack toolHead = null;
@@ -229,8 +239,13 @@ namespace Toolsmith.ToolTinkering {
             bool gaveBinding = false;
             ItemStack bitsDrop = null;
 
+            //A head that is only the placeholder Candle is not a head that broke: it is a tool whose head was
+            //never recorded. Both end the tool, so both leave the stack for the caller to destroy, but only a
+            //head that actually broke has a head worth accounting for.
+            bool headIsPlaceholder = brokenToolStack.HasPlaceholderHead();
+
             toolHead = brokenToolStack.GetToolhead();
-            if (remainingHeadDur > 0 && !brokenToolStack.HasPlaceholderHead()) {
+            if (remainingHeadDur > 0 && !headIsPlaceholder) {
                 toolHead.SetPartCurrentDurability(remainingHeadDur);
                 toolHead.SetPartMaxDurability(brokenToolStack.GetToolheadMaxDurability());
                 toolHead.SetPartCurrentSharpness(remainingSharpness);
@@ -238,7 +253,7 @@ namespace Toolsmith.ToolTinkering {
                 if (brokenToolStack.HasTotalHoneValue()) {
                     toolHead.SetTotalHoneValue(brokenToolStack.GetTotalHoneValue());
                 }
-            } else {
+            } else if (remainingHeadDur <= 0) {
                 headBroke = true; //This right here might be key for compatability sake. The way I built the whole system runs off the assumption that the Tool's Head determines the tool.
                                   //Thus, it can be considered that a tool does not fully "break" in the vanilla sense until the Head itself breaks, it only "falls apart" ie: the tool head flies off the handle, there's possible durability left on both.
                                   //Because of this, always need to consider the possibility of dropping a handle or binder, but if the 'Head' is broken, we also want to run other mod's 'on damage' calls along with vanilla.
@@ -301,10 +316,16 @@ namespace Toolsmith.ToolTinkering {
                 HandleGemDropsForJewelry(byEntity, toolHead);
             }
 
+            //Whether the tool came apart around a head that survived, rather than ending outright. Only this case
+            //empties the slot here; a head that broke, or one that was never more than the placeholder, leaves the
+            //stack for the caller to destroy. The handle and binding are handed back either way, since they wear
+            //out on their own schedule and a head reaching zero is no reason to lose a treated handle with it.
+            bool toolFellApart = !headBroke && !headIsPlaceholder;
+
             EntityPlayer player = byEntity as EntityPlayer;
             if (player != null) {
                 //Try to give the player each part, if given successfully, set the stack to null again to represent this
-                if (!headBroke && toolHead != null) {
+                if (toolFellApart) {
                     gaveHead = player.TryGiveItemStack(toolHead);
                 }
                 if (toolHandle != null) {
@@ -318,7 +339,7 @@ namespace Toolsmith.ToolTinkering {
                     bitsDrop = null;
                 }
 
-                if (!headBroke) { //Move this inside the loop and AFTER giving the itemstack to prevent it from ending up in the same slot that the tool was in. This prevents things like the Treecutting code from falsely assuming the axe is not broke when it actually is.
+                if (toolFellApart) { //Move this inside the loop and AFTER giving the itemstack to prevent it from ending up in the same slot that the tool was in. This prevents things like the Treecutting code from falsely assuming the axe is not broke when it actually is.
                     itemslot.Itemstack = null; //Actually 'break' the original item, but only if the head part isn't broken yet. Handle the 'falling apart' of the tools here, but let the 'breaking' happen elsewhere if the head DID fully break.
 
                     if (refillSlot && toolObject.Tool.HasValue) { //Attempt to refill the slot with a same tool only after the slot is emptied, otherwise it won't succeed.
@@ -331,7 +352,7 @@ namespace Toolsmith.ToolTinkering {
                     }
                 }
             } else {
-                if (!headBroke) { //This needs to be in here as well since no matter what, this needs to run
+                if (toolFellApart) { //This needs to be in here as well since no matter what, this needs to run
                     itemslot.Itemstack = null; //Actually 'break' the original item, but only if the head part isn't broken yet. Handle the 'falling apart' of the tools here, but let the 'breaking' happen elsewhere if the head DID fully break.
                     if (world.Side.IsServer()) {
                         world.PlaySoundAt(new AssetLocation("sounds/effect/toolbreak"), byEntity.Pos.X, byEntity.Pos.Y, byEntity.Pos.Z, null, 1f, 16f);
@@ -339,8 +360,10 @@ namespace Toolsmith.ToolTinkering {
                 }
             }
 
-            //Drop any remaining tools not given to the player into the world
-            if (!headBroke && toolHead != null && !gaveHead) {
+            //Drop any remaining tools not given to the player into the world. byEntity is where the tool was when
+            //it came apart, which for a thrown spear is the projectile at its impact point rather than the thrower,
+            //so a spear that gives out mid-flight leaves its parts where it landed.
+            if (toolFellApart && !gaveHead) {
                 world.SpawnItemEntity(toolHead, byEntity.Pos.XYZ);
             }
             if (toolHandle != null && !gaveHandle) {
@@ -353,6 +376,24 @@ namespace Toolsmith.ToolTinkering {
             } else if (bitsDrop != null) {
                 world.SpawnItemEntity(bitsDrop, byEntity.Pos.XYZ);
             }
+
+            //A tool that fell apart has already been taken out of the slot above. Anything else - a head that
+            //broke, or a head that was never more than the placeholder - has ended and still sits there, so the
+            //caller destroys it. Answering with the slot's state rather than with the headBroke that came in is
+            //what keeps a placeholder-headed tool from surviving the damage that finished it.
+            //
+            //Except that destroying the slot only reaches a tool held in an inventory. A thrown spear is damaged
+            //through a DummySlot the projectile built around its own ProjectileStack, and emptying that dummy
+            //leaves the projectile's reference untouched: it re-reads the same stack, finds durability on it, and
+            //both keeps flying and stays collectible - handing back a whole spear beside the parts dropped above.
+            //Zeroing the stack is what the projectile actually reads, through the "durability" attribute that
+            //Toolsmith's own head durability is stored in, so it sees a spent item and despawns itself.
+            if (!toolFellApart && itemslot.Inventory == null) {
+                toolObject.SetDurability(brokenToolStack, 0);
+                return false;
+            }
+
+            return !toolFellApart;
         }
 
         public static ItemWhetstone WhetstoneInOffhand(EntityAgent byEntity) {
@@ -385,6 +426,9 @@ namespace Toolsmith.ToolTinkering {
             return IsValidBinding(byEntity.LeftHandItemSlot?.Itemstack);
         }
 
+        //Answers "is this an acceptable thing to be holding where a binding is optional" - so nothing at all is a
+        //yes, because a tool crafts perfectly well without a binding. Only ask this about an offhand slot or a
+        //crafting input that is allowed to be absent. To ask whether a stack IS a binding, use IsBindingItem.
         public static bool IsValidBinding(ItemStack stack) {
             if (stack == null) {
                 return true;
@@ -408,6 +452,17 @@ namespace Toolsmith.ToolTinkering {
                     return stack.Collectible.HasBehavior<CollectibleBehaviorToolBinding>(); //ToolsmithConstants.ToolsmithBindingBlockTag.isPresentIn(ref stack.Block.Tags);
                 }
             }
+        }
+
+        //Answers "is this stack a binding" - nothing is not a binding. Use this when picking a binding out of a set
+        //of items, where treating an absent stack as a match would pick the wrong slot. IsValidBinding answers the
+        //other question, whether an optional binding slot holds something acceptable, and says yes to nothing.
+        public static bool IsBindingItem(ItemStack stack) {
+            if (stack == null) {
+                return false;
+            }
+
+            return IsValidBinding(stack);
         }
 
         public static void AssemblePartBundle(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel) {
@@ -518,6 +573,50 @@ namespace Toolsmith.ToolTinkering {
             return null;
         }
 
+        //Why a set of slots cannot be crafted into a tool. Every value other than None is something the player can
+        //act on, so each one has its own message rather than a single "that didn't work" - being told the bench
+        //refused without being told what to change is the thing this whole enum exists to prevent.
+        public enum EnumCraftRefusal {
+            None,
+            NoHead,
+            NoHandle,
+            ExtraItems
+        }
+
+        //The same question CheckForValidTool answers, but phrased so the client can explain a refusal. Safe to call
+        //on either side: it only reads the slots. The client raises the message and the server enforces the refusal,
+        //because the message call is client-only and the craft itself must not be decided by the client.
+        public static EnumCraftRefusal WhyCannotCraftTool(ItemSlot[] slots) {
+            var sortedSlots = CheckForValidTool(slots);
+            if (sortedSlots == null) {
+                foreach (var slot in slots) {
+                    if (IsValidHead(slot.Itemstack)) {
+                        return EnumCraftRefusal.NoHandle; //A head is present, so the handle is what is missing.
+                    }
+                }
+                return EnumCraftRefusal.NoHead;
+            }
+
+            if (slots.Length > sortedSlots.Length) { //Every slot that is not one of the parts found is in the way.
+                return EnumCraftRefusal.ExtraItems;
+            }
+
+            return EnumCraftRefusal.None;
+        }
+
+        public static string GetCraftRefusalMessage(EnumCraftRefusal refusal) {
+            switch (refusal) {
+                case EnumCraftRefusal.NoHead:
+                    return Lang.Get("toolsmith:workbench-needs-head");
+                case EnumCraftRefusal.NoHandle:
+                    return Lang.Get("toolsmith:workbench-needs-handle");
+                case EnumCraftRefusal.ExtraItems:
+                    return Lang.Get("toolsmith:workbench-extra-items");
+                default:
+                    return null;
+            }
+        }
+
         //Send it an array of itemslots, and it will see if it is valid for crafting a tool, then return the ItemStacks in a sorted array. Head -> Handle -> (optional) Binding
         public static ItemSlot[] CheckForValidTool(ItemSlot[] slots) {
             bool foundHead = false;
@@ -536,42 +635,34 @@ namespace Toolsmith.ToolTinkering {
                     foundHandle = true;
                     handleSlot = i;
                 }
-                if (!foundBinding && IsValidBinding(slots[i].Itemstack)) {
+                //IsBindingItem, not IsValidBinding: the latter calls an absent stack an acceptable binding, which is
+                //the right answer for an optional offhand slot and the wrong one here, where it would claim the
+                //first empty slot as the binding and hand back a slot with nothing in it to craft from.
+                if (!foundBinding && IsBindingItem(slots[i].Itemstack)) {
                     foundBinding = true;
                     bindingSlot = i;
                 }
             }
 
-            if (!foundHead) {
+            if (!foundHead || !foundHandle) {
                 return null;
             }
 
-            if (foundHead && foundHandle && foundBinding) {
-                ItemSlot[] returnSlots = new ItemSlot[slots.Length];
-
-                returnSlots[0] = slots[headSlot];
-                returnSlots[1] = slots[handleSlot];
-                returnSlots[2] = slots[bindingSlot];
-
-                return returnSlots;
-            } else if (foundHead && foundHandle && slots.Length == 2) {
-                ItemSlot[] returnSlots = new ItemSlot[slots.Length];
-
-                returnSlots[0] = slots[headSlot];
-                returnSlots[1] = slots[handleSlot];
-
-                return returnSlots;
-            } else {
-                return null;
+            //Sized to the parts actually found rather than to how many slots were searched, so the length tells the
+            //caller both whether a binding is present and, by comparison against the incoming count, whether
+            //anything else is sitting on the bench. WhyCannotCraftTool reads that difference to explain a refusal.
+            if (foundBinding) {
+                return new ItemSlot[] { slots[headSlot], slots[handleSlot], slots[bindingSlot] };
             }
+
+            return new ItemSlot[] { slots[headSlot], slots[handleSlot] };
         }
 
         //Send it an array of slots, and it will try to craft a tool from the parts! Otherwise it will return null.
         public static ItemStack TryCraftToolFromSlots(ItemSlot[] slots, IWorldAccessor world, BlockSelection blockSel) {
-            if (slots.Length != 3 && slots.Length != 2) {
-                return null; //Just in case this is ever sent more then 2 or 3 slots, but it ideally shouldn't be called until after CheckForValidTool is run.
-            }
-
+            //However many slots come in, CheckForValidTool decides what is craftable from them and hands back just
+            //the parts. Refusing on the incoming count instead would turn a bench holding a head, a handle and one
+            //unrelated item into a bench that silently does nothing when the hammer comes down.
             var sortedSlots = CheckForValidTool(slots);
 
             if (sortedSlots == null) {
@@ -634,7 +725,7 @@ namespace Toolsmith.ToolTinkering {
                 return 1;
             } else if (IsValidHandle(itemstack)) {
                 return 2;
-            } else if (IsValidBinding(itemstack)) {
+            } else if (IsBindingItem(itemstack)) { //Asking what a stack IS, so an absent one must not come back as a binding.
                 return 3;
             }
 
