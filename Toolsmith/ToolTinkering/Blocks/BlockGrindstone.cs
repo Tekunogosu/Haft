@@ -93,12 +93,12 @@ namespace Toolsmith.ToolTinkering.Blocks {
             bool doneSharpening = false;
             if (byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack != null) {
                 if (TinkeringUtility.ToolOrHeadNeedsSharpening(byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack, world, byPlayer.Entity) && !byPlayer.Entity.Controls.ShiftKey) { //Make sure the slot isn't empty
-                    int isTool = TinkeringUtility.IsValidSharpenTool(byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack.Collectible, world);
+                    var isTool = TinkeringUtility.IsValidSharpenTool(byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack.Collectible, world);
                     BlockEntityGrindstone grindstoneEnt = GetBlockEntity<BlockEntityGrindstone>(blockSel.Position);
-                    if (grindstoneEnt != null && isTool > 0) {
+                    if (grindstoneEnt != null && isTool != TinkeringUtility.EnumSharpenTarget.None) {
                         grindstoneEnt.ToggleHoningSound(true);
                     }
-                    if (world.Side.IsServer() && isTool > 0) { //Check if it's a valid tool for repair, is made of metal and has one of the 2 behaviors, if so...
+                    if (world.Side.IsServer() && isTool != TinkeringUtility.EnumSharpenTarget.None) { //Check if it's a valid tool for repair, is made of metal and has one of the 2 behaviors, if so...
                         ItemStack item = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack;
 
                         var lastInterval = item.GetGrindstoneInUse();

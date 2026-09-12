@@ -1,4 +1,4 @@
-﻿using ScientificSmithy.Utils;
+﻿using Toolsmith.Compat;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -112,16 +112,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             bool isToolMetal = outputSlot.Itemstack.Collectible.IsCraftableMetal();
             int baseDur = 1000; //Since we don't know the actual base durability YET for the tool, until it is crafted. So this is a placeholder.
             int partDur = (int)(baseDur * ToolsmithModSystem.Config.HeadDurabilityMult);
-            int sharpness;
-            if (outputSlot.Itemstack.Attributes.HasAttribute(ScientificSmithyAttr.StatsAttr))
-            {
-                ITreeAttribute stats = outputSlot.Itemstack.Attributes.GetTreeAttribute(ScientificSmithyAttr.StatsAttr);
-                float sharpMult = stats.GetFloat(ScientificSmithyAttr.HardnessMultAttr, (float)ToolsmithModSystem.Config.SharpnessMult);
-                int halfTough = stats.GetInt(ScientificSmithyAttr.HalfToughAttr, baseDur);
-                sharpness = (int)(sharpMult * halfTough);
-            }
-            else
-                sharpness = (int)(baseDur * ToolsmithModSystem.Config.SharpnessMult);
+            int sharpness = ScientificSmithyCompat.CalculateMaxSharpness(outputSlot.Itemstack, baseDur);
 
             int startingSharpness;
             if (isToolMetal) {

@@ -348,27 +348,27 @@ namespace Toolsmith.ToolTinkering.Blocks {
             } else {
                 ItemStack stack = byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack;
                 var isPart = TinkeringUtility.IsAnyToolPart(stack, world);
-                if (bench.IsSelectSlotEmpty(blockSel.SelectionBoxIndex) && (isPart > 0 || ReforgingUtility.IsPossibleMergeItem(stack, world))) {
-                    if (isPart == 0) {
+                if (bench.IsSelectSlotEmpty(blockSel.SelectionBoxIndex) && (isPart != TinkeringUtility.EnumToolPart.None || ReforgingUtility.IsPossibleMergeItem(stack, world))) {
+                    if (isPart == TinkeringUtility.EnumToolPart.None) {
                         if (world.Side.IsClient()) {
                             return true;
                         }
                         return bench.TryGetOrPutItemOnWorkbench(blockSel.SelectionBoxIndex, byPlayer.InventoryManager.ActiveHotbarSlot, byPlayer, world);
                     } else {
                         if (blockSel.SelectionBoxIndex == (int)WorkbenchSlots.CraftingSlot3) {
-                            if (isPart == 1) {
+                            if (isPart == TinkeringUtility.EnumToolPart.Head) {
                                 return bench.TryGetOrPutItemOnWorkbench(blockSel.SelectionBoxIndex, byPlayer.InventoryManager.ActiveHotbarSlot, byPlayer, world);
                             } else {
                                 return false;
                             }
                         } else if (blockSel.SelectionBoxIndex == (int)WorkbenchSlots.CraftingSlot2) {
-                            if (bench.GetSlotsHoldsString((int)WorkbenchSlots.CraftingSlot3) == "head" && isPart == 2) {
+                            if (bench.GetSlotsHoldsString((int)WorkbenchSlots.CraftingSlot3) == "head" && isPart == TinkeringUtility.EnumToolPart.Handle) {
                                 return bench.TryGetOrPutItemOnWorkbench(blockSel.SelectionBoxIndex, byPlayer.InventoryManager.ActiveHotbarSlot, byPlayer, world);
                             } else {
                                 return false;
                             }
                         } else if (blockSel.SelectionBoxIndex == (int)WorkbenchSlots.CraftingSlot4) {
-                            if (bench.GetSlotsHoldsString((int)WorkbenchSlots.CraftingSlot3) == "head" && isPart == 3) {
+                            if (bench.GetSlotsHoldsString((int)WorkbenchSlots.CraftingSlot3) == "head" && isPart == TinkeringUtility.EnumToolPart.Binding) {
                                 return bench.TryGetOrPutItemOnWorkbench(blockSel.SelectionBoxIndex, byPlayer.InventoryManager.ActiveHotbarSlot, byPlayer, world);
                             } else {
                                 return false;

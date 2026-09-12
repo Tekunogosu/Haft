@@ -1,5 +1,4 @@
-﻿using ScientificSmithy.Utils;
-using SmithingPlus.Util;
+﻿using SmithingPlus.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +6,7 @@ using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Toolsmith.Compat;
 using Toolsmith.ToolTinkering.Behaviors;
 using Toolsmith.ToolTinkering.Drawbacks;
 using Toolsmith.Utils;
@@ -28,17 +28,12 @@ namespace Toolsmith.ToolTinkering.Blocks {
         private (float x, float y, float z)[] offsetBySlot = { (0f, 0f, 0f), (0.4f, 1f, 0.3f), (0.6f, 1f, 0.6f), (0.8f, 1f, 0.3f), (1.0f, 1f, 0.6f), (1.2f, 1f, 0.3f), (0f, 0f, 0f), (1.65f, 1f, 0.55f) };
 
         private int craftingHitsCount = 0;
-        private (float xoff, float yoff, float zoff, int rot) craftingSlot1Wiggle = (0f, 0f, 0f, 0);
-        private (float xoff, float yoff, float zoff, int rot) craftingSlot2Wiggle = (0f, 0f, 0f, 0);
-        private (float xoff, float yoff, float zoff, int rot) craftingSlot3Wiggle = (0f, 0f, 0f, 0);
-        private (float xoff, float yoff, float zoff, int rot) craftingSlot4Wiggle = (0f, 0f, 0f, 0);
-        private (float xoff, float yoff, float zoff, int rot) craftingSlot5Wiggle = (0f, 0f, 0f, 0);
 
-        protected string slot1Holds = "empty";
-        protected string slot2Holds = "empty";
-        protected string slot3Holds = "empty";
-        protected string slot4Holds = "empty";
-        protected string slot5Holds = "empty";
+        //Indexed by the same slot ids the selection boxes use, so slot 1 is at index 1 and the unused 0 and 6 are
+        //simply never read. Sized to cover every id rather than only the crafting slots, which keeps the lookups
+        //below to a bounds check instead of a switch per slot.
+        private (float xoff, float yoff, float zoff, int rot)[] craftingSlotWiggle = new (float, float, float, int)[8];
+        protected string[] slotHolds = { "empty", "empty", "empty", "empty", "empty", "empty", "empty", "empty" };
 
         protected Dictionary<string, MeshData> slotMeshes;
 
@@ -71,78 +66,65 @@ namespace Toolsmith.ToolTinkering.Blocks {
             return offsetBySlot[slotID];
         }
 
-        protected (float xoff, float yoff, float zoff, int rot) GetSlotsCraftingWiggleFactor(int slotID) {
-            switch (slotID) {
-                case (int)WorkbenchSlots.CraftingSlot1:
-                    return craftingSlot1Wiggle;
-                case (int)WorkbenchSlots.CraftingSlot2:
-                    return craftingSlot2Wiggle;
-                case (int)WorkbenchSlots.CraftingSlot3:
-                    return craftingSlot3Wiggle;
-                case (int)WorkbenchSlots.CraftingSlot4:
-                    return craftingSlot4Wiggle;
-                case (int)WorkbenchSlots.CraftingSlot5:
-                    return craftingSlot5Wiggle;
-                default:
-                    return (0f, 0f, 0f, 0);
+        //Which way the bench was placed. Every mesh and drop position on this block is built relative to it, so it is
+        //read in a dozen places and always the same way.
+        protected BlockFacing BenchFacing => BlockFacing.FromCode(Block.LastCodePart());
+
+        //How far to spin a mesh so it faces the same way the bench does, in degrees. The three rotation sites used to
+        //spell this out as their own if-chain; they differ only in what they rotate and whether a wiggle is added on.
+        protected float BenchYawDegrees() {
+            var facing = BenchFacing;
+            if (facing.Equals(BlockFacing.EAST)) {
+                return 270f;
+            } else if (facing.Equals(BlockFacing.WEST)) {
+                return 90f;
+            } else if (facing.Equals(BlockFacing.SOUTH)) {
+                return 180f;
             }
+
+            return 0f;
+        }
+
+        //Degrees to radians, the conversion every Rotate call on this block needs.
+        protected static float ToRadians(float degrees) {
+            return degrees * (MathF.PI / 180);
+        }
+
+        //Only the five crafting slots wiggle; every other id answers with no offset, as the switch these replaced did.
+        private static bool IsCraftingSlot(int slotID) {
+            return slotID >= (int)WorkbenchSlots.CraftingSlot1 && slotID <= (int)WorkbenchSlots.CraftingSlot5;
+        }
+
+        protected (float xoff, float yoff, float zoff, int rot) GetSlotsCraftingWiggleFactor(int slotID) {
+            if (!IsCraftingSlot(slotID)) {
+                return (0f, 0f, 0f, 0);
+            }
+
+            return craftingSlotWiggle[slotID];
         }
 
         protected void SetSlotsCraftingWiggleFactor(int slotID, (float x, float y, float z, int rot) wiggler) {
-            switch (slotID) {
-                case (int)WorkbenchSlots.CraftingSlot1:
-                    craftingSlot1Wiggle = wiggler;
-                    break;
-                case (int)WorkbenchSlots.CraftingSlot2:
-                    craftingSlot2Wiggle = wiggler;
-                    break;
-                case (int)WorkbenchSlots.CraftingSlot3:
-                    craftingSlot3Wiggle = wiggler;
-                    break;
-                case (int)WorkbenchSlots.CraftingSlot4:
-                    craftingSlot4Wiggle = wiggler;
-                    break;
-                case (int)WorkbenchSlots.CraftingSlot5:
-                    craftingSlot5Wiggle = wiggler;
-                    break;
+            if (!IsCraftingSlot(slotID)) {
+                return;
             }
+
+            craftingSlotWiggle[slotID] = wiggler;
         }
 
         public string GetSlotsHoldsString(int slotID) {
-            switch (slotID) {
-                case (int)WorkbenchSlots.CraftingSlot1:
-                    return slot1Holds;
-                case (int)WorkbenchSlots.CraftingSlot2:
-                    return slot2Holds;
-                case (int)WorkbenchSlots.CraftingSlot3:
-                    return slot3Holds;
-                case (int)WorkbenchSlots.CraftingSlot4:
-                    return slot4Holds;
-                case (int)WorkbenchSlots.CraftingSlot5:
-                    return slot5Holds;
-                default:
-                    return "";
+            if (!IsCraftingSlot(slotID)) {
+                return "";
             }
+
+            return slotHolds[slotID];
         }
 
         protected void SetSlotsHoldsString(int slotID, string partType) {
-            switch (slotID) {
-                case (int)WorkbenchSlots.CraftingSlot1:
-                    slot1Holds = partType;
-                    break;
-                case (int)WorkbenchSlots.CraftingSlot2:
-                    slot2Holds = partType;
-                    break;
-                case (int)WorkbenchSlots.CraftingSlot3:
-                    slot3Holds = partType;
-                    break;
-                case (int)WorkbenchSlots.CraftingSlot4:
-                    slot4Holds = partType;
-                    break;
-                case (int)WorkbenchSlots.CraftingSlot5:
-                    slot5Holds = partType;
-                    break;
+            if (!IsCraftingSlot(slotID)) {
+                return;
             }
+
+            slotHolds[slotID] = partType;
         }
 
         public List<int> GetWhatSlotsAreVisible() {
@@ -169,11 +151,9 @@ namespace Toolsmith.ToolTinkering.Blocks {
 
         protected void ResetCraftingAttempt() {
             craftingHitsCount = 0;
-            craftingSlot1Wiggle = (0f, 0f, 0f, 0);
-            craftingSlot2Wiggle = (0f, 0f, 0f, 0);
-            craftingSlot3Wiggle = (0f, 0f, 0f, 0);
-            craftingSlot4Wiggle = (0f, 0f, 0f, 0);
-            craftingSlot5Wiggle = (0f, 0f, 0f, 0);
+            for (int i = (int)WorkbenchSlots.CraftingSlot1; i <= (int)WorkbenchSlots.CraftingSlot5; i++) {
+                craftingSlotWiggle[i] = (0f, 0f, 0f, 0);
+            }
         }
 
         protected void RandomizeWiggles(IWorldAccessor world) {
@@ -312,7 +292,7 @@ namespace Toolsmith.ToolTinkering.Blocks {
         }
 
         private void DropItemInMiddleOfBench(ItemStack item, IWorldAccessor world) {
-            var facing = BlockFacing.FromCode(Block.LastCodePart());
+            var facing = BenchFacing;
             if (facing == BlockFacing.WEST) {
                 world.SpawnItemEntity(item, new Vec3d(Pos.X + 0.5, Pos.Y + 1.1, Pos.Z));
             } else if (facing == BlockFacing.EAST) {
@@ -363,12 +343,12 @@ namespace Toolsmith.ToolTinkering.Blocks {
             }
 
             if (world.Api.ModLoader.IsModEnabled("canjewelry")) {
-                TinkeringUtility.HandleGemDropsForJewelry(byPlayer.Entity, reforgingSlot.Itemstack);
+                CanJewelryCompat.HandleGemDropsForJewelry(byPlayer.Entity, reforgingSlot.Itemstack);
             }
 
             if (world.Api.ModLoader.IsModEnabled("scientificsmithy"))
             {
-                TinkeringUtility.HandleStressStrainTransfer(workItem, reforgingSlot.Itemstack, world.Api);
+                ScientificSmithyCompat.HandleStressStrainTransfer(workItem, reforgingSlot.Itemstack, world.Api);
             }
 
             //Generate the complete work item voxel data from the recipe.
@@ -393,7 +373,7 @@ namespace Toolsmith.ToolTinkering.Blocks {
                 byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.DamageItem(world, byPlayer.Entity, byPlayer.InventoryManager.ActiveHotbarSlot);
             }
 
-            var facing = BlockFacing.FromCode(Block.LastCodePart());
+            var facing = BenchFacing;
             if (facing == BlockFacing.WEST) {
                 world.SpawnItemEntity(workItem, new Vec3d(Pos.X + 0.5, Pos.Y + 1.1, Pos.Z - 0.5));
             } else if (facing == BlockFacing.EAST) {
@@ -422,15 +402,15 @@ namespace Toolsmith.ToolTinkering.Blocks {
                 if (!Inventory.IsSelectSlotEmpty(i)) {
                     var slot = Inventory.GetSlotFromSelectionID(i);
                     if (slot != null) {
-                        var whatPart = TinkeringUtility.IsAnyToolPart(slot.Itemstack, world); //Returns a 1 for a Tool Head, 2 for Handle, 3 for Binding.
+                        var whatPart = TinkeringUtility.IsAnyToolPart(slot.Itemstack, world);
                         switch (whatPart) {
-                            case 1:
+                            case TinkeringUtility.EnumToolPart.Head:
                                 SetSlotsHoldsString(i, "head");
                                 break;
-                            case 2:
+                            case TinkeringUtility.EnumToolPart.Handle:
                                 SetSlotsHoldsString(i, "handle");
                                 break;
-                            case 3:
+                            case TinkeringUtility.EnumToolPart.Binding:
                                 SetSlotsHoldsString(i, "binding");
                                 break;
                             default:
@@ -507,13 +487,12 @@ namespace Toolsmith.ToolTinkering.Blocks {
         }
 
         protected string GetCacheKeyForEmptySlot(int slotIndex) {
-            var facing = BlockFacing.FromCode(Block.LastCodePart());
-            return facing.Code + "-slot-" + slotIndex + "-" + WhatSlotMarkerIndicator(slotIndex) + "-" + craftingHitsCount + "-empty";
+            return BenchFacing.Code + "-slot-" + slotIndex + "-" + WhatSlotMarkerIndicator(slotIndex) + "-" + craftingHitsCount + "-empty";
         }
 
         protected string GetCacheKeyForItem(ItemStack stack, int slotIndex) {
             IContainedMeshSource meshSource = stack.Collectible?.GetCollectibleInterface<IContainedMeshSource>();
-            var facing = BlockFacing.FromCode(Block.LastCodePart());
+            var facing = BenchFacing;
             if (meshSource != null) {
                 var slot = new DummySlot(stack);
                 return facing.Code + "-slot-" + slotIndex + "-" + WhatSlotMarkerIndicator(slotIndex) + "-" + craftingHitsCount + "-" + meshSource.GetMeshCacheKey(slot);
@@ -571,14 +550,7 @@ namespace Toolsmith.ToolTinkering.Blocks {
             markerMeshData = originalMeshData.Clone();
             var offset = offsetBySlot[slotIndex];
             markerMeshData.Translate(offset.x, offset.y + 0.01f, offset.z);
-            var facing = BlockFacing.FromCode(Block.LastCodePart());
-            if (facing.Equals(BlockFacing.EAST)) {
-                markerMeshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, 270 * (MathF.PI / 180), 0);
-            } else if (facing.Equals(BlockFacing.WEST)) {
-                markerMeshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, 90 * (MathF.PI / 180), 0);
-            } else if (facing.Equals(BlockFacing.SOUTH)) {
-                markerMeshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, 180 * (MathF.PI / 180), 0);
-            }
+            markerMeshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, ToRadians(BenchYawDegrees()), 0);
 
             string key = GetCacheKeyForEmptySlot(slotIndex);
             WorkbenchItemMeshCache[key] = markerMeshData;
@@ -591,17 +563,14 @@ namespace Toolsmith.ToolTinkering.Blocks {
                 return new MeshData();
             }
 
+            //A cached mesh already has its slot marker baked in, so it is returned as-is rather than going on to build
+            //a second marker below.
             MeshData mesh = GetSlotWithItemMesh(stack, slotIndex);
             if (mesh != null) {
                 return mesh;
             }
 
-            IContainedMeshSource meshSource = stack.Collectible?.GetCollectibleInterface<IContainedMeshSource>();
-
-            if (meshSource != null) {
-                var slot = new DummySlot(stack);
-                mesh = meshSource.GenMesh(slot, capi.ItemTextureAtlas, Pos);
-            }
+            mesh = GetStackOwnMesh(stack);
 
             MeshData originalMeshData;
             MeshData markerMeshData = null;
@@ -631,57 +600,15 @@ namespace Toolsmith.ToolTinkering.Blocks {
                 markerMeshData = originalMeshData.Clone();
             }
 
-            if (mesh == null) {
-                Shape shape = null;
-                if (stack.Class == EnumItemClass.Item) {
-                    if ((stack.Item as ItemWorkItem) != null) {
-                        return new MeshData();
-                    }
-                    AssetLocation shapeBase = stack.Item?.Shape?.Base;
-                    if (shapeBase != null) {
-                        shape = capi.TesselatorManager.GetCachedShape(shapeBase);
-                    }
-                } else {
-                    AssetLocation shapeBase = stack.Block?.Shape?.Base;
-                    if (shapeBase != null) {
-                        shape = capi.TesselatorManager.GetCachedShape(shapeBase);
-                    }
+            //Nothing to render the stack with. A slot marker is still worth showing on its own, so that is returned
+            //where one was built; otherwise the slot renders empty.
+            if (mesh == null && !TryTesselateStackMesh(stack, out mesh)) {
+                if (ToolsmithModSystem.ClientConfig.ShouldRenderWorkbenchSlotMarkers && markerMeshData != null) {
+                    WorkbenchItemMeshCache[GetCacheKeyForItem(stack, slotIndex)] = markerMeshData;
+                    return markerMeshData;
                 }
 
-                if (shape == null) {
-                    string meshKey = GetCacheKeyForItem(stack, slotIndex);
-                    if (ToolsmithModSystem.ClientConfig.ShouldRenderWorkbenchSlotMarkers && markerMeshData != null) {
-                        WorkbenchItemMeshCache[meshKey] = markerMeshData;
-                        return markerMeshData;
-                    } else {
-                        return new MeshData();
-                    }
-                }
-
-                ShapeTextureSource texSource = new(capi, shape, "For rendering item on a Workbench");
-                texSource.textures.Clear();
-
-                if (shape.Textures != null && shape.Textures.Count > 0) {
-                    foreach ((string texCode, AssetLocation assetLoc) in shape.Textures) { //Go through the shape's textures and populate the texSource with any that the shape already has defined
-                        if (stack.Class == EnumItemClass.Item && stack.Item.Textures.TryGetValue(texCode, out CompositeTexture texture)) { //Grab the item's own textures to slap on instead of the shape's base, or just run with the base.
-                            texSource.textures[texCode] = texture;
-                        } else if (stack.Class == EnumItemClass.Block && stack.Block.Textures.TryGetValue(texCode, out CompositeTexture blockTexture)) {
-                            texSource.textures[texCode] = blockTexture;
-                        } else {
-                            texSource.textures[texCode] = new CompositeTexture(assetLoc);
-                        }
-                    }
-                } else if (stack.Item != null && stack.Item.Textures != null && stack.Item.Textures.Count > 0) {
-                    foreach ((string texCode, CompositeTexture tex) in stack.Item.Textures) {
-                        texSource.textures.Add(texCode, tex);
-                    }
-                } else if (stack.Block != null && stack.Block.Textures != null && stack.Block.Textures.Count > 0) {
-                    foreach ((string texCode, CompositeTexture tex) in stack.Block.Textures) {
-                        texSource.textures.Add(texCode, tex);
-                    }
-                }
-
-                capi.Tesselator.TesselateShape("Part on Workbench rendering", shape, out mesh, texSource);
+                return new MeshData();
             }
 
             var offset = offsetBySlot[slotIndex];
@@ -701,24 +628,12 @@ namespace Toolsmith.ToolTinkering.Blocks {
             if (markerMeshData != null) {
                 markerMeshData.Translate(offset.x, offset.y + 0.01f, offset.z);
             }
-            var facing = BlockFacing.FromCode(Block.LastCodePart());
-            if (facing.Equals(BlockFacing.EAST)) {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, (270 + wiggleFactor.rot) * (MathF.PI / 180), 0);
-                if (markerMeshData != null) {
-                    markerMeshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, 270 * (MathF.PI / 180), 0);
-                }
-            } else if (facing.Equals(BlockFacing.WEST)) {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, (90 + wiggleFactor.rot) * (MathF.PI / 180), 0);
-                if (markerMeshData != null) {
-                    markerMeshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, 90 * (MathF.PI / 180), 0);
-                }
-            } else if (facing.Equals(BlockFacing.SOUTH)) {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, (180 + wiggleFactor.rot) * (MathF.PI / 180), 0);
-                if (markerMeshData != null) {
-                    markerMeshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, 180 * (MathF.PI / 180), 0);
-                }
-            } else {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, wiggleFactor.rot * (MathF.PI / 180), 0);
+            //The item wiggles as it is hammered; the slot marker underneath it does not, so only the mesh adds the
+            //wiggle on top of the bench's own facing.
+            var yaw = BenchYawDegrees();
+            mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, ToRadians(yaw + wiggleFactor.rot), 0);
+            if (markerMeshData != null) {
+                markerMeshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, ToRadians(yaw), 0);
             }
 
             if (markerMeshData != null) {
@@ -730,68 +645,86 @@ namespace Toolsmith.ToolTinkering.Blocks {
             return mesh;
         }
 
+        //Builds a mesh for a stack that has no IContainedMeshSource of its own, by tesselating the shape its item or
+        //block type declares and dressing it in that stack's own textures rather than the shape's defaults.
+        //
+        //Answers false when there is no shape to work from at all - a work item, or a type with no shape base. The two
+        //callers want different things in that case, so neither the empty mesh nor the slot marker is decided here.
+        protected bool TryTesselateStackMesh(ItemStack stack, out MeshData mesh) {
+            mesh = null;
+
+            Shape shape = null;
+            if (stack.Class == EnumItemClass.Item) {
+                if ((stack.Item as ItemWorkItem) != null) {
+                    return false;
+                }
+                AssetLocation shapeBase = stack.Item?.Shape?.Base;
+                if (shapeBase != null) {
+                    shape = capi.TesselatorManager.GetCachedShape(shapeBase);
+                }
+            } else {
+                AssetLocation shapeBase = stack.Block?.Shape?.Base;
+                if (shapeBase != null) {
+                    shape = capi.TesselatorManager.GetCachedShape(shapeBase);
+                }
+            }
+
+            if (shape == null) {
+                return false;
+            }
+
+            ShapeTextureSource texSource = new(capi, shape, "For rendering item on a Workbench");
+            texSource.textures.Clear();
+
+            if (shape.Textures != null && shape.Textures.Count > 0) {
+                foreach ((string texCode, AssetLocation assetLoc) in shape.Textures) { //Go through the shape's textures and populate the texSource with any that the shape already has defined
+                    if (stack.Class == EnumItemClass.Item && stack.Item.Textures.TryGetValue(texCode, out CompositeTexture texture)) { //Grab the item's own textures to slap on instead of the shape's base, or just run with the base.
+                        texSource.textures[texCode] = texture;
+                    } else if (stack.Class == EnumItemClass.Block && stack.Block.Textures.TryGetValue(texCode, out CompositeTexture blockTexture)) {
+                        texSource.textures[texCode] = blockTexture;
+                    } else {
+                        texSource.textures[texCode] = new CompositeTexture(assetLoc);
+                    }
+                }
+            } else if (stack.Item != null && stack.Item.Textures != null && stack.Item.Textures.Count > 0) {
+                foreach ((string texCode, CompositeTexture tex) in stack.Item.Textures) {
+                    texSource.textures.Add(texCode, tex);
+                }
+            } else if (stack.Block != null && stack.Block.Textures != null && stack.Block.Textures.Count > 0) {
+                foreach ((string texCode, CompositeTexture tex) in stack.Block.Textures) {
+                    texSource.textures.Add(texCode, tex);
+                }
+            }
+
+            capi.Tesselator.TesselateShape("Part on Workbench rendering", shape, out mesh, texSource);
+            return true;
+        }
+
+        //The mesh a stack builds for itself, for the collectibles that know how. Null when it has no renderer of its
+        //own and a shape has to be tesselated for it instead.
+        protected MeshData GetStackOwnMesh(ItemStack stack) {
+            IContainedMeshSource meshSource = stack.Collectible?.GetCollectibleInterface<IContainedMeshSource>();
+            if (meshSource == null) {
+                return null;
+            }
+
+            return meshSource.GenMesh(new DummySlot(stack), capi.ItemTextureAtlas, Pos);
+        }
+
+        //The cached mesh for this slot if there is one, falling back to whatever the stack renders for itself.
+        protected MeshData GetExistingStackMesh(ItemStack stack, int slotIndex) {
+            return GetSlotWithItemMesh(stack, slotIndex) ?? GetStackOwnMesh(stack);
+        }
+
         protected MeshData GetOrCreateReforgeSlotMesh(ItemStack stack, int slotIndex) {
             if (capi == null) {
                 return new MeshData();
             }
 
-            MeshData mesh = GetSlotWithItemMesh(stack, slotIndex);
-            if (mesh != null) {
-                return mesh;
-            }
+            MeshData mesh = GetExistingStackMesh(stack, slotIndex);
 
-            IContainedMeshSource meshSource = stack.Collectible?.GetCollectibleInterface<IContainedMeshSource>();
-
-            if (meshSource != null) {
-                var slot = new DummySlot(stack);
-                mesh = meshSource.GenMesh(slot, capi.ItemTextureAtlas, Pos);
-            }
-
-            if (mesh == null) {
-                Shape shape = null;
-                if (stack.Class == EnumItemClass.Item) {
-                    if ((stack.Item as ItemWorkItem) != null) {
-                        return new MeshData();
-                    }
-                    AssetLocation shapeBase = stack.Item?.Shape?.Base;
-                    if (shapeBase != null) {
-                        shape = capi.TesselatorManager.GetCachedShape(shapeBase);
-                    }
-                } else {
-                    AssetLocation shapeBase = stack.Block?.Shape?.Base;
-                    if (shapeBase != null) {
-                        shape = capi.TesselatorManager.GetCachedShape(shapeBase);
-                    }
-                }
-
-                if (shape == null) {
-                    return new MeshData();
-                }
-
-                ShapeTextureSource texSource = new(capi, shape, "For rendering item on a Workbench");
-                texSource.textures.Clear();
-
-                if (shape.Textures != null && shape.Textures.Count > 0) {
-                    foreach ((string texCode, AssetLocation assetLoc) in shape.Textures) { //Go through the shape's textures and populate the texSource with any that the shape already has defined
-                        if (stack.Class == EnumItemClass.Item && stack.Item.Textures.TryGetValue(texCode, out CompositeTexture texture)) { //Grab the item's own textures to slap on instead of the shape's base, or just run with the base.
-                            texSource.textures[texCode] = texture;
-                        } else if (stack.Class == EnumItemClass.Block && stack.Block.Textures.TryGetValue(texCode, out CompositeTexture blockTexture)) {
-                            texSource.textures[texCode] = blockTexture;
-                        } else {
-                            texSource.textures[texCode] = new CompositeTexture(assetLoc);
-                        }
-                    }
-                } else if (stack.Item != null && stack.Item.Textures != null && stack.Item.Textures.Count > 0) {
-                    foreach ((string texCode, CompositeTexture tex) in stack.Item.Textures) {
-                        texSource.textures.Add(texCode, tex);
-                    }
-                } else if (stack.Block != null && stack.Block.Textures != null && stack.Block.Textures.Count > 0) {
-                    foreach ((string texCode, CompositeTexture tex) in stack.Block.Textures) {
-                        texSource.textures.Add(texCode, tex);
-                    }
-                }
-
-                capi.Tesselator.TesselateShape("Part on Workbench rendering", shape, out mesh, texSource);
+            if (mesh == null && !TryTesselateStackMesh(stack, out mesh)) {
+                return new MeshData();
             }
 
             var offset = offsetBySlot[slotIndex];
@@ -801,16 +734,7 @@ namespace Toolsmith.ToolTinkering.Blocks {
 
             mesh.Scale(new Vec3f(), 0.5f, 0.5f, 0.5f);
             mesh.Translate(offset.x - 0.15f, offset.y, offset.z - 0.15f);
-            var facing = BlockFacing.FromCode(Block.LastCodePart());
-            if (facing.Equals(BlockFacing.EAST)) {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, (270 + wiggleFactor.rot) * (MathF.PI / 180), 0);
-            } else if (facing.Equals(BlockFacing.WEST)) {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, (90 + wiggleFactor.rot) * (MathF.PI / 180), 0);
-            } else if (facing.Equals(BlockFacing.SOUTH)) {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, (180 + wiggleFactor.rot) * (MathF.PI / 180), 0);
-            } else {
-                mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, wiggleFactor.rot * (MathF.PI / 180), 0);
-            }
+            mesh.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, ToRadians(BenchYawDegrees() + wiggleFactor.rot), 0);
 
             string key = GetCacheKeyForItem(stack, slotIndex);
             WorkbenchItemMeshCache[key] = mesh;
@@ -887,21 +811,19 @@ namespace Toolsmith.ToolTinkering.Blocks {
             base.FromTreeAttributes(tree, worldAccessForResolve);
             Inventory = new WorkbenchInventory(worldAccessForResolve.Api, Pos);
             Inventory.FromTreeAttributes(tree);
-            slot1Holds = tree.GetAsString("slot1Holds", "empty");
-            slot2Holds = tree.GetAsString("slot2Holds", "empty");
-            slot3Holds = tree.GetAsString("slot3Holds", "empty");
-            slot4Holds = tree.GetAsString("slot4Holds", "empty");
-            slot5Holds = tree.GetAsString("slot5Holds", "empty");
+            //The attribute names stay exactly as they were written: they are saved world data, and renaming them
+            //would leave every workbench already placed in a world with blank slot markers after a load.
+            for (int i = (int)WorkbenchSlots.CraftingSlot1; i <= (int)WorkbenchSlots.CraftingSlot5; i++) {
+                slotHolds[i] = tree.GetAsString("slot" + i + "Holds", "empty");
+            }
         }
 
         public override void ToTreeAttributes(ITreeAttribute tree) {
             base.ToTreeAttributes(tree);
             Inventory?.ToTreeAttributes(tree);
-            tree.SetString("slot1Holds", slot1Holds);
-            tree.SetString("slot2Holds", slot2Holds);
-            tree.SetString("slot3Holds", slot3Holds);
-            tree.SetString("slot4Holds", slot4Holds);
-            tree.SetString("slot5Holds", slot5Holds);
+            for (int i = (int)WorkbenchSlots.CraftingSlot1; i <= (int)WorkbenchSlots.CraftingSlot5; i++) {
+                tree.SetString("slot" + i + "Holds", slotHolds[i]);
+            }
         }
     }
 }

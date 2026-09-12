@@ -1,4 +1,4 @@
-﻿using ScientificSmithy.Utils;
+﻿using Toolsmith.Compat;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,15 +70,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
 
             var baseDur = outputSlot.Itemstack.Collectible.GetBaseMaxDurability(outputSlot.Itemstack);
             var toolDur = outputSlot.Itemstack.GetSmithedMaxDurability();
-            int sharpness;
-
-            if (outputSlot.Itemstack.Attributes.HasAttribute(ScientificSmithyAttr.StatsAttr)) {
-                ITreeAttribute stats = outputSlot.Itemstack.Attributes.GetTreeAttribute(ScientificSmithyAttr.StatsAttr);
-                float sharpMult = stats.GetFloat(ScientificSmithyAttr.HardnessMultAttr, (float)ToolsmithModSystem.Config.SharpnessMult);
-                int halfTough = stats.GetInt(ScientificSmithyAttr.HalfToughAttr, baseDur);
-                sharpness = (int)(sharpMult * halfTough);
-            } else
-                sharpness = (int)(baseDur * ToolsmithModSystem.Config.SharpnessMult);
+            int sharpness = ScientificSmithyCompat.CalculateMaxSharpness(outputSlot.Itemstack, baseDur);
 
             int startingSharpness;
             if (isToolMetal) {
@@ -148,7 +140,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
 
                 if (doDamageTool && amount >= currentDur) {
                     if (world.Api.ModLoader.IsModEnabled("canjewelry")) {
-                        TinkeringUtility.HandleGemDropsForJewelry(byEntity, itemStack);
+                        CanJewelryCompat.HandleGemDropsForJewelry(byEntity, itemStack);
                     }
                 }
 

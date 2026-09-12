@@ -1,6 +1,5 @@
 ﻿using ItemRarity;
 using ItemRarity.Rarities;
-using ScientificSmithy.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Toolsmith.Client;
+using Toolsmith.Compat;
 using Toolsmith.Config;
 using Toolsmith.ToolTinkering.Drawbacks;
 using Toolsmith.ToolTinkering.Items;
@@ -228,18 +228,9 @@ namespace Toolsmith.ToolTinkering.Behaviors {
              
             var baseDur = outputSlot.Itemstack.Collectible.GetBaseMaxDurability(outputSlot.Itemstack);
             int headMaxDur = outputSlot.Itemstack.GetToolheadMaxDurability();
-            int maxSharpness;
-            if (headStack.Attributes.HasAttribute(ScientificSmithyAttr.StatsAttr))
-            {
-                ITreeAttribute stats = headStack.Attributes.GetTreeAttribute(ScientificSmithyAttr.StatsAttr);
-                float sharpMult = stats.GetFloat(ScientificSmithyAttr.HardnessMultAttr, (float)ToolsmithModSystem.Config.SharpnessMult);
-                int halfTough = stats.GetInt(ScientificSmithyAttr.HalfToughAttr, baseDur);
-                maxSharpness = (int)(sharpMult * halfTough);
-            }
-            else
-            {
-                maxSharpness = (int)(baseDur * ToolsmithModSystem.Config.SharpnessMult);//Calculate the sharpness next similarly to the durability.
-            }
+            //Read off the head rather than the tool being made: the head is what carries the smithing stats into the
+            //finished tool, and reading the output stack here would give every tool the same sharpness.
+            int maxSharpness = ScientificSmithyCompat.CalculateMaxSharpness(headStack, baseDur);
 
             var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(baseDur, handleStats, treatmentStats, bindingStats);
             var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(baseDur, handleStats, bindingStats);
@@ -318,7 +309,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
 
             if (ToolsmithModSystem.Api.ModLoader.IsModEnabled("canjewelry")) {
                 foreach (var input in allInputslots.Where(i => !i.Empty && TinkeringUtility.IsValidHead(i.Itemstack))) {
-                    TinkeringUtility.CheckAndHandleJewelryStatTransfer(input.Itemstack, outputSlot.Itemstack);
+                    CanJewelryCompat.CheckAndHandleJewelryStatTransfer(input.Itemstack, outputSlot.Itemstack);
                     break;
                 }
             }

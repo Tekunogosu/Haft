@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Toolsmith.Compat;
 using Toolsmith.Config;
 using Toolsmith.Utils;
 using Vintagestory.API.Common.Entities;
@@ -19,8 +20,6 @@ using Vintagestory.GameContent;
 using Vintagestory.API.Config;
 using Toolsmith.ToolTinkering.Drawbacks;
 using Vintagestory.API.Datastructures;
-using canjewelry.src;
-using ScientificSmithy.Utils;
 using Newtonsoft.Json.Linq;
 
 namespace Toolsmith.ToolTinkering {
@@ -274,7 +273,7 @@ namespace Toolsmith.ToolTinkering {
             }
 
             if (ToolsmithModSystem.Api.ModLoader.IsModEnabled("canjewelry")) {
-                CheckAndHandleJewelryStatTransfer(brokenToolStack, toolHead);
+                CanJewelryCompat.CheckAndHandleJewelryStatTransfer(brokenToolStack, toolHead);
             }
 
             if (remainingHandleDur > 0) {
@@ -316,7 +315,7 @@ namespace Toolsmith.ToolTinkering {
 
             if (ToolsmithModSystem.Config.DebugMessages && world.Api.Side.IsServer()) {
                 ToolsmithModSystem.Logger.Debug("Tool broke!");
-                ToolsmithModSystem.Logger.Debug("The tool head is " + (toolHead?.Collectible.Code.ToString()));
+                ToolsmithModSystem.Logger.Debug("The tool head is " + toolHead.Collectible.Code.ToString());
                 ToolsmithModSystem.Logger.Debug("Head has durability: " + remainingHeadDur);
                 ToolsmithModSystem.Logger.Debug("Tool Handle is " + (toolHandle?.Collectible.Code.ToString()));
                 ToolsmithModSystem.Logger.Debug("Handle has durability: " + remainingHandleDur);
@@ -326,7 +325,7 @@ namespace Toolsmith.ToolTinkering {
 
             //Handle any mod compat drops here for when a tool breaks!
             if (headBroke && world.Api.ModLoader.IsModEnabled("canjewelry")) {
-                HandleGemDropsForJewelry(byEntity, toolHead);
+                CanJewelryCompat.HandleGemDropsForJewelry(byEntity, toolHead);
             }
 
             //Whether the tool came apart around a head that survived, rather than ending outright. Only this case
@@ -754,39 +753,57 @@ namespace Toolsmith.ToolTinkering {
             return null;
         }
 
-        public static int IsAnyToolPart(ItemStack itemstack, IWorldAccessor world) {
+        //Which part of a tool a stack is, for the workbench slot indicators and for deciding what a slot will accept.
+        //None covers both "not a part at all" and "on the ignore list", which callers treat the same way.
+        public enum EnumToolPart {
+            None,
+            Head,
+            Handle,
+            Binding
+        }
+
+        public static EnumToolPart IsAnyToolPart(ItemStack itemstack, IWorldAccessor world) {
             if (world.Side.IsServer() && ToolsmithModSystem.IgnoreCodes.Count > 0 && ToolsmithModSystem.IgnoreCodes.Contains(itemstack.Collectible.Code.ToString())) {
-                return 0;
+                return EnumToolPart.None;
             } else if (IsValidHead(itemstack)) {
-                return 1;
+                return EnumToolPart.Head;
             } else if (IsValidHandle(itemstack)) {
-                return 2;
+                return EnumToolPart.Handle;
             } else if (IsBindingItem(itemstack)) { //Asking what a stack IS, so an absent one must not come back as a binding.
-                return 3;
+                return EnumToolPart.Binding;
             }
 
-            return 0;
+            return EnumToolPart.None;
+        }
+
+        //Where a honeable item keeps its durability and sharpness. The three kinds store them under different
+        //attributes, so every step of the honing path has to know which it is holding; None means it cannot be honed.
+        public enum EnumSharpenTarget {
+            None,
+            TinkeredTool,
+            SmithedTool,
+            ToolHead
         }
 
         //This checks if it is a valid repair tool as well as if it is a fully tinkered tool or if it is just a tool's head, since the durabilities are stored under different attributes
-        public static int IsValidSharpenTool(CollectibleObject item, IWorldAccessor world) {
+        public static EnumSharpenTarget IsValidSharpenTool(CollectibleObject item, IWorldAccessor world) {
             if (world.Side.IsServer() && ToolsmithModSystem.IgnoreCodes.Count > 0 && ToolsmithModSystem.IgnoreCodes.Contains(item.Code.ToString())) { //First check if the ignore list has any entries, and ensure this one isn't on it. Likely means something got improperly given the Behavior on init.
-                return 0;
+                return EnumSharpenTarget.None;
             } else if (item.HasBehavior<CollectibleBehaviorTinkeredTools>()) { //This one stores it under 'tinkeredToolHead' durability
                 if (!item.HasBehavior<CollectibleBehaviorToolBlunt>()) {
-                    return 1;
+                    return EnumSharpenTarget.TinkeredTool;
                 }
             } else if (item.HasBehavior<CollectibleBehaviorSmithedTools>()) { //And this one just uses the regular durability values since it's just a single solid tool, no parts
                 if (!item.HasBehavior<CollectibleBehaviorToolBlunt>()) {
-                    return 2;
+                    return EnumSharpenTarget.SmithedTool;
                 }
             } else if (item.HasBehavior<CollectibleBehaviorToolHead>()) { //While this stores it as just 'toolPartDurability', since not every part will be a head, but every head will have this behavior
                 if (!item.HasBehavior<CollectibleBehaviorToolBlunt>()) {
-                    return 3;
+                    return EnumSharpenTarget.ToolHead;
                 }
             }
 
-            return 0;
+            return EnumSharpenTarget.None;
         }
 
         public static bool IsDeconstructableTool(CollectibleObject item, IWorldAccessor world) {
@@ -808,17 +825,17 @@ namespace Toolsmith.ToolTinkering {
             float durPercent;
             var toolType = IsValidSharpenTool(item.Collectible, world);
 
-            if (toolType == 1) {
+            if (toolType == EnumSharpenTarget.TinkeredTool) {
                 curSharp = item.GetToolCurrentSharpness();
                 maxSharp = item.GetToolMaxSharpness();
                 curDur = item.GetToolheadCurrentDurability();
                 durPercent = item.GetToolheadDurabilityPercent();
-            } else if (toolType == 2) {
+            } else if (toolType == EnumSharpenTarget.SmithedTool) {
                 curSharp = item.GetToolCurrentSharpness();
                 maxSharp = item.GetToolMaxSharpness();
                 curDur = item.GetSmithedDurability();
                 durPercent = item.GetSmithedRemainingHPPercent();
-            } else if (toolType == 3) {
+            } else if (toolType == EnumSharpenTarget.ToolHead) {
                 curSharp = item.GetPartCurrentSharpness();
                 maxSharp = item.GetPartMaxSharpness();
                 curDur = item.GetPartCurrentDurability();
@@ -862,8 +879,8 @@ namespace Toolsmith.ToolTinkering {
         }
 
         //The next three methods are for the three steps of handling the sharpness honing. It helped to encapsulate it all to handle both the Grindstone and the Whetstones here.
-        public static void RecieveDurabilitiesAndSharpness(ref int curDur, ref int maxDur, ref int curSharp, ref int maxSharp, ref float totalHoned, ItemStack item, int isTool) {
-            if (isTool == 1) { //The item is a Tinkered Tool! Use the extensions for the tool's head durability.
+        public static void RecieveDurabilitiesAndSharpness(ref int curDur, ref int maxDur, ref int curSharp, ref int maxSharp, ref float totalHoned, ItemStack item, EnumSharpenTarget isTool) {
+            if (isTool == EnumSharpenTarget.TinkeredTool) { //The item is a Tinkered Tool! Use the extensions for the tool's head durability.
                 curDur = item.GetToolheadCurrentDurability();
                 maxDur = item.GetToolheadMaxDurability();
                 if (item.HasPlaceholderHead()) { //If the tool still has no proper head item saved to it, something went wrong and an error should have been printed.
@@ -873,7 +890,7 @@ namespace Toolsmith.ToolTinkering {
                 var bindingDur = item.GetToolbindingCurrentDurability(); //^^^
                 curSharp = item.GetToolCurrentSharpness();
                 maxSharp = item.GetToolMaxSharpness();
-            } else if (isTool == 2) { //The item is a Smithed Tool!
+            } else if (isTool == EnumSharpenTarget.SmithedTool) { //The item is a Smithed Tool!
                 curDur = item.GetSmithedDurability();
                 maxDur = item.GetSmithedMaxDurability();
                 curSharp = item.GetToolCurrentSharpness();
@@ -949,8 +966,8 @@ namespace Toolsmith.ToolTinkering {
             }
         }
 
-        public static void SetResultsOfSharpening(int curDur, int curSharp, float totalSharpnessHoned, bool firstHoning, ItemStack item, EntityAgent byEntity, ItemSlot mainHandSlot, int isTool) {
-            if (isTool == 1) {
+        public static void SetResultsOfSharpening(int curDur, int curSharp, float totalSharpnessHoned, bool firstHoning, ItemStack item, EntityAgent byEntity, ItemSlot mainHandSlot, EnumSharpenTarget isTool) {
+            if (isTool == EnumSharpenTarget.TinkeredTool) {
                 if (curDur <= 0) {
                     curDur = 1; //Just in case this ever gets here and it's less then 0, just set it to 1 since it shouldn't be breaking tools. But leaving that bit commented out for now, perhaps can configure it as an option later? Eh!
                 }
@@ -968,7 +985,7 @@ namespace Toolsmith.ToolTinkering {
                         item.ClearBrokeWhileSharpeningFlag();
                     }
                 }*/
-            } else if (isTool == 2) {
+            } else if (isTool == EnumSharpenTarget.SmithedTool) {
                 if (curDur <= 0) {
                     curDur = 1;
                 }
@@ -1052,7 +1069,7 @@ namespace Toolsmith.ToolTinkering {
                 head.SetTotalHoneValue(tool.GetTotalHoneValue());
             }
             if (world.Api.ModLoader.IsModEnabled("canjewelry")) {
-                CheckAndHandleJewelryStatTransfer(tool, head);
+                CanJewelryCompat.CheckAndHandleJewelryStatTransfer(tool, head);
             }
             handle.SetPartCurrentDurability(tool.GetToolhandleCurrentDurability());
             handle.SetPartMaxDurability(tool.GetToolhandleMaxDurability());
@@ -1093,66 +1110,6 @@ namespace Toolsmith.ToolTinkering {
             }
 
             byPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
-        }
-
-        public static void CheckAndHandleJewelryStatTransfer(ItemStack source, ItemStack destination) {
-            if (source != null && destination != null && source.Attributes.HasAttribute(CANJWConstants.ITEM_ENCRUSTED_STRING)) {
-                ITreeAttribute sourceEncrustedTree = source.Attributes.GetTreeAttribute(CANJWConstants.ITEM_ENCRUSTED_STRING);
-                ITreeAttribute destinationEncrustedTree = destination.Attributes.GetOrAddTreeAttribute(CANJWConstants.ITEM_ENCRUSTED_STRING);
-                destinationEncrustedTree = sourceEncrustedTree.Clone();
-                destination.Attributes[CANJWConstants.ITEM_ENCRUSTED_STRING] = destinationEncrustedTree;
-            }
-        }
-
-        //This is copied from CAN Jewelry and edited since it uh, doesn't appear to actually work on the Jewelry side? Even with the chance to drop at 1.0, it simply doesn't. I think it's cause it's trying to access SAPI on the client side?
-        //Might need updating if Jewelry updates
-        public static void HandleGemDropsForJewelry(Entity byEntity, ItemStack itemstack) {
-            if (byEntity == null || (byEntity.Api != null && byEntity.Api.Side == EnumAppSide.Client)) {
-                return;
-            }
-
-            if (itemstack != null && itemstack.Attributes.HasAttribute(CANJWConstants.ITEM_ENCRUSTED_STRING)) {
-                Random r = new Random();
-
-
-                var tree = itemstack.Attributes.GetTreeAttribute(CANJWConstants.ITEM_ENCRUSTED_STRING);
-                for (int i = 0; i < tree.GetAsInt(CANJWConstants.SOCKET_ADDED_NUMBER); i++) {
-                    if (canjewelry.src.canjewelry.config.chance_gem_drop_on_item_broken == 0 || r.NextDouble() > canjewelry.src.canjewelry.config.chance_gem_drop_on_item_broken) {
-                        continue;
-                    }
-
-                    ITreeAttribute socketSlot = tree.GetTreeAttribute("slot" + i.ToString());
-                    if (socketSlot != null) {
-                        int size = socketSlot.GetInt("size");
-                        string gemType = socketSlot.GetString("gemtype");
-                        string gemSize;
-                        switch (size) {
-                            case 1:
-                                gemSize = "normal";
-                                break;
-                            case 2:
-                                gemSize = "flawless";
-                                break;
-                            case 3:
-                                gemSize = "exquisite";
-                                break;
-                            default:
-                                continue;
-                        }
-
-                        string[] buffNames = (socketSlot[CANJWConstants.ENCRUSTABLE_BUFFS_NAMES] as StringArrayAttribute).value;
-                        float[] buffValues = (socketSlot[CANJWConstants.ENCRUSTABLE_BUFFS_VALUES] as FloatArrayAttribute).value;
-                        ITreeAttribute gemTree = new TreeAttribute();
-                        gemTree[CANJWConstants.ENCRUSTABLE_BUFFS_NAMES] = new StringArrayAttribute(buffNames);
-                        gemTree[CANJWConstants.ENCRUSTABLE_BUFFS_VALUES] = new FloatArrayAttribute(buffValues);
-                        gemTree.SetString(CANJWConstants.CUTTING_TYPE, socketSlot.GetString(CANJWConstants.CUTTING_TYPE));
-                        Item currentItem = byEntity.World.GetItem(new AssetLocation("canjewelry:" + "gem-cut-" + gemSize + "-" + gemType));
-                        ItemStack newIS = new ItemStack(currentItem, 1);
-                        newIS.Attributes[CANJWConstants.CUT_GEM_TREE] = gemTree;
-                        byEntity.World.SpawnItemEntity(newIS, byEntity.Pos.XYZ.Clone().Add(0.5f, 0.25f, 0.5f));
-                    }
-                }
-            }
         }
 
         public static void BreakDownIntoBits(float secondsUsed, IWorldAccessor world, IPlayer byPlayer, BlockSelection blockSel) {
@@ -1214,11 +1171,6 @@ namespace Toolsmith.ToolTinkering {
             } else {
                 return false;
             }
-        }
-
-        public static void HandleStressStrainTransfer(ItemStack outStack, ItemStack inStack, ICoreAPI api)
-        {
-            outStack.TransferStressStrainAttr(inStack, api);
         }
     }
 }

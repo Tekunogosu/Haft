@@ -19,7 +19,7 @@ namespace Toolsmith.ToolTinkering.Items {
         protected ILoadedSound honingScrape;
 
         //Copied over from the Grindstone but changed to instead be done in-hand with the items instead of on a block. It's slightly different handling.
-        public void HandleSharpenTick(float secondsUsed, ItemSlot mainHandSlot, ItemSlot offhandSlot, EntityAgent byEntity, int isTool) { //"isTool" is fed by the respective items in question when they call this to try and sharpen.
+        public void HandleSharpenTick(float secondsUsed, ItemSlot mainHandSlot, ItemSlot offhandSlot, EntityAgent byEntity, TinkeringUtility.EnumSharpenTarget isTool) { //"isTool" is fed by the respective items in question when they call this to try and sharpen.
             int curDur = 0;
             int maxDur = 0;
             int curSharp = 0;
@@ -198,7 +198,7 @@ namespace Toolsmith.ToolTinkering.Items {
         //It is important to know that this will send the OffhandItem the Main Hand slot! And not the Offhand one like in the _actual_ calls above.
         //This returns false if it should steal the call, and true if it should let it keep going.
         public bool HasOffhandInteractionAvailable(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent) {
-            if (!slot.Empty && TinkeringUtility.IsValidSharpenTool(slot.Itemstack.Collectible, byEntity.World) > 0) {
+            if (!slot.Empty && TinkeringUtility.IsValidSharpenTool(slot.Itemstack.Collectible, byEntity.World) != TinkeringUtility.EnumSharpenTarget.None) {
                 return false;
             }
 

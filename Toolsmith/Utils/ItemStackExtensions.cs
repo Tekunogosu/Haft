@@ -1,5 +1,4 @@
-﻿using ScientificSmithy.Utils;
-using SmithingPlus.Util;
+﻿using SmithingPlus.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Toolsmith.Client;
 using Toolsmith.Client.Behaviors;
+using Toolsmith.Compat;
 using Toolsmith.Config;
 using Toolsmith.ToolTinkering.Behaviors;
 using Vintagestory.API.Common;
@@ -503,16 +503,7 @@ namespace Toolsmith.Utils {
             }
 
             var baseDur = itemStack.Collectible.GetBaseMaxDurability(itemStack);
-            int sharpness;
-            if (itemStack.Attributes.HasAttribute(ScientificSmithyAttr.StatsAttr))
-            {
-                ITreeAttribute stats = itemStack.Attributes.GetTreeAttribute(ScientificSmithyAttr.StatsAttr);
-                float sharpMult = stats.GetFloat(ScientificSmithyAttr.HardnessMultAttr, (float)ToolsmithModSystem.Config.SharpnessMult);
-                int halfTough = stats.GetInt(ScientificSmithyAttr.HalfToughAttr, baseDur);
-                sharpness = (int)(sharpMult * halfTough);
-            }
-            else
-                sharpness = (int)(baseDur * ToolsmithModSystem.Config.SharpnessMult);
+            int sharpness = ScientificSmithyCompat.CalculateMaxSharpness(itemStack, baseDur);
 
             float sharpnessMult;
             if (itemStack.Collectible.IsCraftableMetal()) {
@@ -797,15 +788,7 @@ namespace Toolsmith.Utils {
                         mult = ToolsmithConstants.NonMetalStartingSharpnessMult;
                     }
 
-                    if (itemStack.Attributes.HasAttribute(ScientificSmithyAttr.StatsAttr))
-                    {
-                        ITreeAttribute stats = itemStack.Attributes.GetTreeAttribute(ScientificSmithyAttr.StatsAttr);
-                        float sharpMult = stats.GetFloat(ScientificSmithyAttr.HardnessMultAttr, (float)ToolsmithModSystem.Config.SharpnessMult);
-                        int halfTough = stats.GetInt(ScientificSmithyAttr.HalfToughAttr, baseDur);
-                        maxSharp = (int)(sharpMult * halfTough);
-                    }
-                    else
-                        maxSharp = (int)(baseDur * ToolsmithModSystem.Config.SharpnessMult);
+                    maxSharp = ScientificSmithyCompat.CalculateMaxSharpness(itemStack, baseDur);
 
                     itemStack.SetPartMaxSharpness(maxSharp);
                     var result = (int)(mult * maxSharp);
@@ -818,15 +801,7 @@ namespace Toolsmith.Utils {
             itemStack.SetPartMaxDurability(maxDur);
             itemStack.SetPartCurrentDurability(maxDur);
 
-            if (itemStack.Attributes.HasAttribute(ScientificSmithyAttr.StatsAttr))
-            {
-                ITreeAttribute stats = itemStack.Attributes.GetTreeAttribute(ScientificSmithyAttr.StatsAttr);
-                float sharpMult = stats.GetFloat(ScientificSmithyAttr.HardnessMultAttr, (float)ToolsmithModSystem.Config.SharpnessMult);
-                int halfTough = stats.GetInt(ScientificSmithyAttr.HalfToughAttr, (int)(maxDur / ToolsmithModSystem.Config.HeadDurabilityMult));
-                maxSharp = (int)(sharpMult * halfTough);
-            }
-            else
-                maxSharp = (int)((maxDur / ToolsmithModSystem.Config.HeadDurabilityMult) * ToolsmithModSystem.Config.SharpnessMult);
+            maxSharp = ScientificSmithyCompat.CalculateMaxSharpness(itemStack, (int)(maxDur / ToolsmithModSystem.Config.HeadDurabilityMult));
 
             if (itemStack.Collectible.IsCraftableMetal()) {
                 mult = ToolsmithConstants.StartingSharpnessMult;
@@ -841,16 +816,7 @@ namespace Toolsmith.Utils {
 
         public static void ResetHeadSharpness(this ItemStack itemStack) {
             var maxDur = itemStack.GetPartMaxDurability();
-            int maxSharp;
-            if (itemStack.Attributes.HasAttribute(ScientificSmithyAttr.StatsAttr))
-            {
-                ITreeAttribute stats = itemStack.Attributes.GetTreeAttribute(ScientificSmithyAttr.StatsAttr);
-                float sharpMult = stats.GetFloat(ScientificSmithyAttr.HardnessMultAttr, (float)ToolsmithModSystem.Config.SharpnessMult);
-                int halfTough = stats.GetInt(ScientificSmithyAttr.HalfToughAttr, (int)(maxDur / ToolsmithModSystem.Config.HeadDurabilityMult));
-                maxSharp = (int)(sharpMult * halfTough);
-            }
-            else
-                maxSharp = (int)((maxDur / ToolsmithModSystem.Config.HeadDurabilityMult) * ToolsmithModSystem.Config.SharpnessMult);
+            int maxSharp = ScientificSmithyCompat.CalculateMaxSharpness(itemStack, (int)(maxDur / ToolsmithModSystem.Config.HeadDurabilityMult));
 
             itemStack.SetPartMaxSharpness(maxSharp);
             float mult;
