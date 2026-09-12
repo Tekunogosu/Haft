@@ -77,12 +77,35 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                     workingDsc.AppendLine(Lang.Get("tinkeredtoolfreehone"));
                 }
             }
-            workingDsc.Insert(startIndex, Lang.Get("toolbindingdurability", curBindingDur, maxBindingDur) + '\n'); //Insert in the part durabilities in the place of it
-            workingDsc.Insert(startIndex, Lang.Get("toolhandledurability", curHandleDur, maxHandleDur) + '\n');
-            workingDsc.Insert(startIndex, Lang.Get("toolheaddurability", curHeadDur, maxHeadDur) + '\n');
+            workingDsc.Insert(startIndex, Lang.Get("toolbindingdurability", StringHelpers.ColorForDurability(curBindingDur, maxBindingDur), curBindingDur, maxBindingDur) + '\n'); //Insert in the part durabilities in the place of it
+            workingDsc.Insert(startIndex, Lang.Get("toolhandledurability", StringHelpers.ColorForDurability(curHandleDur, maxHandleDur), curHandleDur, maxHandleDur) + '\n');
+            workingDsc.Insert(startIndex, Lang.Get("toolheaddurability", StringHelpers.ColorForDurability(curHeadDur, maxHeadDur), curHeadDur, maxHeadDur) + '\n');
             if (!inSlot.Itemstack.Collectible.HasBehavior<CollectibleBehaviorToolBlunt>()) {
-                workingDsc.Insert(startIndex, Lang.Get("toolsharpness", curSharp, maxSharp) + '\n');
+                workingDsc.Insert(startIndex, Lang.Get("toolsharpness", StringHelpers.ColorForDurability(curSharp, maxSharp), curSharp, maxSharp) + '\n');
             }
+
+            //The wood is recorded on the handle the tool was built from, not on the tool, so it has to be read back
+            //off that stored stack. GetToolhandleForData rather than GetToolhandle: this is a tooltip asking a
+            //question, and the mutating version would write a handle onto any tool that had lost one.
+            var storedHandle = inSlot.Itemstack.GetToolhandleForData();
+            if (storedHandle != null && storedHandle.HasHandleWoodTag()) {
+                workingDsc.AppendLine(Lang.Get("toolhandlewood", Lang.Get("material-" + storedHandle.GetHandleWoodTag())));
+            }
+
+            //A tool can be built without a binding at all, so a null here is an ordinary answer rather than missing
+            //data. GetToolbinding already returns null instead of writing one back, so it is safe to ask from a tooltip.
+            var storedBinding = inSlot.Itemstack.GetToolbinding();
+            if (storedBinding != null) {
+                var bindingPart = ToolsmithModSystem.Stats.BindingParts.Get(storedBinding.Collectible.Code.Path);
+                if (bindingPart != null) {
+                    var bindingStats = ToolsmithModSystem.Stats.BindingStats.Get(bindingPart.bindingStatTag);
+                    if (bindingStats != null && bindingStats.langTag != "") {
+                        workingDsc.AppendLine(Lang.Get("toolbindingmaterial", Lang.Get(bindingStats.langTag)));
+                    }
+                }
+            }
+
+            TinkeringUtility.ReplaceVanillaToolSpeedLines(inSlot, workingDsc);
 
             dsc.Clear();
             dsc.Append(workingDsc);
@@ -223,6 +246,13 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 bindingStats = ToolsmithModSystem.Stats.BindingStats.Get(binding.bindingStatTag);
             }
 
+            WoodStatDefines woodStats;
+            if (handleStack.HasHandleWoodTag()) {
+                woodStats = ToolsmithModSystem.Stats.WoodStats.Get(handleStack.GetHandleWoodTag());
+            } else { //Sticks, bones and crude handles never carry a wood, and neither do handles saved before the wood tag existed.
+                woodStats = ToolsmithModSystem.Stats.WoodStats.Get(ToolsmithConstants.DefaultWoodStatKey);
+            }
+
             //Various math and calculating the end effect of each part here.
             HandleExtraModCompat(allInputslots, outputSlot); //Handle some mod compatability here! Anything that needs a little bit of extra handling before getting the first BaseMaxDurability.
              
@@ -232,8 +262,8 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             //finished tool, and reading the output stack here would give every tool the same sharpness.
             int maxSharpness = ScientificSmithyCompat.CalculateMaxSharpness(headStack, baseDur);
 
-            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(baseDur, handleStats, treatmentStats, bindingStats);
-            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(baseDur, handleStats, bindingStats);
+            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(baseDur, handleStats, treatmentStats, bindingStats, woodStats);
+            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(baseDur, handleStats, bindingStats, woodStats);
 
             //Apply the end results of that to the tool/parts. Could the parts themselves actually hold the stats...? Eh. Might be faster to just directly apply them to the tool and then update the current HP when it breaks.
             var currentHeadPer = headStack.GetPartRemainingHPPercent(); //If this returns 0, then assume it's full durability since something is unset. Keep this assumption in mind!!!

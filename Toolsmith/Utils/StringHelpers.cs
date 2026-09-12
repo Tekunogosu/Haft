@@ -5,9 +5,114 @@ using System.Text;
 using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 
 namespace Toolsmith.Utils {
     public static class StringHelpers {
+
+        //The tooltip palette. Taken from the colors the base game already uses in its own lang strings so a
+        //Toolsmith tooltip reads as part of the game rather than as something bolted on: #84ff84/#ff8484 are
+        //vanilla's own green and red, #fff785 its yellow. Purple has no vanilla precedent and marks the one state
+        //above "good" - a part that has taken no damage at all, or a head that cannot be honed any further.
+        public const string PristineColor = "#c9a0ff";
+        public const string GoodColor = "#84ff84";
+        public const string WornColor = "#fff785";
+        public const string PoorColor = "#ff8484";
+        public const string UnknownColor = "#bbbbbb";
+
+        //One owner for the percentage-to-color mapping, so a head, a handle, a binding and a sharpness bar all
+        //band at the same thresholds. Returning the color rather than the finished string keeps the wording in the
+        //lang file where a translator can reach it.
+        public static string ColorForRemainingPercent(float remainingPercent) {
+            if (remainingPercent >= 1.0f) {
+                return PristineColor;
+            } else if (remainingPercent > 0.66f) {
+                return GoodColor;
+            } else if (remainingPercent > 0.33f) {
+                return WornColor;
+            } else {
+                return PoorColor;
+            }
+        }
+
+        //The durability lines carry a current and a max rather than a percent, and a max of zero would otherwise
+        //divide by zero on a part whose stats have not been written yet.
+        public static string ColorForDurability(int current, int max) {
+            if (max <= 0) {
+                return UnknownColor;
+            }
+            return ColorForRemainingPercent((float)current / (float)max);
+        }
+
+        //The stat lines on a part - multipliers and bonuses - are not a fraction of anything, so they band by sign
+        //rather than by threshold: a bonus helps, a malus hurts, and zero is worth neither color.
+        public static string ColorForBonus(double bonus) {
+            if (bonus > 0) {
+                return GoodColor;
+            } else if (bonus < 0) {
+                return PoorColor;
+            } else {
+                return UnknownColor;
+            }
+        }
+
+        //A multiplier is measured against 1.0 rather than against zero, so it needs its own comparison even though
+        //it bands to the same three colors.
+        public static string ColorForMultiplier(double multiplier) {
+            if (multiplier > 1.0) {
+                return GoodColor;
+            } else if (multiplier < 1.0) {
+                return PoorColor;
+            } else {
+                return UnknownColor;
+            }
+        }
+
+        //Bands a mining speed. 1x is the bare-hands baseline that vanilla itself filters out, so anything actually
+        //shown is at least some improvement - the colors separate "worth using this tool" from "barely faster".
+        public static string ColorForMiningSpeed(float speed) {
+            if (speed >= 5.0f) {
+                return PristineColor;
+            } else if (speed >= 3.0f) {
+                return GoodColor;
+            } else if (speed >= 1.5f) {
+                return WornColor;
+            } else {
+                return UnknownColor;
+            }
+        }
+
+        //Deletes the whole line that begins with the given text, including its trailing newline. Vanilla writes
+        //several tooltip lines this mod would rather render itself, and each of them has to be taken back out of
+        //the buffer before the replacement goes in. Finding them by the translated prefix rather than by an English
+        //literal is what keeps this working in another language: the prefix is asked of the same translation table
+        //vanilla used to write it.
+        //
+        //Does nothing when the prefix is absent, so a tool that never had the line costs one scan and no special
+        //case at the call site.
+        public static void RemoveTooltipLineStartingWith(StringBuilder tooltip, string linePrefix) {
+            if (linePrefix == null || linePrefix.Length == 0) {
+                return;
+            }
+
+            string text = tooltip.ToString();
+            int lineStart = text.IndexOf(linePrefix, StringComparison.Ordinal);
+            if (lineStart < 0) {
+                return;
+            }
+
+            //Walk back to the start of the line so the label's own leading text goes with it, and forward past the
+            //newline so removing a line does not leave a blank one behind.
+            while (lineStart > 0 && text[lineStart - 1] != '\n') {
+                lineStart--;
+            }
+            int lineEnd = text.IndexOf('\n', lineStart);
+            if (lineEnd < 0) {
+                lineEnd = text.Length - 1;
+            }
+
+            tooltip.Remove(lineStart, lineEnd - lineStart + 1);
+        }
 
         //Pass this the starting and ending index values you want it to set to the proper location in the tooltip where the Vanilla Durability Line is located.
         //Can technically start partway through the tooltip if needed by setting them to a value ahead of time, but general use is with them starting at 0 to start at the top of the tooltip.

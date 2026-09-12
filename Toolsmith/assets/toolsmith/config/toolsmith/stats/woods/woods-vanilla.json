@@ -1,0 +1,67 @@
+[
+	{
+		"id": "kapok",
+		"hardnessFactor": 0.75,
+		"nailBindingBonus": -0.1
+	},
+	{
+		"id": "pine",
+		"hardnessFactor": 0.825,
+		"nailBindingBonus": -0.07
+	},
+	{
+		"id": "redwood",
+		"hardnessFactor": 0.85,
+		"nailBindingBonus": -0.06
+	},
+	{
+		"id": "baldcypress",
+		"hardnessFactor": 0.85,
+		"nailBindingBonus": -0.06
+	},
+	{
+		"id": "aged",
+		"hardnessFactor": 0.875,
+		"nailBindingBonus": -0.05
+	},
+	{
+		"id": "larch",
+		"hardnessFactor": 0.925,
+		"nailBindingBonus": -0.03
+	},
+	{
+		"id": "walnut",
+		"hardnessFactor": 0.95,
+		"nailBindingBonus": -0.02
+	},
+	{
+		"id": "birch",
+		"hardnessFactor": 0.98,
+		"nailBindingBonus": -0.01
+	},
+	{
+		"id": "oak",
+		"hardnessFactor": 1.0,
+		"nailBindingBonus": 0.0
+	},
+	{
+		"id": "maple",
+		"hardnessFactor": 1.025,
+		"nailBindingBonus": 0.01
+	},
+	{
+		"id": "acacia",
+		"hardnessFactor": 1.075,
+		"nailBindingBonus": 0.03
+	},
+	{
+		"id": "purpleheart",
+		"hardnessFactor": 1.2,
+		"nailBindingBonus": 0.08
+	},
+	{
+		"id": "ebony",
+		"hardnessFactor": 1.25,
+		"nailBindingBonus": 0.1
+	}
+]

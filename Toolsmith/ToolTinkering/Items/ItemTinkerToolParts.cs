@@ -85,7 +85,7 @@ namespace Toolsmith.ToolTinkering.Items {
             if ( head != null && handle != null ) {
                 dsc.AppendLine(Lang.Get("tinkertoolpartscontains", head.GetName(), handle.GetName()));
             } else {
-                dsc.AppendLine("This Tinker Tool Part Bundle is lacking either a head or handle! Something went wrong, craft at your own risk.");
+                dsc.AppendLine(Lang.Get("tinkertoolpartsincomplete"));
             }
 
             base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);

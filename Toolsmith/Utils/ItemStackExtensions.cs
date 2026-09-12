@@ -286,6 +286,7 @@ namespace Toolsmith.Utils {
                 if (oldHandlePath[0] == "handle" || oldHandlePath[0] == "carpentedhandle") {
                     HandlePartDefines handleStats = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(oldHandlePath[0]);
                     newHandle.SetHandleStatTag(handleStats.handleStatTag);
+                    newHandle.SetHandleWoodTag(ToolsmithConstants.DefaultWoodStatKey); //The old handles recorded no wood, so give the stat the same oak the texture below already assumes.
                     renderTree.SetPartShapePath(handleStats.handleShapePath);
                     textureTree.SetPartTexturePathFromKey("wood", ToolsmithConstants.HandleWoodTexturePathMinusType + "oak");
                 }
@@ -569,8 +570,15 @@ namespace Toolsmith.Utils {
                 treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.Get(ToolsmithConstants.DefaultTreatmentTag);
             }
 
-            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(baseDur, handleStats, treatmentStats, bindingStats);
-            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(baseDur, handleStats, bindingStats);
+            WoodStatDefines woodStats;
+            if (handle.HasHandleWoodTag()) {
+                woodStats = ToolsmithModSystem.Stats.WoodStats.Get(handle.GetHandleWoodTag());
+            } else { //Sticks, bones and crude handles never carry a wood, and neither do handles saved before the wood tag existed.
+                woodStats = ToolsmithModSystem.Stats.WoodStats.Get(ToolsmithConstants.DefaultWoodStatKey);
+            }
+
+            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(baseDur, handleStats, treatmentStats, bindingStats, woodStats);
+            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(baseDur, handleStats, bindingStats, woodStats);
 
             if (maxHandleDur < 0) {
                 handle.SetPartCurrentDurability((int)handleDur);
@@ -844,6 +852,22 @@ namespace Toolsmith.Utils {
 
         public static void RemoveHandleStatTag(this ItemStack itemStack) {
             itemStack.Attributes.RemoveAttribute(ToolsmithAttributes.HandleStatTag);
+        }
+
+        public static void SetHandleWoodTag(this ItemStack itemStack, string tag) {
+            itemStack.Attributes.SetString(ToolsmithAttributes.HandleWoodTag, tag);
+        }
+
+        public static string GetHandleWoodTag(this ItemStack itemStack) {
+            return itemStack.Attributes.GetString(ToolsmithAttributes.HandleWoodTag);
+        }
+
+        public static bool HasHandleWoodTag(this ItemStack itemStack) {
+            return itemStack.Attributes.HasAttribute(ToolsmithAttributes.HandleWoodTag);
+        }
+
+        public static void RemoveHandleWoodTag(this ItemStack itemStack) {
+            itemStack.Attributes.RemoveAttribute(ToolsmithAttributes.HandleWoodTag);
         }
 
         public static void SetHandleGripTag(this ItemStack itemStack, string tag) {

@@ -20,6 +20,7 @@ namespace Toolsmith.Config {
         public Dictionary<string, GripStatDefines> GripStats = new() { };
         public Dictionary<string, TreatmentStatDefines> TreatmentStats = new() { };
         public Dictionary<string, BindingStatDefines> BindingStats = new() { };
+        public Dictionary<string, WoodStatDefines> WoodStats = new() { };
     }
 
     public static class ToolsmithPartStatsHelpers {
@@ -35,8 +36,10 @@ namespace Toolsmith.Config {
         //Starts from the tool's own base durability and takes each bonus in turn - the handle's own, the treatment
         //on it, then the binding holding it - each applied to the running total rather than to the base, so they
         //compound rather than simply adding up.
-        public static float CalculateHandleDurability(int baseDur, HandleStatDefines handleStats, TreatmentStatDefines treatmentStats, BindingStatDefines bindingStats) {
-            var handleDur = baseDur * handleStats.baseHPfactor;
+        //The wood scales the handle's own factor rather than the finished total, so a hard wood and a good treatment
+        //compound with each other instead of being added on at the end independently.
+        public static float CalculateHandleDurability(int baseDur, HandleStatDefines handleStats, TreatmentStatDefines treatmentStats, BindingStatDefines bindingStats, WoodStatDefines woodStats) {
+            var handleDur = baseDur * handleStats.baseHPfactor * woodStats.hardnessFactor;
             handleDur += handleDur * handleStats.selfHPBonus;
             handleDur += handleDur * treatmentStats.handleHPbonus;
             handleDur += handleDur * bindingStats.handleHPBonus;
@@ -45,10 +48,17 @@ namespace Toolsmith.Config {
 
         //The binding has fewer terms than the handle: its own factor and bonus, plus whatever support the handle
         //lends it. Nothing a treatment does reaches the binding.
-        public static float CalculateBindingDurability(int baseDur, HandleStatDefines handleStats, BindingStatDefines bindingStats) {
+        //
+        //The wood only reaches a binding that is nailed on - isMetal already means exactly that. A wrap of rope or
+        //twine is tightened around the handle rather than driven into it, so how hard the wood is makes no
+        //difference to how well it holds.
+        public static float CalculateBindingDurability(int baseDur, HandleStatDefines handleStats, BindingStatDefines bindingStats, WoodStatDefines woodStats) {
             var bindingDur = baseDur * bindingStats.baseHPfactor;
             bindingDur += bindingDur * bindingStats.selfHPBonus;
             bindingDur += bindingDur * handleStats.bindingHPBonus;
+            if (bindingStats.isMetal) {
+                bindingDur += bindingDur * woodStats.nailBindingBonus;
+            }
             return bindingDur;
         }
 
@@ -176,6 +186,33 @@ namespace Toolsmith.Config {
                     targetDict[entry.id] = entry;
                 } else if (!ToolsmithModSystem.Stats.EnableEdits) {
                     ToolsmithModSystem.Logger.Error("Attempted to add a HandleStatDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
+                }
+            }
+        }
+
+        public static void VerifyAndStoreDefinesInDict(List<WoodStatDefines> list, bool runFullCheck, ref Dictionary<string, WoodStatDefines> targetDict) {
+            foreach (var entry in list) {
+                if (entry.id == null) {
+                    ToolsmithModSystem.Logger.Error("Attempted to read a WoodStatDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
+                    continue;
+                }
+
+                if (runFullCheck) {
+                    if (entry.hardnessFactor == -1.0f) {
+                        ToolsmithModSystem.Logger.Error("HardnessFactor for WoodStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 1.0 and continuing, stats will be improper but still function.");
+                        entry.hardnessFactor = 1.0f;
+                    }
+
+                    if (entry.nailBindingBonus == -1.0f) {
+                        ToolsmithModSystem.Logger.Error("NailBindingBonus for WoodStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
+                        entry.nailBindingBonus = 0.0f;
+                    }
+                }
+
+                if (!targetDict.ContainsKey(entry.id)) {
+                    targetDict[entry.id] = entry;
+                } else if (!ToolsmithModSystem.Stats.EnableEdits) {
+                    ToolsmithModSystem.Logger.Error("Attempted to add a WoodStatDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
                 }
             }
         }

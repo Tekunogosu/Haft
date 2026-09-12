@@ -479,6 +479,11 @@ namespace Toolsmith {
                 ToolsmithPartStatsHelpers.VerifyAndStoreDefinesInDict(bindingStat.Value, Config.RunFullJsonVerifying, ref Stats.BindingStats);
             }
 
+            Dictionary<AssetLocation, List<WoodStatDefines>> woodStats = api.Assets.GetMany<List<WoodStatDefines>>(api.Logger, "config/toolsmith/stats/woods");
+            foreach (var woodStat in woodStats) {
+                ToolsmithPartStatsHelpers.VerifyAndStoreDefinesInDict(woodStat.Value, Config.RunFullJsonVerifying, ref Stats.WoodStats);
+            }
+
             if (Config.RunFullJsonVerifying) {
                 Logger.Debug("Full Json Verification complete! All found errors will have been printed above.");
             }

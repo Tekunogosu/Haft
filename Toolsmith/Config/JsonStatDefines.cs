@@ -26,6 +26,17 @@ namespace Toolsmith.Config {
         public float speedBonus = -1.0f; //Advanced handles can make it easier to use the tool as well!
     }
 
+    //The wood a handle was shaped from. Kept as its own stat type rather than folded into HandleStatDefines because
+    //the two vary independently - an oak handle and an oak carpented handle share a wood but not a tier, and a
+    //crude handle has a tier but no wood at all (it is made from firewood, which carries no wood variant).
+    public class WoodStatDefines : ToolsmithStat {
+        [JsonProperty]
+        public float hardnessFactor = -1.0f; //Scales the handle's base durability. Derived from real Janka hardness, oak as the 1.0 baseline.
+
+        [JsonProperty]
+        public float nailBindingBonus = -1.0f; //Harder wood holds a nail better. Only ever applied to metal bindings - a rope wrap does not care what it is tightened around.
+    }
+
     public class GripStatDefines : ToolsmithStat {
         [JsonProperty]
         public string texturePath = "plain"; //The default here is effectively no path.

@@ -41,8 +41,10 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 } else if (!inSlot.Itemstack.HasTotalHoneValue()) {
                     workingDsc.AppendLine(Lang.Get("smithedtoolfreehone"));
                 }
-                workingDsc.Insert(startIndex, Lang.Get("toolsharpness", curSharp, maxSharp) + '\n');
+                workingDsc.Insert(startIndex, Lang.Get("toolsharpness", StringHelpers.ColorForDurability(curSharp, maxSharp), curSharp, maxSharp) + '\n');
             }
+
+            TinkeringUtility.ReplaceVanillaToolSpeedLines(inSlot, workingDsc);
 
             dsc.Clear();
             dsc.Append(workingDsc);

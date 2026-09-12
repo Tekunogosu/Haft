@@ -200,6 +200,50 @@ namespace Toolsmith.ToolTinkering {
             }
         }
 
+        /// <summary>
+        /// Replaces the tool tier and mining speed lines vanilla wrote with ones laid out the way the rest of a
+        /// Toolsmith tooltip is: one material per row, in a monospace column, with the speed colored.
+        /// </summary>
+        /// <remarks>
+        /// Vanilla builds its mining speed line by appending each material onto one running line, so the lang key
+        /// only supplies the "Mining Speed: " prefix - there is no way to split the materials apart by overriding
+        /// the key alone. The line is taken back out and rebuilt from GetMiningSpeeds instead, which also avoids
+        /// parsing numbers back out of text that has already been formatted for display.
+        ///
+        /// The 1.1 floor is vanilla's own: anything at or below it is not fast enough to be worth a line.
+        ///
+        /// Both the tinkered and the smithed tool tooltips need this, which is why it lives here rather than in
+        /// either of them.
+        /// </remarks>
+        public static void ReplaceVanillaToolSpeedLines(ItemSlot inSlot, StringBuilder tooltip) {
+            var collectible = inSlot.Itemstack.Collectible;
+            var miningSpeeds = collectible.GetMiningSpeeds(inSlot);
+
+            StringHelpers.RemoveTooltipLineStartingWith(tooltip, Lang.Get("item-tooltip-miningspeed"));
+            StringHelpers.RemoveTooltipLineStartingWith(tooltip, Lang.Get("Tool Tier: {0}", collectible.GetToolTier(inSlot)));
+
+            if (miningSpeeds == null || miningSpeeds.Count == 0) {
+                return;
+            }
+
+            tooltip.AppendLine(Lang.Get("toolsmithtooltier", collectible.GetToolTier(inSlot)));
+
+            var speedModifier = collectible.GetMiningSpeedModifier(inSlot.Itemstack);
+            bool wroteHeader = false;
+            foreach (var materialSpeed in miningSpeeds) {
+                var speed = materialSpeed.Value * speedModifier;
+                if (speed < 1.1) {
+                    continue;
+                }
+
+                if (!wroteHeader) {
+                    tooltip.AppendLine(Lang.Get("toolsmithminingspeedheader"));
+                    wroteHeader = true;
+                }
+                tooltip.AppendLine(Lang.Get("toolsmithminingspeedrow", Lang.Get(materialSpeed.Key.ToString()).PadRight(10), StringHelpers.ColorForMiningSpeed(speed), speed.ToString("#.#")));
+            }
+        }
+
         //Helper method to centralize the checks for if something should attempt to access this Slot or Itemstack generally for purposes of handling or accessing any Attribute data. This is important to prevent it from assigning attribute data to something that shouldn't get it, IE trader inventories or creative before it's actually pulled out.
         public static bool ShouldNotAccessStats(ItemSlot slot) {
             if (slot == null) {

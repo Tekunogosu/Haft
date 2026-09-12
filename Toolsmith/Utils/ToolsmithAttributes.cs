@@ -39,6 +39,7 @@ namespace Toolsmith.Utils {
         public const string HandleStatTag = "toolHandleTag";
         public const string HandleGripTag = "toolHandleGripTag";
         public const string HandleTreatmentTag = "toolHandleTreatmentTag"; //Tags stay on the base item that have them and don't need to be moved to the crafted tool. They will have their stats transferred instead upwards.
+        public const string HandleWoodTag = "toolHandleWoodTag"; //Which wood the handle was shaped from. Set from the supportbeam blank at craft time - before this the wood only ever survived as a texture path in the render tree.
         public const string PartWetTreatment = "partHasWetTreatment"; //Both a flag and holds the full time the treatment goes for.
         public const string DisposeMeNowPleaseTag = "disposeMeNowThisShouldntExist"; //Set the copy stack in the first Transition tick to this tag, to make retreiving it easier. It should regen this if it's somehow lost as well!
 

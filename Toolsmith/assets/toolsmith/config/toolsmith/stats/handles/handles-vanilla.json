@@ -1,7 +1,7 @@
 [
 	{
 		"id": "stick",
-		"baseHPfactor": 1.0,
+		"baseHPfactor": 0.6,
 		"selfHPBonus": 0.0,
 		"bindingHPBonus": 0.0,
 		"speedBonus": 0.0
@@ -15,7 +15,7 @@
 	},
 	{
 		"id": "crude",
-		"baseHPfactor": 1.0,
+		"baseHPfactor": 0.8,
 		"selfHPBonus": 0.0,
 		"bindingHPBonus": 0.05,
 		"speedBonus": 0.0

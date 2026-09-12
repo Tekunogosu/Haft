@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Toolsmith.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -29,8 +30,8 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 if (bindingStats != null) {
                     var totalMult = bindingStats.baseHPfactor * (1 + bindingStats.selfHPBonus);
                     dsc.AppendLine("");
-                    dsc.AppendLine(Lang.Get("toolbindingtotalmult", float.Truncate(totalMult * 100) / 100));
-                    dsc.AppendLine(Lang.Get("toolbindinghandlebonus", Math.Round(bindingStats.handleHPBonus * 100)));
+                    dsc.AppendLine(Lang.Get("toolbindingtotalmult", StringHelpers.ColorForMultiplier(totalMult), float.Truncate(totalMult * 100) / 100));
+                    dsc.AppendLine(Lang.Get("toolbindinghandlebonus", StringHelpers.ColorForBonus(bindingStats.handleHPBonus), Math.Round(bindingStats.handleHPBonus * 100)));
                     dsc.AppendLine(Lang.Get("toolbindingrecoverychance", Math.Round(bindingStats.recoveryPercent * 100)));
                     if (bindingStats.isMetal) {
                         dsc.AppendLine(Lang.Get("toolbindingmetaldrops"));

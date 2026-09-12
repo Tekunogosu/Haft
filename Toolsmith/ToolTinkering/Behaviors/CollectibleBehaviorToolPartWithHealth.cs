@@ -31,7 +31,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                             dsc.AppendLine(Lang.Get("fullysharpened"));
                         } else {
                             var percent = Math.Floor(remainingSharpPercent * 100);
-                            dsc.AppendLine(Lang.Get("partiallysharpened", percent));
+                            dsc.AppendLine(Lang.Get("partiallysharpened", StringHelpers.ColorForRemainingPercent(remainingSharpPercent), percent));
                         }
                     }
                 }
@@ -42,7 +42,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 dsc.AppendLine(Lang.Get("pristinecondition"));
             } else {
                 var percent = Math.Floor(remainingPercent * 100);
-                dsc.AppendLine(Lang.Get("partiallydamaged", percent));
+                dsc.AppendLine(Lang.Get("partiallydamaged", StringHelpers.ColorForRemainingPercent(remainingPercent), percent));
             }
         }
     }

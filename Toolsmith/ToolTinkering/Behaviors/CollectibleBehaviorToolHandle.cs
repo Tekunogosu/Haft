@@ -30,7 +30,10 @@ namespace Toolsmith.ToolTinkering.Behaviors {
         }
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo) {
-            if (inSlot is ItemSlotCreative) {
+            //ItemSlotCreative is a slot type and ShouldNotAccessStats tests the inventory, so the two catch
+            //different things - the latter also covers the handbook's DummyInventory and a trader's inventory,
+            //where a handle has no attribute data worth reading.
+            if (inSlot is ItemSlotCreative || TinkeringUtility.ShouldNotAccessStats(inSlot)) {
                 dsc.AppendLine(Lang.Get("toolhandledirections"));
                 base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);
                 return;
@@ -51,20 +54,35 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 if (handleStats != null) {
                     var totalHandleMult = handleStats.baseHPfactor * (1 + handleStats.selfHPBonus);
                     dsc.AppendLine("");
-                    dsc.AppendLine(Lang.Get("toolhandletotalmult", float.Truncate(totalHandleMult * 100) / 100));
-                    dsc.AppendLine(Lang.Get("toolhandlebindingbonus", Math.Round(handleStats.bindingHPBonus * 100)));
-                    dsc.AppendLine(Lang.Get("toolhandleusespeedbonus", Math.Round(handleStats.speedBonus * 100)));
+
+                    //Only a handle shaped from a support beam carries a wood. Sticks, bones and crude handles never
+                    //had one, and handles saved before the wood tag existed lost theirs, so say so rather than
+                    //printing the oak the stats fall back to as though it had been chosen.
+                    if (inSlot.Itemstack.HasHandleWoodTag()) {
+                        var woodTag = inSlot.Itemstack.GetHandleWoodTag();
+                        var woodStats = ToolsmithModSystem.Stats.WoodStats.Get(woodTag);
+                        dsc.AppendLine(Lang.Get("toolhandlewood", Lang.Get("material-" + woodTag)));
+                        if (woodStats != null) {
+                            dsc.AppendLine(Lang.Get("toolhandlewooddensity", StringHelpers.ColorForMultiplier(woodStats.hardnessFactor), woodStats.hardnessFactor));
+                        }
+                    } else if (ToolsmithModSystem.Stats.BaseHandleParts.Get(inSlot.Itemstack.Collectible.Code.Path)?.canBeTreated == true) {
+                        dsc.AppendLine(Lang.Get("toolhandlewoodunknown")); //Only worth saying on a handle that could have had a wood in the first place.
+                    }
+
+                    dsc.AppendLine(Lang.Get("toolhandletotalmult", StringHelpers.ColorForMultiplier(totalHandleMult), float.Truncate(totalHandleMult * 100) / 100));
+                    dsc.AppendLine(Lang.Get("toolhandlebindingbonus", StringHelpers.ColorForBonus(handleStats.bindingHPBonus), Math.Round(handleStats.bindingHPBonus * 100)));
+                    dsc.AppendLine(Lang.Get("toolhandleusespeedbonus", StringHelpers.ColorForBonus(handleStats.speedBonus), Math.Round(handleStats.speedBonus * 100)));
                     if (inSlot.Itemstack.HasHandleTreatmentTag()) {
                         var treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.Get(inSlot.Itemstack.GetHandleTreatmentTag());
                         if (treatmentStats != null) {
-                            dsc.AppendLine(Lang.Get("toolhandletreatmentbonus", Math.Round(treatmentStats.handleHPbonus * 100)));
+                            dsc.AppendLine(Lang.Get("toolhandletreatmentbonus", StringHelpers.ColorForBonus(treatmentStats.handleHPbonus), Math.Round(treatmentStats.handleHPbonus * 100)));
                         }
                     }
                     if (inSlot.Itemstack.HasHandleGripTag()) {
                         var gripStats = ToolsmithModSystem.Stats.GripStats.Get(inSlot.Itemstack.GetHandleGripTag());
                         if (gripStats != null) {
-                            dsc.AppendLine(Lang.Get("toolhandlegripspeedbonus", Math.Round(gripStats.speedBonus * 100)));
-                            dsc.AppendLine(Lang.Get("toolhandlegripchancenodamage", Math.Round((1 - gripStats.chanceToDamage) * 100)));
+                            dsc.AppendLine(Lang.Get("toolhandlegripspeedbonus", StringHelpers.ColorForBonus(gripStats.speedBonus), Math.Round(gripStats.speedBonus * 100)));
+                            dsc.AppendLine(Lang.Get("toolhandlegripchancenodamage", StringHelpers.ColorForBonus(1 - gripStats.chanceToDamage), Math.Round((1 - gripStats.chanceToDamage) * 100)));
                         }
                     }
                 }
@@ -72,6 +90,11 @@ namespace Toolsmith.ToolTinkering.Behaviors {
         }
 
         public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack) {
+            //Named the way the base game names its own wood-typed blocks - "Support beam (Oak)" - so a row of
+            //handles in an inventory can be told apart without opening each tooltip.
+            if (itemStack.HasHandleWoodTag()) {
+                sb.Append(" (" + Lang.Get("material-" + itemStack.GetHandleWoodTag()) + ")");
+            }
             if (itemStack.HasWetTreatment()) {
                 sb.Append(Lang.Get("handleiswet"));
             }
@@ -120,6 +143,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                         woodtypeTextPath = ToolsmithConstants.DebarkedWoodBackupPathMinusType + woodtype;
                     }
                     handleTextureTree.SetPartTexturePathFromKey("wood", woodtypeTextPath);
+                    outputSlot.Itemstack.SetHandleWoodTag(woodtype); //Already collapsed to a key the wood stats hold - the veryaged/veryagedrotten folding above runs first.
                     HandlePartDefines handleStats = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(outputSlot.Itemstack.Collectible.Code.Path);
                     handleRenderTree.SetPartShapePath(handleStats.handleShapePath);
                     outputSlot.Itemstack.SetHandleStatTag(handleStats.handleStatTag);

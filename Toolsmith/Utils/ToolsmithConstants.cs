@@ -64,5 +64,6 @@ namespace Toolsmith.Utils {
 
         //The keys for accessing the default stat blocks for the different parts
         public const string DefaultBindingStatKey = "none";
+        public const string DefaultWoodStatKey = "oak"; //Handles predating the wood tag, and the ones with no wood at all (stick, bone, crude), fall back to this. Matches the renderer's own default wood texture.
     }
 }
