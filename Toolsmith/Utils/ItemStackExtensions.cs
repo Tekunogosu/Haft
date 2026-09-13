@@ -286,7 +286,7 @@ namespace Toolsmith.Utils {
                 if (oldHandlePath[0] == "handle" || oldHandlePath[0] == "carpentedhandle") {
                     HandlePartDefines handleStats = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(oldHandlePath[0]);
                     newHandle.SetHandleStatTag(handleStats.handleStatTag);
-                    newHandle.SetHandleWoodTag(ToolsmithConstants.DefaultWoodStatKey); //The old handles recorded no wood, so give the stat the same oak the texture below already assumes.
+                    newHandle.SetHandleMaterialTag(ToolsmithConstants.DefaultMaterialStatKey); //The old handles recorded no wood, so give the stat the same oak the texture below already assumes.
                     renderTree.SetPartShapePath(handleStats.handleShapePath);
                     textureTree.SetPartTexturePathFromKey("wood", ToolsmithConstants.HandleWoodTexturePathMinusType + "oak");
                 }
@@ -570,15 +570,10 @@ namespace Toolsmith.Utils {
                 treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.Get(ToolsmithConstants.DefaultTreatmentTag);
             }
 
-            WoodStatDefines woodStats;
-            if (handle.HasHandleWoodTag()) {
-                woodStats = ToolsmithModSystem.Stats.WoodStats.Get(handle.GetHandleWoodTag());
-            } else { //Sticks, bones and crude handles never carry a wood, and neither do handles saved before the wood tag existed.
-                woodStats = ToolsmithModSystem.Stats.WoodStats.Get(ToolsmithConstants.DefaultWoodStatKey);
-            }
+            MaterialStatDefines materialStats = handle.GetHandleMaterialStats();
 
-            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(baseDur, handleStats, treatmentStats, bindingStats, woodStats);
-            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(baseDur, handleStats, bindingStats, woodStats);
+            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(handleStats, treatmentStats, bindingStats, materialStats);
+            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(handleStats, bindingStats, materialStats);
 
             if (maxHandleDur < 0) {
                 handle.SetPartCurrentDurability((int)handleDur);
@@ -598,7 +593,7 @@ namespace Toolsmith.Utils {
             }
 
             itemStack.SetSpeedBonus(ToolsmithPartStatsHelpers.CalculateSpeedBonus(handleStats, gripStats));
-            itemStack.SetGripChanceToDamage(ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(gripStats));
+            itemStack.SetGripChanceToDamage(ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(gripStats, treatmentStats));
         }
 
         //The Attribute Flags for tools! These will all be similar except for their intended use and name.
@@ -854,20 +849,73 @@ namespace Toolsmith.Utils {
             itemStack.Attributes.RemoveAttribute(ToolsmithAttributes.HandleStatTag);
         }
 
-        public static void SetHandleWoodTag(this ItemStack itemStack, string tag) {
-            itemStack.Attributes.SetString(ToolsmithAttributes.HandleWoodTag, tag);
+        //Everything a handle offers to a part being applied to it: the tags its own part define carries, plus the
+        //tags of whatever it is made of. Gathering both is what lets a rule be written against the material without
+        //splitting the handle parts per material - one "handle" part still covers all thirteen woods, and an oak
+        //handle and a pine handle answer differently because their materials do.
+        public static HashSet<string> GetHandleProvidedTags(this ItemStack handle) {
+            var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (handle?.Collectible?.Code != null) {
+                var part = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(handle.Collectible.Code.Path);
+                if (part?.providesTags != null) {
+                    tags.AddRange(part.providesTags);
+                }
+            }
+
+            var materialStats = handle.GetHandleMaterialStats();
+            if (materialStats?.providesTags != null) {
+                tags.AddRange(materialStats.providesTags);
+            }
+
+            return tags;
         }
 
-        public static string GetHandleWoodTag(this ItemStack itemStack) {
-            return itemStack.Attributes.GetString(ToolsmithAttributes.HandleWoodTag);
+        //Resolves the material stats for a handle, in one place, because two callers need the same answer: the
+        //material the stack records, else oak - the fallback a stick, a bone or a crude handle has always taken,
+        //having no material of its own, and the one a handle that never passed through crafting takes as well.
+        public static MaterialStatDefines GetHandleMaterialStats(this ItemStack handle) {
+            if (handle.HasHandleMaterialTag()) {
+                var tag = handle.GetHandleMaterialTag();
+                if (tag != null && ToolsmithModSystem.Stats.MaterialStats.ContainsKey(tag)) {
+                    return ToolsmithModSystem.Stats.MaterialStats.Get(tag);
+                }
+            }
+
+            return ToolsmithModSystem.Stats.MaterialStats.Get(ToolsmithConstants.DefaultMaterialStatKey);
         }
 
-        public static bool HasHandleWoodTag(this ItemStack itemStack) {
-            return itemStack.Attributes.HasAttribute(ToolsmithAttributes.HandleWoodTag);
+        public static void SetHandleMaterialTag(this ItemStack itemStack, string tag) {
+            itemStack.Attributes.SetString(ToolsmithAttributes.HandleMaterialTag, tag);
         }
 
-        public static void RemoveHandleWoodTag(this ItemStack itemStack) {
-            itemStack.Attributes.RemoveAttribute(ToolsmithAttributes.HandleWoodTag);
+        //Reads the material, migrating a handle saved under the old toolHandleWoodTag name as it goes. The migration
+        //lives here rather than in a separate pass so that every caller gets it without having to remember to ask:
+        //a handle from an older save is rewritten the first time anything looks at it, and a handle that has already
+        //been migrated costs one HasAttribute check.
+        public static string GetHandleMaterialTag(this ItemStack itemStack) {
+            if (itemStack.Attributes.HasAttribute(ToolsmithAttributes.HandleMaterialTag)) {
+                return itemStack.Attributes.GetString(ToolsmithAttributes.HandleMaterialTag);
+            }
+
+            if (itemStack.Attributes.HasAttribute(ToolsmithAttributes.LegacyHandleWoodTag)) {
+                var legacy = itemStack.Attributes.GetString(ToolsmithAttributes.LegacyHandleWoodTag);
+                itemStack.Attributes.SetString(ToolsmithAttributes.HandleMaterialTag, legacy);
+                itemStack.Attributes.RemoveAttribute(ToolsmithAttributes.LegacyHandleWoodTag);
+                return legacy;
+            }
+
+            return null;
+        }
+
+        public static bool HasHandleMaterialTag(this ItemStack itemStack) {
+            return itemStack.Attributes.HasAttribute(ToolsmithAttributes.HandleMaterialTag) ||
+                   itemStack.Attributes.HasAttribute(ToolsmithAttributes.LegacyHandleWoodTag);
+        }
+
+        public static void RemoveHandleMaterialTag(this ItemStack itemStack) {
+            itemStack.Attributes.RemoveAttribute(ToolsmithAttributes.HandleMaterialTag);
+            itemStack.Attributes.RemoveAttribute(ToolsmithAttributes.LegacyHandleWoodTag);
         }
 
         public static void SetHandleGripTag(this ItemStack itemStack, string tag) {
@@ -892,6 +940,14 @@ namespace Toolsmith.Utils {
 
         public static bool HasHandleTreatmentTag(this ItemStack itemStack) {
             return itemStack.Attributes.HasAttribute(ToolsmithAttributes.HandleTreatmentTag);
+        }
+
+        public static void SetReadyToBlue(this ItemStack itemStack) {
+            itemStack.Attributes.SetBool(ToolsmithAttributes.PartReadyToBlue, true);
+        }
+
+        public static bool IsReadyToBlue(this ItemStack itemStack) {
+            return itemStack.Attributes.GetBool(ToolsmithAttributes.PartReadyToBlue, false);
         }
 
         public static void SetWetTreatment(this ItemStack itemStack, int hours) {

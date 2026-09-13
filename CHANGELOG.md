@@ -59,6 +59,14 @@ game now still beats a crude one.
 
 ### Fixes
 
+- A tool built from a head that was sharpened before it was fitted claimed it still needed
+  honing. The free-honing notice was shown whenever no honing had been recorded, and the first
+  honing is deliberately never recorded, so a sharpened head carried nothing across the craft
+  and the finished tool advertised honing it did not need. The notice now also asks whether the
+  edge is actually dull, using the same check the whetstone and grindstone already use to decide
+  when to stop. The free honing is still there to spend; the tool only mentions it once it is
+  worth spending.
+
 - The handle tooltip checked only for a creative slot, so a handle shown in the handbook or a
   trader's inventory still had its attributes read. It now uses the same inventory check as
   every other tool part.

@@ -1,0 +1,142 @@
+{
+	"code": "metalhandle",
+	"tags": [
+		"toolsmith-part",
+		"toolsmith-handle"
+	],
+	"maxstacksize": 4,
+	"behaviors": [
+		{
+			"name": "GroundStorable",
+			"properties": {
+				"layout": "Quadrants",
+				"collisionBox": {
+					"x1": 0,
+					"y1": 0,
+					"z1": 0,
+					"x2": 1,
+					"y2": 0.125,
+					"z2": 1
+				}
+			}
+		},
+		{
+			"name": "toolsmith:ModularPartRenderingFromAttributes",
+			"properties": {
+				"textures": [
+					{
+						"code": "wood",
+						"Default": "game:block/metal/plate/iron",
+						"values": [
+							"game:block/metal/plate/bismuth",
+							"game:block/metal/plate/bismuthbronze",
+							"game:block/metal/plate/blackbronze",
+							"game:block/metal/plate/brass",
+							"game:block/metal/plate/copper",
+							"game:block/metal/ingot/cupronickel",
+							"game:block/metal/plate/electrum",
+							"game:block/metal/plate/gold",
+							"game:block/metal/plate/iron",
+							"game:block/metal/plate/lead",
+							"game:block/metal/plate/meteoriciron",
+							"game:block/metal/plate/molybdochalkos",
+							"game:block/metal/plate/nickel",
+							"game:block/metal/plate/silver",
+							"game:block/metal/plate/steel",
+							"game:block/metal/plate/tin",
+							"game:block/metal/plate/tinbronze",
+							"game:block/metal/plate/zinc"
+						]
+					}
+				],
+				"skipCreativeInventoryAdditions": false,
+				"creativeTabs": [
+					"general",
+					"items"
+				]
+			}
+		}
+	],
+	"attributes": {
+		"rackable": true,
+		"toolrackTransform": {
+			"translation": {
+				"x": 0,
+				"y": 0.6,
+				"z": 0
+			},
+			"scale": 1.25
+		},
+		"handbook": {
+			"groupBy": [
+				"metalhandle"
+			]
+		}
+	},
+	"storageFlags": 257,
+	"shape": {
+		"base": "toolsmith:item/parts/handles/fine/handle"
+	},
+	"creativeinventory": {
+		"general": [
+			"*"
+		],
+		"items": [
+			"*"
+		]
+	},
+	"tpHandTransform": {
+		"translation": {
+			"x": 0,
+			"y": 0,
+			"z": 0.5
+		},
+		"rotation": {
+			"x": 0,
+			"y": 0,
+			"z": 0
+		},
+		"origin": {
+			"x": 0,
+			"y": 0,
+			"z": 0
+		},
+		"scale": 0.58
+	},
+	"guiTransform": {
+		"translation": {
+			"x": 0,
+			"y": 0,
+			"z": 0
+		},
+		"rotation": {
+			"x": -115,
+			"y": -9,
+			"z": 110
+		},
+		"origin": {
+			"x": 1.07,
+			"y": -0.175,
+			"z": 0.75
+		},
+		"scale": 2.55
+	},
+	"groundTransform": {
+		"translation": {
+			"x": 0,
+			"y": 0,
+			"z": 0
+		},
+		"rotation": {
+			"x": 0,
+			"y": 0,
+			"z": 0
+		},
+		"origin": {
+			"x": 0.5,
+			"y": 0,
+			"z": 0.5
+		},
+		"scale": 5
+	}
+}

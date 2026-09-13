@@ -10,6 +10,12 @@ namespace Toolsmith.Config {
     public class ToolsmithStat {
         [JsonProperty]
         public string id = null; //An ID to help access and find what it is - make sure this is the same as the Dictionary Key. It might help to keep an id associated with the stats.
+
+        //What this stat block IS, as arbitrary labels, matched against a part's requiresTags. On a material this is
+        //how "wood" and "metal" become gateable without a handle part existing per material. Same free-string rule as
+        //ToolsmithPart.providesTags - see the comment there.
+        [JsonProperty]
+        public string[] providesTags = new string[0];
     }
 
     public class HandleStatDefines : ToolsmithStat { //In an effort to keep things similarly vanilla for durability values, the baseHPfactor is a multiplier on the base durability of the tool-to-be-crafted
@@ -29,12 +35,17 @@ namespace Toolsmith.Config {
     //The wood a handle was shaped from. Kept as its own stat type rather than folded into HandleStatDefines because
     //the two vary independently - an oak handle and an oak carpented handle share a wood but not a tier, and a
     //crude handle has a tier but no wood at all (it is made from firewood, which carries no wood variant).
-    public class WoodStatDefines : ToolsmithStat {
+    public class MaterialStatDefines : ToolsmithStat {
         [JsonProperty]
-        public float hardnessFactor = -1.0f; //Scales the handle's base durability. Derived from real Janka hardness, oak as the 1.0 baseline.
+        public float densityFactor = -1.0f; //Scales the handle's base durability. Oak is the 1.0 baseline: woods are derived from real Janka hardness, metals sit above the whole wood range.
+
+        //The name densityFactor carries in an older config. Compat mods ship hardnessFactor, so it is still read and
+        //folded into densityFactor at verification time. Only ever written by Json, never read by mod code.
+        [JsonProperty]
+        public float hardnessFactor = -1.0f;
 
         [JsonProperty]
-        public float nailBindingBonus = -1.0f; //Harder wood holds a nail better. Only ever applied to metal bindings - a rope wrap does not care what it is tightened around.
+        public float nailBindingBonus = -1.0f; //A denser material holds a nail better. Only ever applied to metal bindings - a rope wrap does not care what it is tightened around.
     }
 
     public class GripStatDefines : ToolsmithStat {
@@ -57,7 +68,14 @@ namespace Toolsmith.Config {
 
         [JsonProperty]
         public float handleHPbonus = -1.0f; //Treating the handle makes it last longer
-    }
+    
+        //A treated surface resists wear as well as lasting longer: this is the share of handle damage the treatment
+        //shrugs off entirely, multiplied into the same chanceToDamage roll a grip feeds. Scales with the effort the
+        //treatment takes, so a wipe of grease saves a little and a proper blued finish saves the most.
+        //0.0 means no reduction, which is what every wood treatment has until someone decides otherwise.
+        [JsonProperty]
+        public float chanceToDamageReduction = 0.0f;
+}
 
     public class BindingStatDefines : ToolsmithStat {
         [JsonProperty]

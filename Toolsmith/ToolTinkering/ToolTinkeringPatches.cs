@@ -11,6 +11,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using Toolsmith.Client;
 using Toolsmith.Client.Behaviors;
 using Toolsmith.Config;
 using Toolsmith.ToolTinkering.Behaviors;
@@ -552,6 +553,186 @@ namespace Toolsmith.ToolTinkering {
             }
 
             return codes.AsEnumerable();
+        }
+    }
+
+    //A smithing recipe never reaches CollectibleBehavior.OnCreatedByCrafting - that hook is for grid crafting - so a
+    //handle taken off an anvil would carry no material at all and silently read as oak. The anvil finishing a work
+    //item is the only moment where the metal it was worked from is still known, so the material is stamped on here.
+    //
+    //The metal has to be captured in the PREFIX: by the time CheckIfFinished returns, the work item has been consumed
+    //and the output placed, so reading the recipe afterwards finds nothing. The postfix then looks for the finished
+    //handle in the player's hands or the anvil's own slot and tags it.
+    [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringCraftingPatchCategory)]
+    public class AnvilSmithedHandlePatches {
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(BlockEntityAnvil), "CheckIfFinished")]
+        private static void CaptureMetalBeforeFinishing(BlockEntityAnvil __instance, out string __state) {
+            __state = null;
+
+            var outputCode = __instance?.SelectedRecipe?.Output?.Code;
+            if (outputCode == null || !ToolsmithModSystem.Stats.BaseHandleParts.ContainsKey(outputCode.Path)) {
+                return;
+            }
+
+            __state = __instance.SelectedRecipe?.Ingredient?.Code?.EndVariant();
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(BlockEntityAnvil), "CheckIfFinished")]
+        private static void StampMaterialOnSmithedHandle(BlockEntityAnvil __instance, IPlayer byPlayer, string __state) {
+            if (string.IsNullOrEmpty(__state)) {
+                return;
+            }
+
+            var handSlot = byPlayer?.InventoryManager?.ActiveHotbarSlot;
+            if (TryStamp(handSlot, __state)) {
+                return;
+            }
+
+            //Not in hand - a full hotbar drops the output on the ground instead, and the player picks it up later.
+            if (byPlayer?.InventoryManager != null) {
+                foreach (var slot in byPlayer.InventoryManager.GetHotbarInventory()) {
+                    if (TryStamp(slot, __state)) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        private static bool TryStamp(ItemSlot slot, string metal) {
+            var stack = slot?.Itemstack;
+            if (stack?.Collectible?.Code == null) {
+                return false;
+            }
+            if (!ToolsmithModSystem.Stats.BaseHandleParts.ContainsKey(stack.Collectible.Code.Path)) {
+                return false;
+            }
+            if (stack.HasHandleMaterialTag()) {
+                return false;
+            }
+
+            //Everything the grid path sets on a freshly made handle, because a smithed one has been through none of
+            //it: the render tree, the material, the shape and stat tags, and a starting durability.
+            ITreeAttribute multiPartTree = stack.GetMultiPartRenderTree();
+            ITreeAttribute handlePartAndTransformTree = multiPartTree.GetPartAndTransformRenderTree(ToolsmithAttributes.ModularPartHandleName);
+            ITreeAttribute handleRenderTree = handlePartAndTransformTree.GetPartRenderTree();
+            ITreeAttribute handleTextureTree = handleRenderTree.GetPartTextureTree();
+
+            var texturePath = ToolsmithConstants.HandleMetalTexturePathMinusType + metal;
+            if (!ToolsmithModSystem.Api.Assets.Exists(new AssetLocation(texturePath + ".png"))) {
+                texturePath = ToolsmithConstants.IngotMetalBackupPathMinusType + metal;
+            }
+            handleTextureTree.SetPartTexturePathFromKey("wood", texturePath);
+
+            stack.SetHandleMaterialTag(metal);
+
+            var handleStats = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(stack.Collectible.Code.Path);
+            if (handleStats != null) {
+                handleRenderTree.SetPartShapePath(handleStats.handleShapePath);
+                stack.SetHandleStatTag(handleStats.handleStatTag);
+            }
+            stack.SetPartCurrentDurability(1000);
+            stack.SetPartMaxDurability(1000);
+
+            slot.MarkDirty();
+            return true;
+        }
+    }
+
+    //Charcoal bluing, as a forge interaction rather than a rub-on treatment. Charcoal is the packing medium heated
+    //around the part, not something smeared onto it, so it cannot be a treatment part the way grease or vinegar are.
+    //
+    //The process only cares about reaching roughly 300C and does not care how the part cools: the black oxide layer
+    //forms while hot, and traditionally the piece is simply left in air afterwards. So this watches for a handle in a
+    //forge getting hot enough and marks it blued in place - the same item comes out, now treated.
+    [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringCraftingPatchCategory)]
+    public class ForgeBluingPatches {
+
+        private static readonly FieldInfo ForgeContentsField = AccessTools.Field(typeof(BlockEntityForge), "contents");
+        private static readonly FieldInfo ForgeFuelLevelField = AccessTools.Field(typeof(BlockEntityForge), "fuelLevel");
+        private static readonly FieldInfo ForgeBurningField = AccessTools.Field(typeof(BlockEntityForge), "burning");
+
+        private static bool warnedAboutForgeField = false;
+
+        private static ItemStack ForgeContents(BlockEntityForge forge) {
+            //A wrong field name here would fail silently forever, so say so once rather than never bluing anything
+            //and leaving no trace of why.
+            if (ForgeContentsField == null) {
+                if (!warnedAboutForgeField) {
+                    warnedAboutForgeField = true;
+                    ToolsmithModSystem.Logger.Error("Could not find the 'contents' field on BlockEntityForge. Charcoal bluing will never trigger. The field has likely been renamed in this game version.");
+                }
+                return null;
+            }
+
+            return ForgeContentsField.GetValue(forge) as ItemStack;
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(BlockEntityForge), "OnGameTick")]
+        private static void BlueHandleAtTemperature(BlockEntityForge __instance) {
+            //contents is private on BlockEntityForge, so it is read reflectively rather than through a property.
+            var stack = ForgeContents(__instance);
+            if (stack?.Collectible?.Code == null) {
+                return;
+            }
+
+            //Only a treatable handle, and only one not already carrying a treatment.
+            var part = ToolsmithModSystem.Stats.BaseHandleParts.Get(stack.Collectible.Code.Path);
+            if (part == null || !part.canBeTreated) {
+                return;
+            }
+            if (stack.HasHandleTreatmentTag()) {
+                return;
+            }
+
+            //Bluing is a metal finish. The tag check is what keeps it off a wooden handle, which would simply burn.
+            if (!ConfigUtility.TagsSatisfy(new string[] { "metal" }, stack.GetHandleProvidedTags())) {
+                return;
+            }
+
+            //The forge must actually be burning charcoal around the piece. Without this, any handle that happened to
+            //be hot would blue the instant it touched a forge - including one just off the anvil, which passes through
+            //300C on its way down from working heat. Requiring live fuel is what makes bluing a thing the player
+            //chooses to do rather than something that happens to them.
+            if (!(ForgeBurningField?.GetValue(__instance) is bool burning) || !burning) {
+                return;
+            }
+            //fuelLevel is read as a number without assuming int or float - guessing the wrong one would silently
+            //switch bluing off rather than fail loudly.
+            var fuelValue = ForgeFuelLevelField?.GetValue(__instance);
+            if (fuelValue == null || Convert.ToSingle(fuelValue) <= 0f) {
+                return;
+            }
+
+            var temperature = stack.Collectible.GetTemperature(__instance.Api.World, stack);
+
+            //A handle has to be COOLED before it can be blued, then deliberately brought back up. Without this, a
+            //piece taken straight off the anvil and dropped in a lit forge blues on its way down from working heat -
+            //the player never performed the process, they just failed to wait.
+            //
+            //Arming happens here rather than on a tick of the handle itself, because a handle spends almost all its
+            //life outside a forge and ticking every one of them to watch a temperature nothing else reads would cost
+            //far more than it is worth. Cooling below the mark ANYWHERE is what matters, and the forge is the only
+            //place the answer is ever needed, so it is checked on arrival and each tick thereafter.
+            if (temperature < ToolsmithConstants.BluingCooledTemperature) {
+                if (!stack.IsReadyToBlue()) {
+                    stack.SetReadyToBlue();
+                    __instance.MarkDirty(true);
+                }
+                return;
+            }
+
+            //Still hot and never recorded as cooled: this is a piece that came straight from the anvil, so it heats
+            //without blueing. Leaving it in until the fire dies, or pulling it out to cool, arms it for a second pass.
+            if (temperature < ToolsmithConstants.BluingTemperature || !stack.IsReadyToBlue()) {
+                return;
+            }
+
+            stack.SetHandleTreatmentTag(ToolsmithConstants.BluingTreatmentTag);
+            __instance.MarkDirty(true);
         }
     }
 }

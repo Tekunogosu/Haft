@@ -13,6 +13,21 @@ namespace Toolsmith.Config {
 
         [JsonProperty]
         public string id = null;
+
+        //Arbitrary labels describing what this part is, and what it will accept. Two lists rather than one field per
+        //rule, so a new restriction needs no new schema: tag the parts, state the requirement, done.
+        //
+        //providesTags says what this part IS - a treatment tagging itself "wood-treatment", a grip tagging itself
+        //"adhesive-backed". requiresTags says what a part it is applied TO must provide. A part with no requiresTags
+        //restricts nothing, which is why every existing part and every compat mod keeps working untouched.
+        //
+        //Matching is exact, case-insensitive, and ALL of requiresTags must be present. Tags are free strings on
+        //purpose: a content mod can invent its own and gate on it without this mod knowing the name.
+        [JsonProperty]
+        public string[] providesTags = new string[0];
+
+        [JsonProperty]
+        public string[] requiresTags = new string[0];
     }
 
     public class HandlePartDefines : ToolsmithPart { //The ID is mandatory for each of these, it should always be the code of the item as written in the ItemTypes defines. It becomes the Dictionary entry and the search parameter to get that part.

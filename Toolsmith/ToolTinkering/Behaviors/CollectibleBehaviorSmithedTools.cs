@@ -38,7 +38,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             if (!inSlot.Itemstack.Collectible.HasBehavior<CollectibleBehaviorToolBlunt>()) {
                 if (inSlot.Itemstack.HasTotalHoneValue() && inSlot.Itemstack.GetTotalHoneValue() > 0 && inSlot.Itemstack.GetTotalHoneValue() < 1) {
                     workingDsc.AppendLine(Lang.Get("smithedtoolhoninginprogress"));
-                } else if (!inSlot.Itemstack.HasTotalHoneValue()) {
+                } else if (TinkeringUtility.ShouldOfferFreeHoning(inSlot.Itemstack, world)) {
                     workingDsc.AppendLine(Lang.Get("smithedtoolfreehone"));
                 }
                 workingDsc.Insert(startIndex, Lang.Get("toolsharpness", StringHelpers.ColorForDurability(curSharp, maxSharp), curSharp, maxSharp) + '\n');

@@ -4,27 +4,39 @@
 		"treatmentStatTag": "oil",
 		"dryingHours": 24,
 		"isLiquid": true,
-		"litersUsed": 0.1
+		"litersUsed": 0.1,
+		"requiresTags": [
+			"wood"
+		]
 	},
 	{
 		"id": "plantoil-walnut",
 		"treatmentStatTag": "oil",
 		"dryingHours": 24,
 		"isLiquid": true,
-		"litersUsed": 0.1
+		"litersUsed": 0.1,
+		"requiresTags": [
+			"wood"
+		]
 	},
 	{
 		"id": "woodfinish-flax",
 		"treatmentStatTag": "oil",
 		"dryingHours": 24,
 		"isLiquid": true,
-		"litersUsed": 0.05
+		"litersUsed": 0.05,
+		"requiresTags": [
+			"wood"
+		]
 	},
 	{
 		"id": "woodfinish-walnut",
 		"treatmentStatTag": "oil",
 		"dryingHours": 24,
 		"isLiquid": true,
-		"litersUsed": 0.05
+		"litersUsed": 0.05,
+		"requiresTags": [
+			"wood"
+		]
 	}
 ]

@@ -70,6 +70,36 @@ namespace Toolsmith.Utils {
             }
         }
 
+        //Does the target satisfy everything the applied part demands? True when the applied part demands nothing,
+        //which is the common case and the reason adding this breaks nothing that already works.
+        public static bool TagsSatisfy(string[] requiredTags, ICollection<string> providedTags) {
+            if (requiredTags == null || requiredTags.Length == 0) {
+                return true;
+            }
+
+            foreach (var required in requiredTags) {
+                if (string.IsNullOrEmpty(required)) {
+                    continue;
+                }
+
+                var found = false;
+                if (providedTags != null) {
+                    foreach (var provided in providedTags) {
+                        if (string.Equals(provided, required, StringComparison.OrdinalIgnoreCase)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public static bool IsValidTreatmentMaterial(string treatmentMat, Dictionary<string,  TreatmentPartDefines> dict) {
             if (treatmentMat == null) return false;
 

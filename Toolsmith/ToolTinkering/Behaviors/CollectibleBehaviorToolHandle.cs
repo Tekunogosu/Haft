@@ -55,18 +55,19 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                     var totalHandleMult = handleStats.baseHPfactor * (1 + handleStats.selfHPBonus);
                     dsc.AppendLine("");
 
-                    //Only a handle shaped from a support beam carries a wood. Sticks, bones and crude handles never
-                    //had one, and handles saved before the wood tag existed lost theirs, so say so rather than
-                    //printing the oak the stats fall back to as though it had been chosen.
-                    if (inSlot.Itemstack.HasHandleWoodTag()) {
-                        var woodTag = inSlot.Itemstack.GetHandleWoodTag();
-                        var woodStats = ToolsmithModSystem.Stats.WoodStats.Get(woodTag);
-                        dsc.AppendLine(Lang.Get("toolhandlewood", Lang.Get("material-" + woodTag)));
-                        if (woodStats != null) {
-                            dsc.AppendLine(Lang.Get("toolhandlewooddensity", StringHelpers.ColorForMultiplier(woodStats.hardnessFactor), woodStats.hardnessFactor));
+                    //A material is recorded when the handle is made, so only a handle that was actually crafted has one.
+                    //A creative-spawned handle never passed through crafting and genuinely has no material, the same
+                    //as a stick or a bone, so say so rather than printing the oak the stats fall back to as though it
+                    //had been chosen.
+                    if (inSlot.Itemstack.HasHandleMaterialTag()) {
+                        var materialTag = inSlot.Itemstack.GetHandleMaterialTag();
+                        var materialStats = ToolsmithModSystem.Stats.MaterialStats.Get(materialTag);
+                        dsc.AppendLine(Lang.Get("toolhandlewood", Lang.Get("material-" + materialTag)));
+                        if (materialStats != null) {
+                            dsc.AppendLine(Lang.Get("toolhandlewooddensity", StringHelpers.ColorForMultiplier(materialStats.densityFactor), materialStats.densityFactor));
                         }
                     } else if (ToolsmithModSystem.Stats.BaseHandleParts.Get(inSlot.Itemstack.Collectible.Code.Path)?.canBeTreated == true) {
-                        dsc.AppendLine(Lang.Get("toolhandlewoodunknown")); //Only worth saying on a handle that could have had a wood in the first place.
+                        dsc.AppendLine(Lang.Get("toolhandlewoodunknown")); //Only worth saying on a handle that could have had a material in the first place.
                     }
 
                     dsc.AppendLine(Lang.Get("toolhandletotalmult", StringHelpers.ColorForMultiplier(totalHandleMult), float.Truncate(totalHandleMult * 100) / 100));
@@ -76,6 +77,11 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                         var treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.Get(inSlot.Itemstack.GetHandleTreatmentTag());
                         if (treatmentStats != null) {
                             dsc.AppendLine(Lang.Get("toolhandletreatmentbonus", StringHelpers.ColorForBonus(treatmentStats.handleHPbonus), Math.Round(treatmentStats.handleHPbonus * 100)));
+                            //A treatment that also sheds wear says so on its own line, next to the grip's equivalent.
+                            //Silent when it saves nothing, so an untreated-for-wear treatment prints no empty claim.
+                            if (treatmentStats.chanceToDamageReduction > 0.0f) {
+                                dsc.AppendLine(Lang.Get("toolhandletreatmentwear", StringHelpers.ColorForBonus(treatmentStats.chanceToDamageReduction), Math.Round(treatmentStats.chanceToDamageReduction * 100)));
+                            }
                         }
                     }
                     if (inSlot.Itemstack.HasHandleGripTag()) {
@@ -92,8 +98,8 @@ namespace Toolsmith.ToolTinkering.Behaviors {
         public override void GetHeldItemName(StringBuilder sb, ItemStack itemStack) {
             //Named the way the base game names its own wood-typed blocks - "Support beam (Oak)" - so a row of
             //handles in an inventory can be told apart without opening each tooltip.
-            if (itemStack.HasHandleWoodTag()) {
-                sb.Append(" (" + Lang.Get("material-" + itemStack.GetHandleWoodTag()) + ")");
+            if (itemStack.HasHandleMaterialTag()) {
+                sb.Append(" (" + Lang.Get("material-" + itemStack.GetHandleMaterialTag()) + ")");
             }
             if (itemStack.HasWetTreatment()) {
                 sb.Append(Lang.Get("handleiswet"));
@@ -114,7 +120,9 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 if (!slot.Empty && (slot.Itemstack.Collectible.Code != ToolsmithConstants.SandpaperCode || slot.Itemstack.Collectible.Code != ToolsmithConstants.FirewoodCode)) {
                     if (slot.Itemstack.Collectible.Tool != null) {
                         toolSlot = slot;
-                    } else if (slot.Itemstack.Collectible.Code.FirstCodePart() == ToolsmithConstants.HandleBlankCode) {
+                    } else if (slot.Itemstack.Collectible.Code.FirstCodePart() == ToolsmithConstants.HandleBlankCode ||
+                               slot.Itemstack.Collectible.Code.FirstCodePart() == ToolsmithConstants.MetalHandleBlankCode ||
+                               slot.Itemstack.Collectible.Code.FirstCodePart() == ToolsmithConstants.WorkItemFirstCodePart) {
                         blankSlot = slot;
                     } else if (TinkeringUtility.IsValidHandle(slot.Itemstack)) {
                         handleSlot = slot;
@@ -128,22 +136,40 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 }
             }
 
-            if (toolSlot != null && blankSlot != null) {
-                var woodtype = blankSlot.Itemstack.Collectible.LastCodePart();
-                if (!TinkeringUtility.IsStickOrBone(outputSlot.Itemstack) && woodtype != null) {
-                    if (woodtype == "veryaged" || woodtype == "veryagedrotten") {
-                        woodtype = "aged";
+            //Smithing hands in only the work item - there is no hammer among the input slots the way a grid recipe has
+            //its knife - so the blank alone is the whole input there. A grid recipe still requires its tool.
+            var isSmithedBlank = blankSlot != null && blankSlot.Itemstack.Collectible.Code.FirstCodePart() == ToolsmithConstants.WorkItemFirstCodePart;
+            if ((toolSlot != null || isSmithedBlank) && blankSlot != null) {
+                //Both an ingot (grid) and a work item (anvil) are metal blanks. Missing the work item here would send a
+                //smithed handle down the wood texture path and look for a tool texture named after a metal.
+                var isMetalBlank = blankSlot.Itemstack.Collectible.Code.FirstCodePart() == ToolsmithConstants.MetalHandleBlankCode || isSmithedBlank;
+                var materialType = blankSlot.Itemstack.Collectible.LastCodePart();
+                if (!TinkeringUtility.IsStickOrBone(outputSlot.Itemstack) && materialType != null) {
+                    if (!isMetalBlank && (materialType == "veryaged" || materialType == "veryagedrotten")) {
+                        materialType = "aged";
                     }
                     ITreeAttribute multiPartTree = outputSlot.Itemstack.GetMultiPartRenderTree();
                     ITreeAttribute handlePartAndTransformTree = multiPartTree.GetPartAndTransformRenderTree(ToolsmithAttributes.ModularPartHandleName);
                     ITreeAttribute handleRenderTree = handlePartAndTransformTree.GetPartRenderTree();
                     ITreeAttribute handleTextureTree = handleRenderTree.GetPartTextureTree();
-                    var woodtypeTextPath = ToolsmithConstants.HandleWoodTexturePathMinusType + woodtype;
-                    if (!ToolsmithModSystem.Api.Assets.Exists(new AssetLocation(woodtypeTextPath + ".png"))) {
-                        woodtypeTextPath = ToolsmithConstants.DebarkedWoodBackupPathMinusType + woodtype;
+
+                    //Wood and metal differ only in where the texture comes from. A wood has a tool-specific texture
+                    //with a debarked fallback; a metal uses the plate texture the bindings already use, so a metal
+                    //that exists as an ingot has one without anything further being drawn.
+                    string materialTextPath;
+                    if (isMetalBlank) {
+                        materialTextPath = ToolsmithConstants.HandleMetalTexturePathMinusType + materialType;
+                        if (!ToolsmithModSystem.Api.Assets.Exists(new AssetLocation(materialTextPath + ".png"))) {
+                            materialTextPath = ToolsmithConstants.IngotMetalBackupPathMinusType + materialType;
+                        }
+                    } else {
+                        materialTextPath = ToolsmithConstants.HandleWoodTexturePathMinusType + materialType;
+                        if (!ToolsmithModSystem.Api.Assets.Exists(new AssetLocation(materialTextPath + ".png"))) {
+                            materialTextPath = ToolsmithConstants.DebarkedWoodBackupPathMinusType + materialType;
+                        }
                     }
-                    handleTextureTree.SetPartTexturePathFromKey("wood", woodtypeTextPath);
-                    outputSlot.Itemstack.SetHandleWoodTag(woodtype); //Already collapsed to a key the wood stats hold - the veryaged/veryagedrotten folding above runs first.
+                    handleTextureTree.SetPartTexturePathFromKey("wood", materialTextPath);
+                    outputSlot.Itemstack.SetHandleMaterialTag(materialType); //Already collapsed to a key the material stats hold - the veryaged/veryagedrotten folding above runs first.
                     HandlePartDefines handleStats = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(outputSlot.Itemstack.Collectible.Code.Path);
                     handleRenderTree.SetPartShapePath(handleStats.handleShapePath);
                     outputSlot.Itemstack.SetHandleStatTag(handleStats.handleStatTag);
@@ -167,7 +193,12 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 }
                 
                 if (ToolsmithModSystem.Stats.GripParts.ContainsKey(gripOrTreatmentSlot.Itemstack.Collectible.Code.Path)) {
-                    if (handleSlot.Itemstack.HasHandleGripTag()) {
+                    //Same two refusals, in order: a handle already wearing a grip, then a grip this handle cannot
+                    //take. The second is what lets a smooth metal handle demand an adhesive-backed grip while a
+                    //wooden one accepts any - see the tag comment on ToolsmithPart.
+                    if (handleSlot.Itemstack.HasHandleGripTag() ||
+                            !ConfigUtility.TagsSatisfy(ToolsmithModSystem.Stats.GripParts[gripOrTreatmentSlot.Itemstack.Collectible.Code.Path]?.requiresTags,
+                                                       handleSlot.Itemstack.GetHandleProvidedTags())) {
                         outputSlot.Itemstack = null;
                         outputSlot.Itemstack = new ItemStack(ToolsmithModSystem.Api.World.GetBlock(new AssetLocation("game:air")));
                         outputSlot.Itemstack.SetDisposeMeNowPlease();
@@ -218,6 +249,19 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                         }
 
                         var treatmentStatPair = ToolsmithModSystem.Stats.TreatmentParts.TryGetValue(treatment.Collectible.Code.Path);
+
+                        //A treatment can demand things of what it is applied to - beeswax asking for wood, a bluing
+                        //salt asking for metal. The recipe cannot filter this, because treatment recipes are built per
+                        //handle PART and one part covers every wood, so the check belongs here where the handle's
+                        //actual material is known. Refused the same way an already-treated handle is.
+                        if (!ConfigUtility.TagsSatisfy(treatmentStatPair?.requiresTags, handleSlot.Itemstack.GetHandleProvidedTags())) {
+                            outputSlot.Itemstack = null;
+                            outputSlot.Itemstack = new ItemStack(ToolsmithModSystem.Api.World.GetBlock(new AssetLocation("game:air")));
+                            outputSlot.Itemstack.SetDisposeMeNowPlease();
+                            bhHandling = EnumHandling.PreventDefault;
+                            return;
+                        }
+
                         var treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.TryGetValue(treatmentStatPair.treatmentStatTag);
                         var handleStatPair = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(handleSlot.Itemstack.Collectible.Code.Path);
                         outputSlot.Itemstack.SetHandleTreatmentTag(treatmentStats.id);

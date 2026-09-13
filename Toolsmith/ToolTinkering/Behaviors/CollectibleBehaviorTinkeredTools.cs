@@ -73,7 +73,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             if (!inSlot.Itemstack.Collectible.HasBehavior<CollectibleBehaviorToolBlunt>()) {
                 if (inSlot.Itemstack.HasTotalHoneValue() && inSlot.Itemstack.GetTotalHoneValue() > 0 && inSlot.Itemstack.GetTotalHoneValue() < 1) {
                     workingDsc.AppendLine(Lang.Get("tinkeredtoolhoninginprogress"));
-                } else if (!inSlot.Itemstack.HasTotalHoneValue()) {
+                } else if (TinkeringUtility.ShouldOfferFreeHoning(inSlot.Itemstack, world)) {
                     workingDsc.AppendLine(Lang.Get("tinkeredtoolfreehone"));
                 }
             }
@@ -88,8 +88,8 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             //off that stored stack. GetToolhandleForData rather than GetToolhandle: this is a tooltip asking a
             //question, and the mutating version would write a handle onto any tool that had lost one.
             var storedHandle = inSlot.Itemstack.GetToolhandleForData();
-            if (storedHandle != null && storedHandle.HasHandleWoodTag()) {
-                workingDsc.AppendLine(Lang.Get("toolhandlewood", Lang.Get("material-" + storedHandle.GetHandleWoodTag())));
+            if (storedHandle != null && storedHandle.HasHandleMaterialTag()) {
+                workingDsc.AppendLine(Lang.Get("toolhandlewood", Lang.Get("material-" + storedHandle.GetHandleMaterialTag())));
             }
 
             //A tool can be built without a binding at all, so a null here is an ordinary answer rather than missing
@@ -246,12 +246,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 bindingStats = ToolsmithModSystem.Stats.BindingStats.Get(binding.bindingStatTag);
             }
 
-            WoodStatDefines woodStats;
-            if (handleStack.HasHandleWoodTag()) {
-                woodStats = ToolsmithModSystem.Stats.WoodStats.Get(handleStack.GetHandleWoodTag());
-            } else { //Sticks, bones and crude handles never carry a wood, and neither do handles saved before the wood tag existed.
-                woodStats = ToolsmithModSystem.Stats.WoodStats.Get(ToolsmithConstants.DefaultWoodStatKey);
-            }
+            MaterialStatDefines materialStats = handleStack.GetHandleMaterialStats();
 
             //Various math and calculating the end effect of each part here.
             HandleExtraModCompat(allInputslots, outputSlot); //Handle some mod compatability here! Anything that needs a little bit of extra handling before getting the first BaseMaxDurability.
@@ -262,8 +257,8 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             //finished tool, and reading the output stack here would give every tool the same sharpness.
             int maxSharpness = ScientificSmithyCompat.CalculateMaxSharpness(headStack, baseDur);
 
-            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(baseDur, handleStats, treatmentStats, bindingStats, woodStats);
-            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(baseDur, handleStats, bindingStats, woodStats);
+            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(handleStats, treatmentStats, bindingStats, materialStats);
+            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(handleStats, bindingStats, materialStats);
 
             //Apply the end results of that to the tool/parts. Could the parts themselves actually hold the stats...? Eh. Might be faster to just directly apply them to the tool and then update the current HP when it breaks.
             var currentHeadPer = headStack.GetPartRemainingHPPercent(); //If this returns 0, then assume it's full durability since something is unset. Keep this assumption in mind!!!
@@ -303,7 +298,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             outputSlot.Itemstack.SetToolbindingCurrentDurability((int)bindingDur);
 
             var speedBonus = ToolsmithPartStatsHelpers.CalculateSpeedBonus(handleStats, gripStats);
-            var gripChanceDamage = ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(gripStats);
+            var gripChanceDamage = ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(gripStats, treatmentStats);
             outputSlot.Itemstack.SetSpeedBonus(speedBonus);
             outputSlot.Itemstack.SetGripChanceToDamage(gripChanceDamage);
 

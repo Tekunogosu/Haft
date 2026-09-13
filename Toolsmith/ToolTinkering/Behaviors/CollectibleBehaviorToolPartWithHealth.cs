@@ -22,7 +22,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 if (TinkeringUtility.IsValidHead(inSlot.Itemstack)) {
                     if (inSlot.Itemstack.HasTotalHoneValue() && inSlot.Itemstack.GetTotalHoneValue() > 0 && inSlot.Itemstack.GetTotalHoneValue() < 1) {
                         dsc.AppendLine(Lang.Get("toolheadhoninginprogress"));
-                    } else if (!inSlot.Itemstack.HasTotalHoneValue()) {
+                    } else if (TinkeringUtility.ShouldOfferFreeHoning(inSlot.Itemstack, world)) {
                         dsc.AppendLine(Lang.Get("toolheadfreehone"));
                     }
                     if (inSlot.Itemstack.GetPartMaxSharpness() > 0) {

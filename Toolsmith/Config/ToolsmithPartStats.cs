@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Toolsmith.Utils;
 using Vintagestory.GameContent;
 
 namespace Toolsmith.Config {
@@ -20,7 +21,7 @@ namespace Toolsmith.Config {
         public Dictionary<string, GripStatDefines> GripStats = new() { };
         public Dictionary<string, TreatmentStatDefines> TreatmentStats = new() { };
         public Dictionary<string, BindingStatDefines> BindingStats = new() { };
-        public Dictionary<string, WoodStatDefines> WoodStats = new() { };
+        public Dictionary<string, MaterialStatDefines> MaterialStats = new() { };
     }
 
     public static class ToolsmithPartStatsHelpers {
@@ -33,13 +34,18 @@ namespace Toolsmith.Config {
         //Returned as float because callers scale by a remaining-HP percent before rounding; returning int here
         //would round twice and lose durability on every repair.
 
-        //Starts from the tool's own base durability and takes each bonus in turn - the handle's own, the treatment
+        //Starts from a flat base shared by every handle and takes each bonus in turn - the handle's own, the treatment
         //on it, then the binding holding it - each applied to the running total rather than to the base, so they
         //compound rather than simply adding up.
-        //The wood scales the handle's own factor rather than the finished total, so a hard wood and a good treatment
-        //compound with each other instead of being added on at the end independently.
-        public static float CalculateHandleDurability(int baseDur, HandleStatDefines handleStats, TreatmentStatDefines treatmentStats, BindingStatDefines bindingStats, WoodStatDefines woodStats) {
-            var handleDur = baseDur * handleStats.baseHPfactor * woodStats.hardnessFactor;
+        //The material scales the handle's own factor rather than the finished total, so a dense material and a good
+        //treatment compound with each other instead of being added on at the end independently.
+        //
+        //The base is deliberately NOT the tool's own durability. A handle is a bar of steel or a length of oak and
+        //knows nothing about the head fixed to it: scaling it by the head's metal said that the same steel handle was
+        //weak on a copper tool and strong on a steel one, which is backwards - the whole appeal of a good handle is
+        //that it outlives the heads it carries. Each part now derives its durability from what it is actually made of.
+        public static float CalculateHandleDurability(HandleStatDefines handleStats, TreatmentStatDefines treatmentStats, BindingStatDefines bindingStats, MaterialStatDefines woodStats) {
+            var handleDur = ToolsmithConstants.PartDurabilityBase * handleStats.baseHPfactor * woodStats.densityFactor;
             handleDur += handleDur * handleStats.selfHPBonus;
             handleDur += handleDur * treatmentStats.handleHPbonus;
             handleDur += handleDur * bindingStats.handleHPBonus;
@@ -49,11 +55,13 @@ namespace Toolsmith.Config {
         //The binding has fewer terms than the handle: its own factor and bonus, plus whatever support the handle
         //lends it. Nothing a treatment does reaches the binding.
         //
-        //The wood only reaches a binding that is nailed on - isMetal already means exactly that. A wrap of rope or
-        //twine is tightened around the handle rather than driven into it, so how hard the wood is makes no
+        //Shares the handle's flat base, and for the same reason: a twine wrap is a twine wrap whatever it is holding.
+        //
+        //The material only reaches a binding that is nailed on - isMetal already means exactly that. A wrap of rope or
+        //twine is tightened around the handle rather than driven into it, so how dense the handle is makes no
         //difference to how well it holds.
-        public static float CalculateBindingDurability(int baseDur, HandleStatDefines handleStats, BindingStatDefines bindingStats, WoodStatDefines woodStats) {
-            var bindingDur = baseDur * bindingStats.baseHPfactor;
+        public static float CalculateBindingDurability(HandleStatDefines handleStats, BindingStatDefines bindingStats, MaterialStatDefines woodStats) {
+            var bindingDur = ToolsmithConstants.PartDurabilityBase * bindingStats.baseHPfactor;
             bindingDur += bindingDur * bindingStats.selfHPBonus;
             bindingDur += bindingDur * handleStats.bindingHPBonus;
             if (bindingStats.isMetal) {
@@ -67,10 +75,17 @@ namespace Toolsmith.Config {
             return handleStats.speedBonus + gripStats.speedBonus;
         }
 
-        //The chance the handle takes damage at all comes from the grip alone - a hand that does not slip is the
-        //whole of it. Here so every caller reads the stat through the same name as the durability math above.
-        public static float CalculateGripChanceToDamage(GripStatDefines gripStats) {
-            return gripStats.chanceToDamage;
+        //The chance the handle takes damage at all. Two independent things can prevent a knock landing: a grip that
+        //stops the hand slipping, and a treated surface that shrugs the wear off. They multiply rather than add, so
+        //each one removes a share of what still gets through and the pair can never reach a guaranteed save.
+        public static float CalculateGripChanceToDamage(GripStatDefines gripStats, TreatmentStatDefines treatmentStats = null) {
+            var chance = gripStats.chanceToDamage;
+
+            if (treatmentStats != null && treatmentStats.chanceToDamageReduction > 0.0f) {
+                chance *= (1.0f - treatmentStats.chanceToDamageReduction);
+            }
+
+            return chance;
         }
 
         public static void VerifyAndStoreDefinesInDict(List<HandlePartDefines> list, bool runFullCheck, ref Dictionary<string, HandlePartDefines> targetDict) {
@@ -190,21 +205,27 @@ namespace Toolsmith.Config {
             }
         }
 
-        public static void VerifyAndStoreDefinesInDict(List<WoodStatDefines> list, bool runFullCheck, ref Dictionary<string, WoodStatDefines> targetDict) {
+        public static void VerifyAndStoreDefinesInDict(List<MaterialStatDefines> list, bool runFullCheck, ref Dictionary<string, MaterialStatDefines> targetDict) {
             foreach (var entry in list) {
                 if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a WoodStatDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
+                    ToolsmithModSystem.Logger.Error("Attempted to read a MaterialStatDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
                     continue;
                 }
 
+                //An older config, and every compat mod written against one, spells this hardnessFactor. Fold it in
+                //before the check below, so such an entry reads as complete rather than being reported unset.
+                if (entry.densityFactor == -1.0f && entry.hardnessFactor != -1.0f) {
+                    entry.densityFactor = entry.hardnessFactor;
+                }
+
                 if (runFullCheck) {
-                    if (entry.hardnessFactor == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("HardnessFactor for WoodStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 1.0 and continuing, stats will be improper but still function.");
-                        entry.hardnessFactor = 1.0f;
+                    if (entry.densityFactor == -1.0f) {
+                        ToolsmithModSystem.Logger.Error("DensityFactor for MaterialStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 1.0 and continuing, stats will be improper but still function.");
+                        entry.densityFactor = 1.0f;
                     }
 
                     if (entry.nailBindingBonus == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("NailBindingBonus for WoodStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
+                        ToolsmithModSystem.Logger.Error("NailBindingBonus for MaterialStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
                         entry.nailBindingBonus = 0.0f;
                     }
                 }
@@ -212,7 +233,7 @@ namespace Toolsmith.Config {
                 if (!targetDict.ContainsKey(entry.id)) {
                     targetDict[entry.id] = entry;
                 } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a WoodStatDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
+                    ToolsmithModSystem.Logger.Error("Attempted to add a MaterialStatDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
                 }
             }
         }

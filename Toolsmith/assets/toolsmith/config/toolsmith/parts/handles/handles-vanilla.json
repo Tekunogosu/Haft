@@ -38,5 +38,13 @@
 		"handleShapePath": "toolsmith:shapes/item/parts/handles/fine/handle",
 		"canBeTreated": true,
 		"dryingTimeMult": 2.0
+    },
+    {
+		"id": "metalhandle",
+		"handleStatTag": "metal",
+		"canHaveGrip": true,
+		"handleShapePath": "toolsmith:shapes/item/parts/handles/fine/handle",
+		"canBeTreated": true,
+		"dryingTimeMult": 0.5
     }
 ]

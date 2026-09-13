@@ -862,6 +862,21 @@ namespace Toolsmith.ToolTinkering {
             return false;
         }
 
+        /// <summary>
+        /// Whether a tooltip should tell the player this item still has its free first honing to spend.
+        /// </summary>
+        /// <remarks>
+        /// Having never been honed is not on its own worth saying: a head sharpened as a loose part keeps its free
+        /// honing, because SetResultsOfSharpening only records a hone value once the free one is spent, and the
+        /// craft that fits it to a handle carries over a value that was never written. The result is a tool that is
+        /// already sharp and still advertises honing it does not need. Asking whether it is actually dull as well
+        /// is what separates the two, and ToolOrHeadNeedsSharpening is the same test the whetstone and grindstone
+        /// use to decide when to stop, rather than a second opinion about the same question.
+        /// </remarks>
+        public static bool ShouldOfferFreeHoning(ItemStack item, IWorldAccessor world) {
+            return !item.HasTotalHoneValue() && ToolOrHeadNeedsSharpening(item, world);
+        }
+
         public static bool ToolOrHeadNeedsSharpening(ItemStack item, IWorldAccessor world, EntityAgent byEntity = null) {
             int curSharp;
             int maxSharp;

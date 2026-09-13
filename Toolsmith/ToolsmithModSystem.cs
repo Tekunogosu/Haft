@@ -479,10 +479,20 @@ namespace Toolsmith {
                 ToolsmithPartStatsHelpers.VerifyAndStoreDefinesInDict(bindingStat.Value, Config.RunFullJsonVerifying, ref Stats.BindingStats);
             }
 
-            Dictionary<AssetLocation, List<WoodStatDefines>> woodStats = api.Assets.GetMany<List<WoodStatDefines>>(api.Logger, "config/toolsmith/stats/woods");
-            foreach (var woodStat in woodStats) {
-                ToolsmithPartStatsHelpers.VerifyAndStoreDefinesInDict(woodStat.Value, Config.RunFullJsonVerifying, ref Stats.WoodStats);
+            //Both directories are read. stats/materials is where a material belongs now that a handle can be metal as
+            //well as wood, but stats/woods is the path every existing compat mod already ships, so it keeps working
+            //rather than silently contributing nothing.
+            Dictionary<AssetLocation, List<MaterialStatDefines>> materialStats = api.Assets.GetMany<List<MaterialStatDefines>>(api.Logger, "config/toolsmith/stats/materials");
+            foreach (var materialStat in materialStats) {
+                ToolsmithPartStatsHelpers.VerifyAndStoreDefinesInDict(materialStat.Value, Config.RunFullJsonVerifying, ref Stats.MaterialStats);
             }
+
+            Dictionary<AssetLocation, List<MaterialStatDefines>> legacyWoodStats = api.Assets.GetMany<List<MaterialStatDefines>>(api.Logger, "config/toolsmith/stats/woods");
+            foreach (var woodStat in legacyWoodStats) {
+                ToolsmithPartStatsHelpers.VerifyAndStoreDefinesInDict(woodStat.Value, Config.RunFullJsonVerifying, ref Stats.MaterialStats);
+            }
+
+            VerifyMaterialsAreLoaded();
 
             if (Config.RunFullJsonVerifying) {
                 Logger.Debug("Full Json Verification complete! All found errors will have been printed above.");
@@ -492,6 +502,31 @@ namespace Toolsmith {
             SaveStatsToWorldData(api);
             SaveConfigAfterJsonAdditions(api);
             SaveStatsAfterJsonAdditions(api);
+        }
+
+        //Checks that every material this mod's own code names by constant actually has a stat block behind it once
+        //the configs are read. A missing one is not a crash: the lookup falls back to oak, so a handle keeps working
+        //but silently carries the wrong durability, which is exactly the kind of failure that survives a play session
+        //without being noticed. Saying so at startup is what makes it findable.
+        //
+        //This is the check a C# enum could not perform. An enum would guarantee the key is spelled correctly and
+        //guarantee nothing at all about a stat block existing to receive it.
+        private void VerifyMaterialsAreLoaded() {
+            List<string> missing = new();
+            foreach (var material in HandleMaterials.All) {
+                if (!Stats.MaterialStats.ContainsKey(material)) {
+                    missing.Add(material);
+                }
+            }
+
+            if (missing.Count > 0) {
+                Logger.Error("No MaterialStatDefine was loaded for: " + string.Join(", ", missing) +
+                    ". Handles of those materials will fall back to " + ToolsmithConstants.DefaultMaterialStatKey +
+                    " and be given the wrong durability. Check that config/toolsmith/stats/materials and " +
+                    "config/toolsmith/stats/woods contain an entry for each.");
+            } else {
+                Logger.Debug("All " + HandleMaterials.All.Length + " known handle materials resolved to a stat block.");
+            }
         }
 
         private void TryToLoadConfig(ICoreAPI api) { //Created following the tutorial on the Wiki!

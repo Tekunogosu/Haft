@@ -1,0 +1,164 @@
+[
+	{
+		"id": "gold",
+		"densityFactor": 0.55,
+		"nailBindingBonus": 0.04,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "silver",
+		"densityFactor": 0.55,
+		"nailBindingBonus": 0.04,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "zinc",
+		"densityFactor": 0.74,
+		"nailBindingBonus": 0.05,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "lead",
+		"densityFactor": 1.04,
+		"nailBindingBonus": 0.06,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "electrum",
+		"densityFactor": 1.11,
+		"nailBindingBonus": 0.06,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "copper",
+		"densityFactor": 1.3,
+		"nailBindingBonus": 0.06,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "tin",
+		"densityFactor": 1.47,
+		"nailBindingBonus": 0.07,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "molybdochalkos",
+		"densityFactor": 1.58,
+		"nailBindingBonus": 0.07,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "brass",
+		"densityFactor": 1.73,
+		"nailBindingBonus": 0.08,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "bismuthbronze",
+		"densityFactor": 2.0,
+		"nailBindingBonus": 0.09,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "bismuth",
+		"densityFactor": 2.01,
+		"nailBindingBonus": 0.09,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "tinbronze",
+		"densityFactor": 2.15,
+		"nailBindingBonus": 0.09,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "cupronickel",
+		"densityFactor": 2.29,
+		"nailBindingBonus": 0.1,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "blackbronze",
+		"densityFactor": 2.43,
+		"nailBindingBonus": 0.1,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "nickel",
+		"densityFactor": 2.58,
+		"nailBindingBonus": 0.11,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "iron",
+		"densityFactor": 3.0,
+		"nailBindingBonus": 0.12,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "meteoriciron",
+		"densityFactor": 3.42,
+		"nailBindingBonus": 0.13,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	},
+	{
+		"id": "steel",
+		"densityFactor": 4.55,
+		"nailBindingBonus": 0.17,
+		"providesTags": [
+			"metal",
+			"smooth"
+		]
+	}
+]

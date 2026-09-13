@@ -1,67 +1,119 @@
 [
 	{
 		"id": "kapok",
-		"hardnessFactor": 0.75,
-		"nailBindingBonus": -0.1
+		"nailBindingBonus": -0.1,
+		"densityFactor": 0.45,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "pine",
-		"hardnessFactor": 0.825,
-		"nailBindingBonus": -0.07
+		"nailBindingBonus": -0.07,
+		"densityFactor": 0.62,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "redwood",
-		"hardnessFactor": 0.85,
-		"nailBindingBonus": -0.06
+		"nailBindingBonus": -0.09,
+		"densityFactor": 0.5,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "baldcypress",
-		"hardnessFactor": 0.85,
-		"nailBindingBonus": -0.06
+		"nailBindingBonus": -0.08,
+		"densityFactor": 0.55,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "aged",
-		"hardnessFactor": 0.875,
-		"nailBindingBonus": -0.05
+		"nailBindingBonus": -0.05,
+		"densityFactor": 0.7,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "larch",
-		"hardnessFactor": 0.925,
-		"nailBindingBonus": -0.03
+		"nailBindingBonus": -0.04,
+		"densityFactor": 0.72,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "walnut",
-		"hardnessFactor": 0.95,
-		"nailBindingBonus": -0.02
+		"nailBindingBonus": -0.02,
+		"densityFactor": 0.85,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "birch",
-		"hardnessFactor": 0.98,
-		"nailBindingBonus": -0.01
+		"nailBindingBonus": -0.01,
+		"densityFactor": 0.97,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "oak",
-		"hardnessFactor": 1.0,
-		"nailBindingBonus": 0.0
+		"nailBindingBonus": 0.0,
+		"densityFactor": 1.0,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "maple",
-		"hardnessFactor": 1.025,
-		"nailBindingBonus": 0.01
+		"nailBindingBonus": 0.02,
+		"densityFactor": 1.12,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "acacia",
-		"hardnessFactor": 1.075,
-		"nailBindingBonus": 0.03
+		"nailBindingBonus": 0.05,
+		"densityFactor": 1.36,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "purpleheart",
-		"hardnessFactor": 1.2,
-		"nailBindingBonus": 0.08
+		"nailBindingBonus": 0.08,
+		"densityFactor": 1.75,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	},
 	{
 		"id": "ebony",
-		"hardnessFactor": 1.25,
-		"nailBindingBonus": 0.1
+		"nailBindingBonus": 0.1,
+		"densityFactor": 2.2,
+		"providesTags": [
+			"wood",
+			"porous"
+		]
 	}
 ]

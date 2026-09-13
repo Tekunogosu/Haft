@@ -33,5 +33,12 @@
 		"selfHPBonus": 0.1,
 		"bindingHPBonus": 0.4,
 		"speedBonus": 0.1
+	},
+	{
+		"id": "metal",
+		"baseHPfactor": 2.0,
+		"selfHPBonus": 0.15,
+		"bindingHPBonus": 0.4,
+		"speedBonus": -0.15
 	}
 ]
