@@ -1,0 +1,33 @@
+<Project>
+
+  <!--
+    Where the game is installed. Every game reference in this solution resolves through $(VINTAGE_STORY),
+    so it has to be set before MSBuild evaluates a HintPath - otherwise every game type goes unresolved and
+    the whole mod lights up red in the editor.
+
+    An environment variable alone is not enough for that. It works in a terminal that has exported one, but
+    an IDE started from a desktop launcher inherits no shell environment, so the variable is simply absent
+    there and the references break with no obvious cause.
+
+    MSBuild imports this file automatically for every project beneath it, IDE and command line alike, so
+    setting it here covers both. An existing environment variable still wins - Condition only assigns when
+    the property has no value yet - which keeps a machine that installed the game elsewhere working without
+    editing this file.
+  -->
+  <PropertyGroup>
+    <VINTAGE_STORY Condition="'$(VINTAGE_STORY)' == '' AND Exists('$(UserProfile)/.local/share/vintagestory/VintagestoryAPI.dll')">$(UserProfile)/.local/share/vintagestory</VINTAGE_STORY>
+    <VINTAGE_STORY Condition="'$(VINTAGE_STORY)' == '' AND Exists('$(HOME)/.local/share/vintagestory/VintagestoryAPI.dll')">$(HOME)/.local/share/vintagestory</VINTAGE_STORY>
+    <VINTAGE_STORY Condition="'$(VINTAGE_STORY)' == '' AND Exists('$(APPDATA)/Vintagestory/VintagestoryAPI.dll')">$(APPDATA)/Vintagestory</VINTAGE_STORY>
+    <VINTAGE_STORY Condition="'$(VINTAGE_STORY)' == '' AND Exists('$(HOME)/Library/Application Support/vintagestory/VintagestoryAPI.dll')">$(HOME)/Library/Application Support/vintagestory</VINTAGE_STORY>
+  </PropertyGroup>
+
+  <!--
+    Says so plainly when the game was not found, rather than letting it surface as a dozen "could not locate
+    the assembly" warnings that name the missing DLLs but not the reason they are missing.
+  -->
+  <Target Name="WarnOnMissingVintageStory" BeforeTargets="ResolveAssemblyReferences"
+          Condition="'$(VINTAGE_STORY)' == '' OR !Exists('$(VINTAGE_STORY)/VintagestoryAPI.dll')">
+    <Warning Text="VINTAGE_STORY does not point at a Vintage Story install (currently '$(VINTAGE_STORY)'). Game references will not resolve. Set it as an environment variable, or add your install path to Directory.Build.props." />
+  </Target>
+
+</Project>

@@ -19,63 +19,59 @@ namespace Toolsmith.Utils {
         //One owner for the percentage-to-color mapping, so a head, a handle, a binding and a sharpness bar all
         //band at the same thresholds. Returning the color rather than the finished string keeps the wording in the
         //lang file where a translator can reach it.
-        public static string ColorForRemainingPercent(float remainingPercent) {
-            if (remainingPercent >= 1.0f) {
-                return PristineColor;
-            } else if (remainingPercent > 0.66f) {
-                return GoodColor;
-            } else if (remainingPercent > 0.33f) {
-                return WornColor;
-            } else {
-                return PoorColor;
-            }
+        public static string ColorForRemainingPercent(float remainingPercent)
+        {
+            return remainingPercent switch
+            {
+                >= 1.0f => PristineColor,
+                > 0.66f => GoodColor,
+                > 0.33f => WornColor,
+                _ => PoorColor
+            };
         }
 
         //The durability lines carry a current and a max rather than a percent, and a max of zero would otherwise
         //divide by zero on a part whose stats have not been written yet.
-        public static string ColorForDurability(int current, int max) {
-            if (max <= 0) {
-                return UnknownColor;
-            }
-            return ColorForRemainingPercent((float)current / (float)max);
+        public static string ColorForDurability(int current, int max)
+        {
+            return max <= 0 ? UnknownColor : ColorForRemainingPercent((float)current / (float)max);
         }
 
         //The stat lines on a part - multipliers and bonuses - are not a fraction of anything, so they band by sign
         //rather than by threshold: a bonus helps, a malus hurts, and zero is worth neither color.
-        public static string ColorForBonus(double bonus) {
-            if (bonus > 0) {
-                return GoodColor;
-            } else if (bonus < 0) {
-                return PoorColor;
-            } else {
-                return UnknownColor;
-            }
+        public static string ColorForBonus(double bonus)
+        {
+            return bonus switch
+            {
+                > 0 => GoodColor,
+                < 0 => PoorColor,
+                _ => UnknownColor
+            };
         }
 
         //A multiplier is measured against 1.0 rather than against zero, so it needs its own comparison even though
         //it bands to the same three colors.
-        public static string ColorForMultiplier(double multiplier) {
-            if (multiplier > 1.0) {
-                return GoodColor;
-            } else if (multiplier < 1.0) {
-                return PoorColor;
-            } else {
-                return UnknownColor;
-            }
+        public static string ColorForMultiplier(double multiplier)
+        {
+            return multiplier switch
+            {
+                > 1.0 => GoodColor,
+                < 1.0 => PoorColor,
+                _ => UnknownColor
+            };
         }
 
         //Bands a mining speed. 1x is the bare-hands baseline that vanilla itself filters out, so anything actually
         //shown is at least some improvement - the colors separate "worth using this tool" from "barely faster".
-        public static string ColorForMiningSpeed(float speed) {
-            if (speed >= 5.0f) {
-                return PristineColor;
-            } else if (speed >= 3.0f) {
-                return GoodColor;
-            } else if (speed >= 1.5f) {
-                return WornColor;
-            } else {
-                return UnknownColor;
-            }
+        public static string ColorForMiningSpeed(float speed)
+        {
+            return speed switch
+            {
+                >= 5.0f => PristineColor,
+                >= 3.0f => GoodColor,
+                >= 1.5f => WornColor,
+                _ => UnknownColor
+            };
         }
 
         //Deletes the whole line that begins with the given text, including its trailing newline. Vanilla writes
