@@ -1,15 +1,8 @@
-﻿using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Toolsmith.Utils;
 using Vintagestory.API.Client;
-using Vintagestory.Client.NoObf;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Util;
 using Toolsmith.ToolTinkering.Behaviors;
 

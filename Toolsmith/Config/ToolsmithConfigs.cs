@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace Toolsmith.Config {
     public class ToolsmithConfigs {
         public bool AutoUpdateConfigsOnVersionChange = true;
@@ -46,12 +40,6 @@ namespace Toolsmith.Config {
             config.BluntHeadedTools = "";
             config.PartBlacklist = "";
             config.ToolsWithWoodInBindingShape = "";
-        }
-
-        public static void AddToRegexString(List<string> entries, ref string regexString) {
-            for (int i = 0; i < entries.Count; i++) {
-                regexString += entries[i] + "|";
-            }
         }
     }
 }

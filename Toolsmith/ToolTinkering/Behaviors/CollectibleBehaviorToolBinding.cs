@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Utils;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Util;
 
 namespace Toolsmith.ToolTinkering.Behaviors {
-    public class CollectibleBehaviorToolBinding : CollectibleBehavior { //Mostly here just for easy simple detection if something is or is not a tool binding!
+    //Marks a collectible as a tool binding, which is how every binding check in the mod identifies one, and adds the
+    //binding's stats to its tooltip.
+    public class CollectibleBehaviorToolBinding : CollectibleBehavior {
         public CollectibleBehaviorToolBinding(CollectibleObject collObj) : base(collObj) {
 
         }

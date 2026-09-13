@@ -1,25 +1,17 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
+﻿using System;
 using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Client;
-using Toolsmith.Client.Behaviors;
 using Toolsmith.Config;
 using Toolsmith.Utils;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
-using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
-using Vintagestory.Common;
-using Vintagestory.GameContent;
 
 namespace Toolsmith.ToolTinkering.Behaviors {
-    public class CollectibleBehaviorToolHandle : CollectibleBehaviorToolPartWithHealth, IModularPartRenderer { //Mostly here just to allow for easy detection if something is a tool handle!
+    //Marks a collectible as a tool handle and owns everything a handle gains in the grid: its material, its grip and
+    //its treatment, along with the render tree each of those contributes to.
+    public class CollectibleBehaviorToolHandle : CollectibleBehaviorToolPartWithHealth, IModularPartRenderer {
 
         public CollectibleBehaviorToolHandle(CollectibleObject collObj) : base(collObj) {
 
@@ -111,6 +103,15 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             }
         }
 
+        //Refuses a craft the grid would otherwise allow. The output cannot simply be left null - the grid re-runs
+        //matching against whatever sits there - so it is replaced with an air stack flagged for disposal, which
+        //ConsumeCraftingIngredients clears before the player can take it.
+        private static void RefuseCraft(ItemSlot outputSlot, ref EnumHandling bhHandling) {
+            outputSlot.Itemstack = new ItemStack(ToolsmithModSystem.Api.World.GetBlock(new AssetLocation("game:air")));
+            outputSlot.Itemstack.SetDisposeMeNowPlease();
+            bhHandling = EnumHandling.PreventDefault;
+        }
+
         public override void OnCreatedByCrafting(ItemSlot[] allInputslots, ItemSlot outputSlot, IRecipeBase byRecipe, ref EnumHandling bhHandling) {
             if (outputSlot as DummySlot != null) {
                 return;
@@ -132,10 +133,6 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                     } else if (TinkeringUtility.IsValidHandle(slot.Itemstack)) {
                         handleSlot = slot;
                     } else if (slot.Itemstack != null) {
-                        /*if (slot.Itemstack.Collectible.Code.Path.StartsWith(ToolsmithAttributes.OldHandlePrefix)) { //If we find an old handle it's time to convert it to the new ones. Remove this bit later on after some time.
-                            outputSlot.Itemstack = ItemStackExtensions.CheckForOldHandleAndConvert(slot.Itemstack);
-                            return;
-                        }*/
                         gripOrTreatmentSlot = slot;
                     }
                 }
@@ -178,8 +175,8 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                     HandlePartDefines handleStats = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(outputSlot.Itemstack.Collectible.Code.Path);
                     handleRenderTree.SetPartShapePath(handleStats.handleShapePath);
                     outputSlot.Itemstack.SetHandleStatTag(handleStats.handleStatTag);
-                    outputSlot.Itemstack.SetPartCurrentDurability(1000);
-                    outputSlot.Itemstack.SetPartMaxDurability(1000);
+                    outputSlot.Itemstack.SetPartCurrentDurability(ToolsmithConstants.PartDurabilityBase);
+                    outputSlot.Itemstack.SetPartMaxDurability(ToolsmithConstants.PartDurabilityBase);
                     bhHandling = EnumHandling.Handled;
                 }
             } else if (handleSlot != null && gripOrTreatmentSlot != null) {
@@ -213,10 +210,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                                                        handleSlot.Itemstack.GetHandleProvidedTags()) ||
                             !ConfigUtility.TagsSatisfy(handlePartDefine?.requiresTags,
                                                        gripOrTreatmentSlot.Itemstack.GetGripProvidedTags())) {
-                        outputSlot.Itemstack = null;
-                        outputSlot.Itemstack = new ItemStack(ToolsmithModSystem.Api.World.GetBlock(new AssetLocation("game:air")));
-                        outputSlot.Itemstack.SetDisposeMeNowPlease();
-                        bhHandling = EnumHandling.PreventDefault;
+                        RefuseCraft(outputSlot, ref bhHandling);
                     } else {
                         var grip = gripOrTreatmentSlot.Itemstack;
                         var gripWithStats = ToolsmithModSystem.Stats.GripParts[grip.Collectible.Code.Path];
@@ -224,19 +218,9 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                         ITreeAttribute gripPartTree = multiPartTree.GetPartAndTransformRenderTree(ToolsmithAttributes.ModularPartGripName);
                         ITreeAttribute gripRenderTree = gripPartTree.GetPartRenderTree();
                         ITreeAttribute gripTextureTree = gripRenderTree.GetPartTextureTree();
-                        /*if (handleSlot.Itemstack.Collectible.Code.Path == "crudehandle") {
-                            gripRenderTree.SetShapeOverrideTag("-crude");
-                        }*/
 
                         HandlePartDefines handleStats = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(outputSlot.Itemstack.Collectible.Code.Path);
-                        //var splitHandlePath = handleStats.handleShapePath.Split('/');
                         var gripPath = MultiPartRenderingHelpers.ConvertFromGenericHandlePathToGripShapePath(handleStats.handleShapePath, gripWithStats.gripShapePath);
-                            /*splitHandlePath[0];
-                        for (int i = 1; i < splitHandlePath.Length - 1; i++) {
-                            gripPath = gripPath + "/" + splitHandlePath[i];
-                        }
-                        gripPath = gripPath + "/grip/" + gripWithStats.gripShapePath;*/
-
                         gripRenderTree.SetPartShapePath(gripPath);
                         outputSlot.Itemstack.SetHandleGripTag(gripStats.id);
                         if (gripWithStats.gripTextureOverride != "") {
@@ -248,19 +232,14 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                     }
                 } else {
                     if (handleSlot.Itemstack.HasHandleGripTag() || handleSlot.Itemstack.HasHandleTreatmentTag()) {
-                        outputSlot.Itemstack = null;
-                        outputSlot.Itemstack = new ItemStack(ToolsmithModSystem.Api.World.GetBlock(new AssetLocation("game:air")));
-                        outputSlot.Itemstack.SetDisposeMeNowPlease();
-                        bhHandling = EnumHandling.PreventDefault;
+                        RefuseCraft(outputSlot, ref bhHandling);
                     } else {
                         ITreeAttribute handlePartTree = multiPartTree.GetPartAndTransformRenderTree(ToolsmithAttributes.ModularPartHandleName);
                         ITreeAttribute handleRenderTree = handlePartTree.GetPartRenderTree();
                         ITreeAttribute handleTextureTree = handleRenderTree.GetPartTextureTree();
                         var treatment = gripOrTreatmentSlot.Itemstack;
 
-                        if (treatment.Class == EnumItemClass.Block && (treatment.Block as ILiquidInterface) != null) {
-                            treatment = (treatment.Block as ILiquidInterface).GetContent(treatment);
-                        }
+                        treatment = TinkeringUtility.GetBindingContent(treatment);
 
                         var treatmentStatPair = ToolsmithModSystem.Stats.TreatmentParts.TryGetValue(treatment.Collectible.Code.Path);
 
@@ -269,10 +248,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                         //handle PART and one part covers every wood, so the check belongs here where the handle's
                         //actual material is known. Refused the same way an already-treated handle is.
                         if (!ConfigUtility.TagsSatisfy(treatmentStatPair?.requiresTags, handleSlot.Itemstack.GetHandleProvidedTags())) {
-                            outputSlot.Itemstack = null;
-                            outputSlot.Itemstack = new ItemStack(ToolsmithModSystem.Api.World.GetBlock(new AssetLocation("game:air")));
-                            outputSlot.Itemstack.SetDisposeMeNowPlease();
-                            bhHandling = EnumHandling.PreventDefault;
+                            RefuseCraft(outputSlot, ref bhHandling);
                             return;
                         }
 
@@ -304,10 +280,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 }
                 
                 if (handleSlot == null && gripOrTreatmentSlot != null && ToolsmithModSystem.Stats.GripParts.ContainsKey(gripOrTreatmentSlot.Itemstack.Collectible.Code.Path)) { //Copying this down here as well since the changes to the 'valid handle' check resulted in not returning a valid handle when it has a Wet Treatment, so it never hit this check when trying to apply a grip.
-                    outputSlot.Itemstack = null;
-                    outputSlot.Itemstack = new ItemStack(ToolsmithModSystem.Api.World.GetBlock(new AssetLocation("game:air")));
-                    outputSlot.Itemstack.SetDisposeMeNowPlease();
-                    bhHandling = EnumHandling.PreventDefault;
+                    RefuseCraft(outputSlot, ref bhHandling);
                 }
             }
 

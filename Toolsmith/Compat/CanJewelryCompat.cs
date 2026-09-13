@@ -1,4 +1,4 @@
-using canjewelry.src;
+﻿using canjewelry.src;
 using System;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;

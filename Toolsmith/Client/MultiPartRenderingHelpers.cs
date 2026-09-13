@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Config;
-using Toolsmith.ToolTinkering.Behaviors;
 using Toolsmith.ToolTinkering.Items;
 using Toolsmith.Utils;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
 
@@ -398,7 +390,9 @@ namespace Toolsmith.Client {
             return retVal;
         }
 
-        public static void BuildToolRenderFromAllSeparateParts(ItemStack tool, ItemStack head, ItemStack handle, ItemStack binding = null) { //Always try to run this BEFORE putting the tool together! This will hopefully ensure that the proper render data is placed on the items themselves before they are added to the Tool's attributes.
+        //Call this before the parts are consumed: it reads their stacks to build the tool's render tree, so a part
+        //already taken out of its slot has nothing left to read.
+        public static void BuildToolRenderFromAllSeparateParts(ItemStack tool, ItemStack head, ItemStack handle, ItemStack binding = null) {
             var toolType = GetToolTypeFromHeadShapePath(head.Item.Shape.Base.Path);
             if (toolType == null) {
                 return;

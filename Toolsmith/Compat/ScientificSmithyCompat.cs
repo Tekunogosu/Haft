@@ -1,4 +1,4 @@
-using ScientificSmithy.Utils;
+﻿using ScientificSmithy.Utils;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 

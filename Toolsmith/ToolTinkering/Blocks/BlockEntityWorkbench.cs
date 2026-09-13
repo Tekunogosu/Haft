@@ -1,22 +1,14 @@
-﻿using SmithingPlus.Util;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Compat;
-using Toolsmith.ToolTinkering.Behaviors;
 using Toolsmith.ToolTinkering.Drawbacks;
 using Toolsmith.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
-using Vintagestory.Common.Collectible.Block;
 using Vintagestory.GameContent;
 
 namespace Toolsmith.ToolTinkering.Blocks {
@@ -227,7 +219,7 @@ namespace Toolsmith.ToolTinkering.Blocks {
             for (int i = 1; i < 6; i++) {
                 if (!enabledSlots.Contains(i) && !IsSelectSlotEmpty(i)) {
                     var item = Inventory.GetSlotFromSelectionID(i).TakeOutWhole();
-                    DropItemInMiddleOfBench(item, world);
+                    DropInFrontOfBench(item, world);
                 }
             }
         }
@@ -262,26 +254,22 @@ namespace Toolsmith.ToolTinkering.Blocks {
                 if (craftingSlots.Count() > 1) {
                     if (ReforgingUtility.CheckForPossibleMerger(craftingSlots)) {
                         var combinedStack = ReforgingUtility.MergeDupesAndReturn(craftingSlots);
-                        DropItemInMiddleOfBench(combinedStack, world);
+                        DropInFrontOfBench(combinedStack, world);
                         UpdateSlotIndicators(world);
                         PopDisabledSlots(world);
 
-                        if (byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.Tool == EnumTool.Hammer) {
-                            byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.DamageItem(world, byPlayer.Entity, byPlayer.InventoryManager.ActiveHotbarSlot);
-                        }
+                        DamageHammerInHand(world, byPlayer);
                         MarkDirty(redrawOnClient: true);
                         return true;
                     }
 
                     var craftedTool = TinkeringUtility.TryCraftToolFromSlots(craftingSlots, world, blockSel);
                     if (craftedTool != null) {
-                        DropItemInMiddleOfBench(craftedTool, world);
+                        DropInFrontOfBench(craftedTool, world);
                         UpdateSlotIndicators(world);
                         PopDisabledSlots(world);
 
-                        if (byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.Tool == EnumTool.Hammer) {
-                            byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.DamageItem(world, byPlayer.Entity, byPlayer.InventoryManager.ActiveHotbarSlot);
-                        }
+                        DamageHammerInHand(world, byPlayer);
                         MarkDirty(redrawOnClient: true);
                         return true;
                     }
@@ -291,16 +279,29 @@ namespace Toolsmith.ToolTinkering.Blocks {
             }
         }
 
-        private void DropItemInMiddleOfBench(ItemStack item, IWorldAccessor world) {
+        //Drops onto the bench's working edge - the side the player stands at - rather than into the block. A
+        //reforged work item is pushed half a block further out so it does not land on the bench it came off.
+        private void DropInFrontOfBench(ItemStack item, IWorldAccessor world, double extraDistance = 0.0) {
             var facing = BenchFacing;
+            Vec3d pos;
             if (facing == BlockFacing.WEST) {
-                world.SpawnItemEntity(item, new Vec3d(Pos.X + 0.5, Pos.Y + 1.1, Pos.Z));
+                pos = new Vec3d(Pos.X + 0.5, Pos.Y + 1.1, Pos.Z - extraDistance);
             } else if (facing == BlockFacing.EAST) {
-                world.SpawnItemEntity(item, new Vec3d(Pos.X + 0.5, Pos.Y + 1.1, Pos.Z + 1.0));
+                pos = new Vec3d(Pos.X + 0.5, Pos.Y + 1.1, Pos.Z + 1.0 + extraDistance);
             } else if (facing == BlockFacing.SOUTH) {
-                world.SpawnItemEntity(item, new Vec3d(Pos.X, Pos.Y + 1.1, Pos.Z + 0.5));
+                pos = new Vec3d(Pos.X - extraDistance, Pos.Y + 1.1, Pos.Z + 0.5);
             } else {
-                world.SpawnItemEntity(item, new Vec3d(Pos.X + 1.0, Pos.Y + 1.1, Pos.Z + 0.5));
+                pos = new Vec3d(Pos.X + 1.0 + extraDistance, Pos.Y + 1.1, Pos.Z + 0.5);
+            }
+
+            world.SpawnItemEntity(item, pos);
+        }
+
+        //Damages the hammer that drove a bench action, when the player is actually holding one.
+        private static void DamageHammerInHand(IWorldAccessor world, IPlayer byPlayer) {
+            var heldSlot = byPlayer.InventoryManager.ActiveHotbarSlot;
+            if (heldSlot?.Itemstack?.Collectible.Tool == EnumTool.Hammer) {
+                heldSlot.Itemstack.Collectible.DamageItem(world, byPlayer.Entity, heldSlot);
             }
         }
 
@@ -369,20 +370,9 @@ namespace Toolsmith.ToolTinkering.Blocks {
             ReforgingUtility.SetRecipeIDToWorkPiece(workItem, recipe);
             reforgingSlot.Itemstack = null;
             reforgingSlot.MarkDirty();
-            if (byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.Tool == EnumTool.Hammer) {
-                byPlayer.InventoryManager.ActiveHotbarSlot.Itemstack.Collectible.DamageItem(world, byPlayer.Entity, byPlayer.InventoryManager.ActiveHotbarSlot);
-            }
+            DamageHammerInHand(world, byPlayer);
 
-            var facing = BenchFacing;
-            if (facing == BlockFacing.WEST) {
-                world.SpawnItemEntity(workItem, new Vec3d(Pos.X + 0.5, Pos.Y + 1.1, Pos.Z - 0.5));
-            } else if (facing == BlockFacing.EAST) {
-                world.SpawnItemEntity(workItem, new Vec3d(Pos.X + 0.5, Pos.Y + 1.1, Pos.Z + 1.5));
-            } else if (facing == BlockFacing.SOUTH) {
-                world.SpawnItemEntity(workItem, new Vec3d(Pos.X - 0.5, Pos.Y + 1.1, Pos.Z + 0.5));
-            } else {
-                world.SpawnItemEntity(workItem, new Vec3d(Pos.X + 1.5, Pos.Y + 1.1, Pos.Z + 0.5));
-            }
+            DropInFrontOfBench(workItem, world, 0.5);
 
             MarkDirty(redrawOnClient: true);
 
@@ -450,10 +440,6 @@ namespace Toolsmith.ToolTinkering.Blocks {
             if (Api == null || Api.Side.IsServer()) {
                 return;
             }
-            /*if (Inventory.AllSlotsEmpty()) {
-                return;
-            }*/
-
             for (int i = 1; i <= 7; i++) {
                 if (i == 6) {
                     continue;
@@ -513,47 +499,36 @@ namespace Toolsmith.ToolTinkering.Blocks {
             return meshData;
         }
 
+        //The cached marker mesh for whatever this slot is currently asking for. False when the cache has no entry,
+        //which callers report and then carry on without a marker rather than failing the whole slot.
+        protected bool TryGetSlotMarkerMesh(int slotIndex, out MeshData markerMesh) {
+            var markerPath = WhatSlotMarkerIndicator(slotIndex) switch {
+                "head" => ToolsmithConstants.WorkbenchSlotMarkerHeadPath,
+                "handle" => ToolsmithConstants.WorkbenchSlotMarkerHandlePath,
+                "binding" => ToolsmithConstants.WorkbenchSlotMarkerBindingPath,
+                _ => ToolsmithConstants.WorkbenchSlotMarkerEmptyPath
+            };
+
+            if (!slotMeshes.TryGetValue(markerPath, out var cached)) {
+                ToolsmithModSystem.Logger.Warning("Could not get the " + WhatSlotMarkerIndicator(slotIndex) + " slot marker from cache. Marker will not render.");
+                markerMesh = null;
+                return false;
+            }
+
+            markerMesh = cached.Clone();
+            return true;
+        }
+
         protected MeshData GetOrCreateEmptySlotMesh(int slotIndex) {
-            if (capi == null) {
+            if (capi == null || !TryGetSlotMarkerMesh(slotIndex, out MeshData markerMeshData)) {
                 return new MeshData();
             }
 
-            MeshData originalMeshData;
-            MeshData markerMeshData;
-            switch (WhatSlotMarkerIndicator(slotIndex)) {
-                case "head":
-                    if (!slotMeshes.TryGetValue(ToolsmithConstants.WorkbenchSlotMarkerHeadPath, out originalMeshData)) {
-                        ToolsmithModSystem.Logger.Warning("Could not get Head Slot Marker from cache. Marker will not Render.");
-                        return new MeshData();
-                    }
-                    break;
-                case "handle":
-                    if (!slotMeshes.TryGetValue(ToolsmithConstants.WorkbenchSlotMarkerHandlePath, out originalMeshData)) {
-                        ToolsmithModSystem.Logger.Warning("Could not get Handle Slot Marker from cache. Marker will not Render.");
-                        return new MeshData();
-                    }
-                    break;
-                case "binding":
-                    if (!slotMeshes.TryGetValue(ToolsmithConstants.WorkbenchSlotMarkerBindingPath, out originalMeshData)) {
-                        ToolsmithModSystem.Logger.Warning("Could not get Binding Slot Marker from cache. Marker will not Render.");
-                        return new MeshData();
-                    }
-                    break;
-                default:
-                    if (!slotMeshes.TryGetValue(ToolsmithConstants.WorkbenchSlotMarkerEmptyPath, out originalMeshData)) {
-                        ToolsmithModSystem.Logger.Warning("Could not get Empty Slot Marker from cache. Marker will not Render.");
-                        return new MeshData();
-                    }
-                    break;
-            }
-
-            markerMeshData = originalMeshData.Clone();
             var offset = offsetBySlot[slotIndex];
             markerMeshData.Translate(offset.x, offset.y + 0.01f, offset.z);
             markerMeshData.Rotate(new Vec3f(0.5f, 0.5f, 0.5f), 0, ToRadians(BenchYawDegrees()), 0);
 
-            string key = GetCacheKeyForEmptySlot(slotIndex);
-            WorkbenchItemMeshCache[key] = markerMeshData;
+            WorkbenchItemMeshCache[GetCacheKeyForEmptySlot(slotIndex)] = markerMeshData;
 
             return markerMeshData;
         }
@@ -572,38 +547,15 @@ namespace Toolsmith.ToolTinkering.Blocks {
 
             mesh = GetStackOwnMesh(stack);
 
-            MeshData originalMeshData;
             MeshData markerMeshData = null;
             if (ToolsmithModSystem.ClientConfig.ShouldRenderWorkbenchSlotMarkers) {
-                switch (WhatSlotMarkerIndicator(slotIndex)) {
-                    case "head":
-                        if (!slotMeshes.TryGetValue(ToolsmithConstants.WorkbenchSlotMarkerHeadPath, out originalMeshData)) {
-                            ToolsmithModSystem.Logger.Warning("Could not get Head Slot Marker from cache. Marker will not Render, but Item should still show.");
-                        }
-                        break;
-                    case "handle":
-                        if (!slotMeshes.TryGetValue(ToolsmithConstants.WorkbenchSlotMarkerHandlePath, out originalMeshData)) {
-                            ToolsmithModSystem.Logger.Warning("Could not get Handle Slot Marker from cache. Marker will not Render, but Item should still show.");
-                        }
-                        break;
-                    case "binding":
-                        if (!slotMeshes.TryGetValue(ToolsmithConstants.WorkbenchSlotMarkerBindingPath, out originalMeshData)) {
-                            ToolsmithModSystem.Logger.Warning("Could not get Binding Slot Marker from cache. Marker will not Render, but Item should still show.");
-                        }
-                        break;
-                    default:
-                        if (!slotMeshes.TryGetValue(ToolsmithConstants.WorkbenchSlotMarkerEmptyPath, out originalMeshData)) {
-                            ToolsmithModSystem.Logger.Warning("Could not get Empty Slot Marker from cache. Marker will not Render, but Item should still show.");
-                        }
-                        break;
-                }
-                markerMeshData = originalMeshData.Clone();
+                TryGetSlotMarkerMesh(slotIndex, out markerMeshData);
             }
 
             //Nothing to render the stack with. A slot marker is still worth showing on its own, so that is returned
             //where one was built; otherwise the slot renders empty.
             if (mesh == null && !TryTesselateStackMesh(stack, out mesh)) {
-                if (ToolsmithModSystem.ClientConfig.ShouldRenderWorkbenchSlotMarkers && markerMeshData != null) {
+                if (markerMeshData != null) {
                     WorkbenchItemMeshCache[GetCacheKeyForItem(stack, slotIndex)] = markerMeshData;
                     return markerMeshData;
                 }

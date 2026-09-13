@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Compat;
 using Toolsmith.Config;
 using Toolsmith.Utils;
@@ -11,11 +9,9 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.MathTools;
-using Vintagestory.ServerMods.NoObf;
 using Toolsmith.ToolTinkering.Items;
 using Toolsmith.ToolTinkering.Behaviors;
 using Toolsmith.Client;
-using System.Reflection.Metadata.Ecma335;
 using Vintagestory.GameContent;
 using Vintagestory.API.Config;
 using Toolsmith.ToolTinkering.Drawbacks;
@@ -23,7 +19,9 @@ using Vintagestory.API.Datastructures;
 using Newtonsoft.Json.Linq;
 
 namespace Toolsmith.ToolTinkering {
-    //This is beginning to hold the MEAT of the whole tinkering system. It has various helper functions that are being used in multiple places to help keep everything just running the single code calls and ensuring it isn't spaghetti while I add more ways to do the same things.
+    //The shared operations of the tinkering system: identifying parts, crafting and breaking tools, and the three
+    //steps of honing. Anything a tool, a part, a block or a patch all need to agree on lives here rather than being
+    //answered separately in each of them.
     public static class TinkeringUtility {
 
         static int[] sharpnessColors = new int[11] {
@@ -144,60 +142,37 @@ namespace Toolsmith.ToolTinkering {
             }
         }
 
-        //For rendering the durability bar to be used in the transpiler. Generally for just Tinkered Tools and Parts here, smithed ones can use the default!
+        //The durability bar on a tinkered tool shows whichever part is closest to giving out, since that part is what
+        //ends the tool. A loose part shows its own; anything else falls through to vanilla.
+        //
+        //A tool missing any of the three part attributes has not been initialized yet, so its vanilla durability is
+        //the only figure available and is used until something writes the parts.
         public static int FindLowestCurrentDurabilityForBar(ItemStack itemStack) {
             if (itemStack.Collectible.HasBehavior<CollectibleBehaviorTinkeredTools>()) {
                 if (!itemStack.HasToolheadCurrentDurability() || !itemStack.HasToolhandleCurrentDurability() || !itemStack.HasToolbindingCurrentDurability()) {
                     return itemStack.Collectible.GetRemainingDurability(itemStack);
                 }
-                var head = itemStack.GetToolheadCurrentDurability();
-                var handle = itemStack.GetToolhandleCurrentDurability();
-                var binding = itemStack.GetToolbindingCurrentDurability();
-                int lowest;
 
-                if (binding < handle) {
-                    lowest = binding;
-                } else {
-                    lowest = handle;
-                }
-                if (lowest < head) {
-                    return lowest;
-                } else {
-                    return head;
-                }
+                return Math.Min(itemStack.GetToolheadCurrentDurability(), Math.Min(itemStack.GetToolhandleCurrentDurability(), itemStack.GetToolbindingCurrentDurability()));
             } else if (IsValidHead(itemStack) || IsValidHandle(itemStack)) {
                 return itemStack.GetPartCurrentDurability();
-            } else {
-                return itemStack.Collectible.GetRemainingDurability(itemStack);
             }
+
+            return itemStack.Collectible.GetRemainingDurability(itemStack);
         }
 
-        //Used just like the above, but for the max durabilities!
         public static int FindLowestMaxDurabilityForBar(ItemStack itemStack) {
             if (itemStack.Collectible.HasBehavior<CollectibleBehaviorTinkeredTools>()) {
                 if (!itemStack.HasToolhandleMaxDurability() || !itemStack.HasToolbindingMaxDurability()) {
                     return itemStack.Collectible.GetMaxDurability(itemStack);
                 }
-                var head = itemStack.GetToolheadMaxDurability();
-                var handle = itemStack.GetToolhandleMaxDurability();
-                var binding = itemStack.GetToolbindingMaxDurability();
-                int lowest;
 
-                if (binding < handle) {
-                    lowest = binding;
-                } else {
-                    lowest = handle;
-                }
-                if (lowest < head) {
-                    return lowest;
-                } else {
-                    return head;
-                }
+                return Math.Min(itemStack.GetToolheadMaxDurability(), Math.Min(itemStack.GetToolhandleMaxDurability(), itemStack.GetToolbindingMaxDurability()));
             } else if (IsValidHead(itemStack) || IsValidHandle(itemStack)) {
                 return itemStack.GetPartMaxDurability();
-            } else {
-                return itemStack.Collectible.GetMaxDurability(itemStack);
             }
+
+            return itemStack.Collectible.GetMaxDurability(itemStack);
         }
 
         /// <summary>
@@ -310,10 +285,10 @@ namespace Toolsmith.ToolTinkering {
                     toolHead.SetTotalHoneValue(brokenToolStack.GetTotalHoneValue());
                 }
             } else if (remainingHeadDur <= 0) {
-                headBroke = true; //This right here might be key for compatability sake. The way I built the whole system runs off the assumption that the Tool's Head determines the tool.
-                                  //Thus, it can be considered that a tool does not fully "break" in the vanilla sense until the Head itself breaks, it only "falls apart" ie: the tool head flies off the handle, there's possible durability left on both.
-                                  //Because of this, always need to consider the possibility of dropping a handle or binder, but if the 'Head' is broken, we also want to run other mod's 'on damage' calls along with vanilla.
-                                  //Anything below that checks for !headBroke is looking to see if the Tool should be "Broken" or simply "Fallen Apart" in this sense, if it's fallen apart, do similar checks to vanilla tool breaking locally here. Otherwise let Vanilla code deal with it, since it's all or nothing after this patch is done.
+                //The head is what makes a tool a tool: only a broken head is a break in the vanilla sense, where
+                //other mods' on-damage handling should run. A handle or binding giving out instead leaves the tool
+                //"fallen apart" - its surviving parts are handed back here and vanilla is never told it broke.
+                headBroke = true;
             }
 
             if (ToolsmithModSystem.Api.ModLoader.IsModEnabled("canjewelry")) {
@@ -334,9 +309,6 @@ namespace Toolsmith.ToolTinkering {
 
                 if (handlePercentDamage > comparedPercent) {
                     toolHandle = handleToCheck.Clone();
-                    /*if (toolHandle.HasMultiPartRenderTree()) {
-
-                    }*/
                 }
             }
             if (toolBinding != null) { //Binding doesn't always drop, only if the durability is above the threshold, and then if it's below, it breaks and if made of metal, drops some bits
@@ -475,6 +447,27 @@ namespace Toolsmith.ToolTinkering {
             return !toolFellApart;
         }
 
+        //A tool's durability as the game sees it is the head's, scaled up by the config multiplier. Both tool
+        //behaviors report it the same way, so the multiplier lives in one place rather than in each of them.
+        public static int ScaleToHeadDurability(int durability) {
+            return (int)((double)durability * ToolsmithModSystem.Config.HeadDurabilityMult);
+        }
+
+        //How much a tool's sharpness alone changes its mining speed. A keen edge cuts faster and a dull one drags;
+        //between those bands sharpness costs nothing. A tinkered tool adds its handle's speed bonus on top of this,
+        //which is the only way the two tool kinds differ here.
+        public static float SharpnessMiningSpeedMultiplier(ItemStack itemstack) {
+            float speedMult = 1f;
+            var sharpnessPer = itemstack.GetToolSharpnessPercent();
+            if (sharpnessPer >= 0.9) {
+                speedMult += speedMult * ToolsmithConstants.HighSharpnessSpeedBonusMult;
+            } else if (sharpnessPer <= 0.33) {
+                speedMult += speedMult * ToolsmithConstants.LowSharpnessSpeedMalusMult;
+            }
+
+            return speedMult;
+        }
+
         public static ItemWhetstone WhetstoneInOffhand(EntityAgent byEntity) {
             if (byEntity.LeftHandItemSlot.Empty) {
                 return null;
@@ -513,24 +506,15 @@ namespace Toolsmith.ToolTinkering {
                 return true;
             }
 
-            if (stack.Collectible.ItemClass == EnumItemClass.Item) {
-                return stack.Collectible.HasBehavior<CollectibleBehaviorToolBinding>(); //ToolsmithConstants.ToolsmithBindingItemTag.isPresentIn(ref stack.Item.Tags);
-            } else {
-                if (stack.Block as BlockLiquidContainerBase != null) {
-                    var liquidContainer = stack.Block as BlockLiquidContainerBase;
-                    var liquid = liquidContainer.GetContent(stack);
-                    if (liquid != null) {
-                        var bindingPart = ToolsmithModSystem.Stats.BindingParts.TryGetValue(liquid.Collectible.Code.Path);
-                        if (bindingPart != null) {
-                            return liquidContainer.GetCurrentLitres(stack) >= bindingPart.litersUsed;
-                        }
-                    }
-
-                    return false;
-                } else {
-                    return stack.Collectible.HasBehavior<CollectibleBehaviorToolBinding>(); //ToolsmithConstants.ToolsmithBindingBlockTag.isPresentIn(ref stack.Block.Tags);
-                }
+            var liquidContainer = stack.Block as BlockLiquidContainerBase;
+            if (liquidContainer == null) {
+                return stack.Collectible.HasBehavior<CollectibleBehaviorToolBinding>();
             }
+
+            //A container counts only when it actually holds enough of a binding liquid to use.
+            var liquid = liquidContainer.GetContent(stack);
+            var bindingPart = liquid == null ? null : ToolsmithModSystem.Stats.BindingParts.TryGetValue(liquid.Collectible.Code.Path);
+            return bindingPart != null && liquidContainer.GetCurrentLitres(stack) >= bindingPart.litersUsed;
         }
 
         //Answers "is this stack a binding" - nothing is not a binding. Use this when picking a binding out of a set
@@ -544,11 +528,85 @@ namespace Toolsmith.ToolTinkering {
             return IsValidBinding(stack);
         }
 
+        //The binding a stack represents. A binding can be an item held directly or a liquid inside a container, and
+        //every caller that wants the binding itself rather than what is holding it has to unwrap the second case.
+        //Tested against ILiquidInterface rather than BlockLiquidContainerBase so a container from another mod that
+        //implements the interface without deriving from that class still gives up its contents.
+        public static ItemStack GetBindingContent(ItemStack stack) {
+            var container = stack?.Block as ILiquidInterface;
+            if (container != null) {
+                return container.GetContent(stack);
+            }
+
+            return stack;
+        }
+
+        //Takes the binding out of the slot it was supplied from: a measured draw for a liquid, one item otherwise.
+        //How much liquid a binding uses is a property of the binding part, so a container is never emptied by a
+        //fixed amount.
+        public static void ConsumeBindingFromSlot(ItemSlot bindingSlot) {
+            if (bindingSlot == null || bindingSlot.Empty) {
+                return;
+            }
+
+            var liquidContainer = bindingSlot.Itemstack.Block as BlockLiquidContainerBase;
+            if (liquidContainer != null) {
+                var binding = liquidContainer.GetContent(bindingSlot.Itemstack);
+                var bindingPart = ToolsmithModSystem.Stats.BindingParts.TryGetValue(binding.Collectible.Code.Path);
+                liquidContainer.TryTakeLiquid(bindingSlot.Itemstack, bindingPart.litersUsed);
+            } else {
+                bindingSlot.TakeOut(1);
+            }
+
+            bindingSlot.MarkDirty();
+        }
+
+        //Runs the crafting hooks a tool built outside the grid would otherwise never see. Both ways of building a
+        //tinkered tool - assembled in hand from a bundle, or hammered together on the workbench - go through this, so
+        //a mod hooking OnCreatedByCrafting sees the same call either way.
+        //
+        //Returns null when the head has no tool registered against it, which is the one case neither caller can
+        //proceed from.
+        //
+        //ConsumeCraftingIngredients is called for ItemRarity's sake. In the grid it runs after OnCreatedByCrafting,
+        //when the player takes the item, rather than before it as here.
+        //buildRender runs after the tool stack exists but BEFORE the crafting hooks, because it reads the input part
+        //stacks and ConsumeCraftingIngredients is free to consume them.
+        private static ItemStack CraftToolFromParts(IWorldAccessor world, ItemStack head, ItemSlot[] inputSlots, string recipeName, Action<ItemStack> buildRender = null) {
+            CollectibleObject craftedTool;
+            if (!RecipeRegisterModSystem.TinkerToolGridRecipes.TryGetValue(head.Collectible.Code.ToString(), out craftedTool)) {
+                return null;
+            }
+
+            ItemStack craftedItemStack = new ItemStack(world.GetItem(craftedTool.Code), 1);
+            ItemSlot placeholderOutput = new ItemSlot(new DummyInventory(world.Api));
+            placeholderOutput.Itemstack = craftedItemStack;
+
+            TreeAttribute applyQuenchable = new TreeAttribute();
+            applyQuenchable.SetBool("applyquenchablebuffs", true);
+
+            GridRecipe dummyRecipe = new() {
+                AverageDurability = false,
+                Output = new() {
+                    ResolvedItemStack = craftedItemStack,
+                    RecipeAttributes = new JsonObject(JToken.Parse(applyQuenchable.ToJsonToken()))
+                },
+                Name = recipeName == null ? null : new AssetLocation(recipeName)
+            };
+
+            buildRender?.Invoke(craftedItemStack);
+
+            craftedItemStack.Collectible.ConsumeCraftingIngredients(inputSlots, placeholderOutput, dummyRecipe);
+            craftedItemStack.Collectible.OnCreatedByCrafting(inputSlots, placeholderOutput, dummyRecipe);
+
+            return craftedItemStack;
+        }
+
         public static void AssemblePartBundle(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel) {
             ItemStack bundle = new ItemStack(byEntity.World.GetItem(ToolsmithConstants.ToolBundleCode), 1);
             ItemSlot handleSlot = byEntity.LeftHandItemSlot;
             ItemStack head = slot.TakeOut(1);
-            ItemStack handle = handleSlot.TakeOut(1); //Take out one here to not end up adding things to the initial stack. Whoops. That's why it was applying the render info to a full stack of handles.
+            ItemStack handle = handleSlot.TakeOut(1); //One handle, not the whole stack: render data written to the stack would apply to every handle in it.
 
             MultiPartRenderingHelpers.BuildToolRenderFromHeadAndHandle(bundle, head, handle);
 
@@ -557,99 +615,50 @@ namespace Toolsmith.ToolTinkering {
 
             handleSlot.MarkDirty();
             ItemStack tempHolder = slot.Itemstack;
-            slot.Itemstack = bundle; //Above holds the possible multiple-stacked Toolheads, this finally gives the crafted tool to slot that previously had the head(s)
+            slot.Itemstack = bundle; //The bundle takes the head's slot; anything else stacked there is handed back below.
             slot.MarkDirty();
             if (tempHolder != null) {
-                if (!byEntity.TryGiveItemStack(tempHolder)) { //This should hopefully return any remainder!
+                if (!byEntity.TryGiveItemStack(tempHolder)) { //Whatever else was stacked in the head's slot goes back to the player, or on the ground.
                     byEntity.World.SpawnItemEntity(tempHolder, byEntity.Pos.XYZ);
                 }
             }
         }
 
         public static void AssembleFullTool(ItemSlot bundleSlot, EntityAgent byEntity, BlockSelection blockSel) {
-            CollectibleObject craftedTool;
             ItemStack head = bundleSlot.Itemstack.GetToolhead();
-            var success = RecipeRegisterModSystem.TinkerToolGridRecipes.TryGetValue(head.Collectible.Code.ToString(), out craftedTool);
-            if (success) {
-                ItemStack craftedItemStack = new ItemStack(byEntity.World.GetItem(craftedTool.Code), 1); //Create the tool in question
-                ItemSlot placeholderOutput = new ItemSlot(new DummyInventory(ToolsmithModSystem.Api));
-                placeholderOutput.Itemstack = craftedItemStack;
-                TreeAttribute applyQuenchable = new TreeAttribute();
-                applyQuenchable.SetBool("applyquenchablebuffs", true);
+            ItemSlot headSlot = new ItemSlot(new DummyInventory(ToolsmithModSystem.Api)) { Itemstack = head };
+            ItemSlot handleSlot = new ItemSlot(new DummyInventory(ToolsmithModSystem.Api)) { Itemstack = bundleSlot.Itemstack.GetToolhandle() };
+            ItemSlot bindingSlot = byEntity.LeftHandItemSlot;
 
-                GridRecipe DummyRecipe = new() {
-                    AverageDurability = false,
-                    Output = new() {
-                        ResolvedItemStack = craftedItemStack,
-                        RecipeAttributes = new JsonObject(JToken.Parse(applyQuenchable.ToJsonToken()))
-                    },
-                    Name = new AssetLocation("toolsmith:inhandtinkertoolcrafting")
-                };
+            //The binding is optional, and the offhand is where it comes from when assembling in hand.
+            ItemSlot[] inputSlots = bindingSlot.Empty
+                ? new ItemSlot[] { headSlot, handleSlot }
+                : new ItemSlot[] { headSlot, handleSlot, bindingSlot };
 
-                ItemStack handle = bundleSlot.Itemstack.GetToolhandle();
-                ItemSlot headSlot = new ItemSlot(new DummyInventory(ToolsmithModSystem.Api));
-                headSlot.Itemstack = head;
-                ItemSlot handleSlot = new ItemSlot(new DummyInventory(ToolsmithModSystem.Api));
-                handleSlot.Itemstack = handle;
-                ItemSlot bindingSlot = byEntity.LeftHandItemSlot;
+            var craftedItemStack = CraftToolFromParts(byEntity.World, head, inputSlots, "toolsmith:inhandtinkertoolcrafting");
+            if (craftedItemStack == null) {
+                return;
+            }
 
-                ItemSlot[] inputSlots;
-                if (bindingSlot.Empty) {
-                    inputSlots = new ItemSlot[] { headSlot, handleSlot };
-                } else {
-                    inputSlots = new ItemSlot[] { headSlot, handleSlot, bindingSlot };
-                }
-
-                craftedItemStack.Collectible.ConsumeCraftingIngredients(inputSlots, placeholderOutput, DummyRecipe); //This line is needed because of ItemRarity, but at the same time, this is technically called _AFTER_ the 'onCreatedByCrafting' line, when the player actually clicks to take the item...
-                                                                                                                     //Might be a good idea to reconsider when the whole Tinker Tool Crafting logic is called, but... Would require patching this call, and it's ONLY for Item Rarity so far, not exactly a priority by a long shot. Leaving this note incase something else uses this, but also probably not a big deal to make the change either?
-                craftedItemStack.Collectible.OnCreatedByCrafting(inputSlots, placeholderOutput, DummyRecipe); //Hopefully call this just like it would if properly crafted in the grid!
-
-                if (!bundleSlot.Itemstack.HasBundleHasGenericParts()) {
-                    var successfulBindingAdd = false;
-                    if (!bindingSlot.Empty) {
-                        if (bindingSlot.Itemstack.Block as BlockLiquidContainerBase != null) {
-                            var liquidContainer = bindingSlot.Itemstack.Block as BlockLiquidContainerBase;
-                            var binding = liquidContainer.GetContent(bindingSlot.Itemstack);
-                            successfulBindingAdd = MultiPartRenderingHelpers.AddBindingToExistingToolRender(bundleSlot.Itemstack, binding);
-                        } else {
-                            successfulBindingAdd = MultiPartRenderingHelpers.AddBindingToExistingToolRender(bundleSlot.Itemstack, bindingSlot.Itemstack);
-                        }
-                    }
-                    if (!successfulBindingAdd) {
-                        var toolType = MultiPartRenderingHelpers.GetToolTypeFromHeadShapePath(head.Item.Shape.Base.Path);
-                        if (toolType != null && ToolsmithModSystem.ToolsWithWoodInBindingShapes.Contains(toolType)) {
-                            MultiPartRenderingHelpers.AddWoodPartsOfBindingToExistingToolRender(bundleSlot.Itemstack);
-                        }
-                    }
-                    craftedItemStack.SetMultiPartRenderTree(bundleSlot.Itemstack.GetMultiPartRenderTree());
-                }
-
+            //The bundle already carries the render tree its head and handle built, so the binding is added onto that
+            //rather than the whole tool being rebuilt from parts.
+            if (!bundleSlot.Itemstack.HasBundleHasGenericParts()) {
+                var successfulBindingAdd = false;
                 if (!bindingSlot.Empty) {
-                    if (bindingSlot.Itemstack.Block as BlockLiquidContainerBase != null) {
-                        var liquidContainer = bindingSlot.Itemstack.Block as BlockLiquidContainerBase;
-                        var binding = liquidContainer.GetContent(bindingSlot.Itemstack);
-                        var bindingPart = ToolsmithModSystem.Stats.BindingParts.TryGetValue(binding.Collectible.Code.Path);
-                        liquidContainer.TryTakeLiquid(bindingSlot.Itemstack, bindingPart.litersUsed);
-                        bindingSlot.MarkDirty();
-                    } else {
-                        bindingSlot.TakeOut(1);
-                        bindingSlot.MarkDirty();
+                    successfulBindingAdd = MultiPartRenderingHelpers.AddBindingToExistingToolRender(bundleSlot.Itemstack, GetBindingContent(bindingSlot.Itemstack));
+                }
+                if (!successfulBindingAdd) {
+                    var toolType = MultiPartRenderingHelpers.GetToolTypeFromHeadShapePath(head.Item.Shape.Base.Path);
+                    if (toolType != null && ToolsmithModSystem.ToolsWithWoodInBindingShapes.Contains(toolType)) {
+                        MultiPartRenderingHelpers.AddWoodPartsOfBindingToExistingToolRender(bundleSlot.Itemstack);
                     }
                 }
-                bundleSlot.Itemstack = craftedItemStack;
-                bundleSlot.MarkDirty();
+                craftedItemStack.SetMultiPartRenderTree(bundleSlot.Itemstack.GetMultiPartRenderTree());
             }
-        }
 
-        //Older code now, may be repurposed for the workbench later on.
-        public static ItemSlot SearchForPossibleBindings(IPlayer player) { //Searches only the Hotbar just for efficiency sake! Also kinda ease of use that you don't have to dump EVERYTHING on the ground that might be a binding. Just store it in bags.
-            IInventory hotbar = player.InventoryManager.GetHotbarInventory();
-            foreach (var slot in hotbar.Where(s => s.Itemstack != null)) {
-                if (slot.Itemstack.Collectible.HasBehavior<CollectibleBehaviorToolBinding>()) {
-                    return slot;
-                }
-            }
-            return null;
+            ConsumeBindingFromSlot(bindingSlot);
+            bundleSlot.Itemstack = craftedItemStack;
+            bundleSlot.MarkDirty();
         }
 
         //Why a set of slots cannot be crafted into a tool. Every value other than None is something the player can
@@ -748,53 +757,27 @@ namespace Toolsmith.ToolTinkering {
                 return null;
             }
 
-            CollectibleObject craftedTool;
-            var success = RecipeRegisterModSystem.TinkerToolGridRecipes.TryGetValue(sortedSlots[0].Itemstack.Collectible.Code.ToString(), out craftedTool);
-            if (success) {
-                ItemStack craftedItemStack = new ItemStack(world.GetItem(craftedTool.Code), 1); //Create the tool in question
-                ItemSlot placeholderOutput = new ItemSlot(new DummyInventory(world.Api));
-                placeholderOutput.Itemstack = craftedItemStack;
-                TreeAttribute applyQuenchable = new TreeAttribute();
-                applyQuenchable.SetBool("applyquenchablebuffs", true);
-
-                GridRecipe DummyRecipe = new() {
-                    AverageDurability = false,
-                    Output = new() {
-                        ResolvedItemStack = craftedItemStack,
-                        RecipeAttributes = new JsonObject(JToken.Parse(applyQuenchable.ToJsonToken()))
-                    }
-                };
-
+            //Every part is a loose item here rather than a bundle, so the whole render tree is built from them.
+            var craftedItemStack = CraftToolFromParts(world, sortedSlots[0].Itemstack, sortedSlots, null, tool => {
                 if (sortedSlots.Length > 2) {
-                    MultiPartRenderingHelpers.BuildToolRenderFromAllSeparateParts(craftedItemStack, sortedSlots[0].Itemstack, sortedSlots[1].Itemstack, sortedSlots[2].Itemstack);
+                    MultiPartRenderingHelpers.BuildToolRenderFromAllSeparateParts(tool, sortedSlots[0].Itemstack, sortedSlots[1].Itemstack, sortedSlots[2].Itemstack);
                 } else {
-                    MultiPartRenderingHelpers.BuildToolRenderFromAllSeparateParts(craftedItemStack, sortedSlots[0].Itemstack, sortedSlots[1].Itemstack);
+                    MultiPartRenderingHelpers.BuildToolRenderFromAllSeparateParts(tool, sortedSlots[0].Itemstack, sortedSlots[1].Itemstack);
                 }
-
-                craftedItemStack.Collectible.ConsumeCraftingIngredients(sortedSlots, placeholderOutput, DummyRecipe);
-                craftedItemStack.Collectible.OnCreatedByCrafting(sortedSlots, placeholderOutput, DummyRecipe); //Hopefully call this just like it would if properly crafted in the grid!
-
-                sortedSlots[0].TakeOut(1);
-                sortedSlots[0].MarkDirty();
-                sortedSlots[1].TakeOut(1); //Decrement inputs, and place the finished item in the ToolHead's Slot
-                sortedSlots[1].MarkDirty();
-                if (sortedSlots.Length == 3) {
-                    if (sortedSlots[2].Itemstack.Block as BlockLiquidContainerBase != null) {
-                        var liquidContainer = sortedSlots[2].Itemstack.Block as BlockLiquidContainerBase;
-                        var binding = liquidContainer.GetContent(sortedSlots[2].Itemstack);
-                        var bindingPart = ToolsmithModSystem.Stats.BindingParts.TryGetValue(binding.Collectible.Code.Path);
-                        liquidContainer.TryTakeLiquid(sortedSlots[2].Itemstack, bindingPart.litersUsed);
-                        sortedSlots[2].MarkDirty();
-                    } else {
-                        sortedSlots[2].TakeOut(1);
-                        sortedSlots[2].MarkDirty();
-                    }
-                }
-
-                return craftedItemStack;
+            });
+            if (craftedItemStack == null) {
+                return null;
             }
 
-            return null;
+            sortedSlots[0].TakeOut(1);
+            sortedSlots[0].MarkDirty();
+            sortedSlots[1].TakeOut(1);
+            sortedSlots[1].MarkDirty();
+            if (sortedSlots.Length == 3) {
+                ConsumeBindingFromSlot(sortedSlots[2]);
+            }
+
+            return craftedItemStack;
         }
 
         //Which part of a tool a stack is, for the workbench slot indicators and for deciding what a slot will accept.
@@ -937,7 +920,8 @@ namespace Toolsmith.ToolTinkering {
             return true;
         }
 
-        //The next three methods are for the three steps of handling the sharpness honing. It helped to encapsulate it all to handle both the Grindstone and the Whetstones here.
+        //Honing runs in three steps - read the values, apply one tick, write them back - so the grindstone and the
+        //whetstone share the arithmetic and differ only in what drives the ticks.
         public static void RecieveDurabilitiesAndSharpness(ref int curDur, ref int maxDur, ref int curSharp, ref int maxSharp, ref float totalHoned, ItemStack item, EnumSharpenTarget isTool) {
             if (isTool == EnumSharpenTarget.TinkeredTool) { //The item is a Tinkered Tool! Use the extensions for the tool's head durability.
                 curDur = item.GetToolheadCurrentDurability();
@@ -945,8 +929,10 @@ namespace Toolsmith.ToolTinkering {
                 if (item.HasPlaceholderHead()) { //If the tool still has no proper head item saved to it, something went wrong and an error should have been printed.
                     return;
                 }
-                var handleDur = item.GetToolhandleCurrentDurability(); //This is mostly just being called to test that the tools are fully initialized.
-                var bindingDur = item.GetToolbindingCurrentDurability(); //^^^
+                //Read so their getters initialize a tool that has never had its parts written; the values themselves
+                //are not wanted here.
+                item.GetToolhandleCurrentDurability();
+                item.GetToolbindingCurrentDurability();
                 curSharp = item.GetToolCurrentSharpness();
                 maxSharp = item.GetToolMaxSharpness();
             } else if (isTool == EnumSharpenTarget.SmithedTool) { //The item is a Smithed Tool!
@@ -1025,73 +1011,29 @@ namespace Toolsmith.ToolTinkering {
             }
         }
 
+        //Honing never breaks what is being honed: a durability that reaches zero here is floored at 1 instead.
+        //The three targets keep the same values under different attributes, which is the only thing that differs.
+        //
+        //A hone value is recorded only once the free first honing has been spent, so an unset value is what marks a
+        //tool as still holding that free hone.
         public static void SetResultsOfSharpening(int curDur, int curSharp, float totalSharpnessHoned, bool firstHoning, ItemStack item, EntityAgent byEntity, ItemSlot mainHandSlot, EnumSharpenTarget isTool) {
+            if (curDur <= 0) {
+                curDur = 1;
+            }
+
             if (isTool == EnumSharpenTarget.TinkeredTool) {
-                if (curDur <= 0) {
-                    curDur = 1; //Just in case this ever gets here and it's less then 0, just set it to 1 since it shouldn't be breaking tools. But leaving that bit commented out for now, perhaps can configure it as an option later? Eh!
-                }
                 item.SetToolheadCurrentDurability(curDur);
                 item.SetToolCurrentSharpness(curSharp);
-                if (!firstHoning) {
-                    item.SetTotalHoneValue(totalSharpnessHoned);
-                }
-                /*if (curDur <= 0) {
-                    CollectibleObject toolObj = item.Collectible;
-                    HandleBrokenTinkeredTool(byEntity.World, byEntity, mainHandSlot, 0, curSharp, item.GetToolhandleCurrentDurability(), item.GetToolbindingCurrentDurability(), true, false);
-                    item.SetBrokeWhileSharpeningFlag();
-                    toolObj.DamageItem(byEntity.World, byEntity, mainHandSlot);
-                    if (item != null) {
-                        item.ClearBrokeWhileSharpeningFlag();
-                    }
-                }*/
             } else if (isTool == EnumSharpenTarget.SmithedTool) {
-                if (curDur <= 0) {
-                    curDur = 1;
-                }
                 item.SetSmithedDurability(curDur);
                 item.SetToolCurrentSharpness(curSharp);
-                if (!firstHoning) {
-                    item.SetTotalHoneValue(totalSharpnessHoned);
-                }
-                /*if (curDur <= 0) {
-                    item.SetSmithedDurability(1);
-                    item.SetBrokeWhileSharpeningFlag();
-                    item.Collectible.DamageItem(byEntity.World, byEntity, mainHandSlot);
-                    if (item != null) {
-                        item.ClearBrokeWhileSharpeningFlag();
-                    }
-                }*/
             } else {
-                if (curDur <= 0) {
-                    curDur = 1;
-                }
                 item.SetPartCurrentDurability(curDur);
                 item.SetPartCurrentSharpness(curSharp);
-                if (!firstHoning) {
-                    item.SetTotalHoneValue(totalSharpnessHoned);
-                }
-                /*if (curDur <= 0) {
-                    //Wait... This might be silly and may be hacky but... Can I just make it into an item AND break it right here right now? Lmao
-                    CollectibleObject toolToBreakObj; //This might proc other mod's on damage stuff for the head as if it were a real tool.
-                    var success = RecipeRegisterModSystem.TinkerToolGridRecipes.TryGetValue(item.Collectible.Code.ToString(), out toolToBreakObj);
-                    if (success) {
-                        ItemStack toolToBreak = new ItemStack(byEntity.World.GetItem(toolToBreakObj.Code), 1);
-                        if (IsDeconstructableTool(toolToBreak.Collectible, byEntity.World)) { //Just to make sure it isn't on the ignore list already, but it should only come back as a Tinkered Tool.
-                                             //Initiate that JUST to insure it breaks now! Haha!
-                            item = null;
-                            mainHandSlot.Itemstack = toolToBreak.Clone();
-                            mainHandSlot.Itemstack.SetToolheadCurrentDurability(1);
-                            mainHandSlot.Itemstack.SetBrokeWhileSharpeningFlag();
-                            mainHandSlot.Itemstack.Collectible.DamageItem(byEntity.World, byEntity, mainHandSlot);
-                            if (!mainHandSlot.Empty) {
-                                mainHandSlot.Itemstack.ClearBrokeWhileSharpeningFlag();
-                                mainHandSlot.Itemstack = null;
-                            }
-                        } else { //Just in case, if all else fails, just destroy the head. But man I hope this works, haha.
-                            item = null;
-                        }
-                    }
-                }*/
+            }
+
+            if (!firstHoning) {
+                item.SetTotalHoneValue(totalSharpnessHoned);
             }
         }
 
@@ -1225,11 +1167,7 @@ namespace Toolsmith.ToolTinkering {
         }
 
         public static bool IsStickOrBone(ItemStack stack) {
-            if (stack.Collectible.Code == ToolsmithConstants.DefaultHandleCode || stack.Collectible.Code == ToolsmithConstants.BoneHandleCode) {
-                return true;
-            } else {
-                return false;
-            }
+            return stack.Collectible.Code == ToolsmithConstants.DefaultHandleCode || stack.Collectible.Code == ToolsmithConstants.BoneHandleCode;
         }
     }
 }

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 
 namespace Toolsmith.ToolTinkering.Blocks {
@@ -47,44 +42,17 @@ namespace Toolsmith.ToolTinkering.Blocks {
             return slots.All(x => x.Empty);
         }
 
-        public string GetIDFromSlots() {
-            string id = "workbenchinventory-";
-            int count = 0;
-            foreach (var slot in slots) {
-                if (!slot.Empty) {
-                    id += slot.Itemstack.Collectible.Code;
-                } else {
-                    id += "empty";
-                }
-
-                count++;
-                if (count < slots.Length) {
-                    id += "-";
-                }
-            }
-
-            return id;
-        }
-
+        //Only the crafting slots, and only those holding something. The reforge slot is deliberately excluded: it
+        //stages a tool for reforging rather than contributing a part to a craft.
         public ItemSlot[] GetFullCraftingSlots() {
-            List<ItemSlot> slots = new List<ItemSlot>();
-            if (!IsSelectSlotEmpty(1)) {
-                slots.Add(GetSlotFromSelectionID(1));
-            }
-            if (!IsSelectSlotEmpty(2)) {
-                slots.Add(GetSlotFromSelectionID(2));
-            }
-            if (!IsSelectSlotEmpty(3)) {
-                slots.Add(GetSlotFromSelectionID(3));
-            }
-            if (!IsSelectSlotEmpty(4)) {
-                slots.Add(GetSlotFromSelectionID(4));
-            }
-            if (!IsSelectSlotEmpty(5)) {
-                slots.Add(GetSlotFromSelectionID(5));
+            List<ItemSlot> filled = new List<ItemSlot>();
+            for (int i = (int)WorkbenchSlots.CraftingSlot1; i <= (int)WorkbenchSlots.CraftingSlot5; i++) {
+                if (!IsSelectSlotEmpty(i)) {
+                    filled.Add(GetSlotFromSelectionID(i));
+                }
             }
 
-            return slots.ToArray();
+            return filled.ToArray();
         }
 
         public ItemStack? GetItemFromSlot(int slotID) {
@@ -137,14 +105,6 @@ namespace Toolsmith.ToolTinkering.Blocks {
             return new ItemSlot((WorkbenchInventory)self) {
                 MaxSlotStackSize = 1
             };
-        }
-
-        public override void FromTreeAttributes(ITreeAttribute treeAttribute) {
-            base.FromTreeAttributes(treeAttribute);
-        }
-
-        public override void ToTreeAttributes(ITreeAttribute invtree) {
-            base.ToTreeAttributes(invtree);
         }
     }
 }

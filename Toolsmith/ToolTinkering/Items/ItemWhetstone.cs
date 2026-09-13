@@ -1,25 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
-using Toolsmith.ToolTinkering.Behaviors;
+﻿using Toolsmith.ToolTinkering.Behaviors;
 using Toolsmith.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.GameContent;
-using Vintagestory.ServerMods.NoObf;
 
 namespace Toolsmith.ToolTinkering.Items {
     public class ItemWhetstone : Item, IOffhandDominantInteractionItem {
         protected ILoadedSound honingScrape;
 
-        //Copied over from the Grindstone but changed to instead be done in-hand with the items instead of on a block. It's slightly different handling.
-        public void HandleSharpenTick(float secondsUsed, ItemSlot mainHandSlot, ItemSlot offhandSlot, EntityAgent byEntity, TinkeringUtility.EnumSharpenTarget isTool) { //"isTool" is fed by the respective items in question when they call this to try and sharpen.
+        //One tick of honing against a held whetstone. The grindstone does the same three steps on a block; here the
+        //stone itself also takes damage, and honing ends when the tool no longer needs it.
+        public void HandleSharpenTick(float secondsUsed, ItemSlot mainHandSlot, ItemSlot offhandSlot, EntityAgent byEntity, TinkeringUtility.EnumSharpenTarget isTool) {
             int curDur = 0;
             int maxDur = 0;
             int curSharp = 0;
@@ -46,34 +38,13 @@ namespace Toolsmith.ToolTinkering.Items {
         }
 
         public void ToggleHoningSound(bool startSound, EntityAgent byEntity) {
-            if (startSound) {
-                var api = byEntity.Api;
-                if (!api.Side.IsClient()) {
-                    return;
-                }
-                if (honingScrape == null || !honingScrape.IsPlaying) {
-                    honingScrape = ((IClientWorldAccessor)api.World).LoadSound(new SoundParams() {
-                        Location = new AssetLocation("toolsmith:sounds/whetstone-scraping-loop.ogg"),
-                        ShouldLoop = true,
-                        Position = byEntity.Pos.XYZFloat,
-                        DisposeOnFinish = false,
-                        Volume = 0,
-                        Range = 6,
-                        SoundType = EnumSoundType.Ambient
-                    });
+            SoundUtility.ToggleLoopingSound(ref honingScrape, startSound, byEntity.Api, new AssetLocation("toolsmith:sounds/whetstone-scraping-loop.ogg"), byEntity.Pos.XYZFloat, 0.75f, 1f, 0.2f);
+        }
 
-                    if (honingScrape != null) {
-                        honingScrape.Start();
-                        honingScrape.FadeTo(0.75, 1f, (s) => { });
-                    }
-                } else {
-                    if (honingScrape.IsPlaying) {
-                        honingScrape.FadeTo(0.75, 1f, (s) => { });
-                    }
-                }
-            } else {
-                honingScrape?.FadeOut(0.2f, (s) => { s.Dispose(); honingScrape = null; });
-            }
+        //Stops the sound without needing an entity to hand, for the paths that end honing because the stone itself
+        //is gone - used up, or taken out of the slot.
+        private void StopHoningSound() {
+            SoundUtility.ToggleLoopingSound(ref honingScrape, false, null, null, null, 0f, 0f, 0.2f);
         }
 
         public void UpdateSoundPosition(ICoreAPI api, Vec3f pos) {
@@ -88,9 +59,7 @@ namespace Toolsmith.ToolTinkering.Items {
 
         public override void DamageItem(IWorldAccessor world, Entity byEntity, ItemSlot itemslot, int amount = 1, bool destroyOnZeroDurabilty = true) {
             if (itemslot.Itemstack.Collectible.GetRemainingDurability(itemslot.Itemstack) <= amount) {
-                if (honingScrape != null && honingScrape.IsPlaying) {
-                    honingScrape?.FadeOut(0.2f, (s) => { s.Dispose(); honingScrape = null; });
-                }
+                StopHoningSound();
 
                 if (byEntity as EntityPlayer != null) {
                     byEntity.StopAnimation("sharpeningstone");
@@ -101,20 +70,12 @@ namespace Toolsmith.ToolTinkering.Items {
         }
 
         public override void OnModifiedInInventorySlot(IWorldAccessor world, ItemSlot slot, ItemStack extractedStack = null) {
-            if (extractedStack != null && honingScrape != null && honingScrape.IsPlaying) {
-                honingScrape?.FadeOut(0.2f, (s) => { s.Dispose(); honingScrape = null; });
+            if (extractedStack != null) {
+                StopHoningSound();
             }
 
             base.OnModifiedInInventorySlot(world, slot, extractedStack);
         }
-
-        /*public override string GetHeldTpUseAnimation(ItemSlot activeHotbarSlot, Entity forEntity) {
-            if (sharpening) {
-                return "sharpeningstone";
-            }
-
-            return null;
-        }*/
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling) {
             if (!(slot is ItemSlotOffhand)) {

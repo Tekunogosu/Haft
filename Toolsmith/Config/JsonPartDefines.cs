@@ -1,18 +1,21 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Toolsmith.Config {
 
-    public class ToolsmithPart {
+    //Both part and stat defines are stored by id, and one routine stores either. This is what lets that routine
+    //name the id it is rejecting without knowing which of the two hierarchies it was handed.
+    public interface IToolsmithDefine {
+        string Id { get; }
+    }
+
+    public class ToolsmithPart : IToolsmithDefine {
         [JsonProperty]
         public bool enabled = true;
 
         [JsonProperty]
         public string id = null;
+
+        public string Id => id;
 
         //Arbitrary labels describing what this part is, and what it will accept. Two lists rather than one field per
         //rule, so a new restriction needs no new schema: tag the parts, state the requirement, done.

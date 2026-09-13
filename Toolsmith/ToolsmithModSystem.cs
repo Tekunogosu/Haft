@@ -3,8 +3,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata;
-using Toolsmith.Client;
 using Toolsmith.Client.Behaviors;
 using Toolsmith.Config;
 using Toolsmith.Server;
@@ -15,16 +13,9 @@ using Toolsmith.ToolTinkering.Items;
 using Toolsmith.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
-using Vintagestory.API.Datastructures;
-using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using Vintagestory.Client.NoObf;
-using Vintagestory.GameContent;
-using Vintagestory.Server;
-using Vintagestory.ServerMods;
 
 namespace Toolsmith {
     public class ToolsmithModSystem : ModSystem {
@@ -344,7 +335,7 @@ namespace Toolsmith {
                 }
             }
 
-            SaveWoodInToolBindingToWorld(api);
+            SaveToWorldData(api, ToolsmithConstants.ToolsmithWoodInToolBindingsData, ToolsWithWoodInBindingShapes);
 
             if (Config.PrintAllParsedToolsAndParts) { //Mainly left in for debugging purposes since it's kinda useful to just let it run through everything and see what might be going wrong and where... Especially when adding other mods
                 Logger.Debug("Single Part Tools:");
@@ -382,53 +373,12 @@ namespace Toolsmith {
             if (Config.EnableEditsForRegex) {
                 Logger.Debug("Server is starting with Config Edits for the Regex Strings enabled. If something goes wrong, the changes made could be the cause. Disable the option to reset configs to the generated default, or if you want to update the defaults from the JSON files again - it will not update from any compatability files while this is active. If you report an issue with this enabled, please include your Toolsmith.json config changes as well as the logs!");
             } else {
-                Dictionary<AssetLocation, List<string>> toolHeads = api.Assets.GetMany<List<string>>(api.Logger, "config/toolsmith/regex/toolheads");
-                Config.ToolHeads += "@.*(";
-                foreach (var toolHead in toolHeads) {
-                    ToolsmithConfigsHelpers.AddToRegexString(toolHead.Value, ref Config.ToolHeads);
-                }
-                Config.ToolHeads = Config.ToolHeads.Remove(Config.ToolHeads.Length - 1); //Trim away the very last | that gets added on at the end.
-                Config.ToolHeads += ").*";
-
-                Dictionary<AssetLocation, List<string>> tinkerableTools = api.Assets.GetMany<List<string>>(api.Logger, "config/toolsmith/regex/tinkerabletools");
-                Config.TinkerableTools += "@.*:(";
-                foreach (var tinkerableTool in tinkerableTools) {
-                    ToolsmithConfigsHelpers.AddToRegexString(tinkerableTool.Value, ref Config.TinkerableTools);
-                }
-                Config.TinkerableTools = Config.TinkerableTools.Remove(Config.TinkerableTools.Length - 1);
-                Config.TinkerableTools += ").*";
-
-                Dictionary<AssetLocation, List<string>> singlePartTools = api.Assets.GetMany<List<string>>(api.Logger, "config/toolsmith/regex/singleparttools");
-                Config.SinglePartTools += "@.*:(";
-                foreach (var singlePartTool in singlePartTools) {
-                    ToolsmithConfigsHelpers.AddToRegexString(singlePartTool.Value, ref Config.SinglePartTools);
-                }
-                Config.SinglePartTools = Config.SinglePartTools.Remove(Config.SinglePartTools.Length - 1);
-                Config.SinglePartTools += ").*";
-
-                Dictionary<AssetLocation, List<string>> bluntHeadedTools = api.Assets.GetMany<List<string>>(api.Logger, "config/toolsmith/regex/bluntheadedtools");
-                Config.BluntHeadedTools += "@.*:(";
-                foreach (var bluntHeadedTool in bluntHeadedTools) {
-                    ToolsmithConfigsHelpers.AddToRegexString(bluntHeadedTool.Value, ref Config.BluntHeadedTools);
-                }
-                Config.BluntHeadedTools = Config.BluntHeadedTools.Remove(Config.BluntHeadedTools.Length - 1);
-                Config.BluntHeadedTools += ").*";
-
-                Dictionary<AssetLocation, List<string>> partBlacklists = api.Assets.GetMany<List<string>>(api.Logger, "config/toolsmith/regex/partblacklist");
-                Config.PartBlacklist += "@.*(";
-                foreach (var partBlacklist in partBlacklists) {
-                    ToolsmithConfigsHelpers.AddToRegexString(partBlacklist.Value, ref Config.PartBlacklist);
-                }
-                Config.PartBlacklist = Config.PartBlacklist.Remove(Config.PartBlacklist.Length - 1);
-                Config.PartBlacklist += ").*";
-
-                Dictionary<AssetLocation, List<string>> toolsWithWoodInBindingShapes = api.Assets.GetMany<List<string>>(api.Logger, "config/toolsmith/regex/woodinbindingshapes");
-                Config.ToolsWithWoodInBindingShape += "@.*(";
-                foreach (var tool in toolsWithWoodInBindingShapes) {
-                    ToolsmithConfigsHelpers.AddToRegexString(tool.Value, ref Config.ToolsWithWoodInBindingShape);
-                }
-                Config.ToolsWithWoodInBindingShape = Config.ToolsWithWoodInBindingShape.Remove(Config.ToolsWithWoodInBindingShape.Length - 1);
-                Config.ToolsWithWoodInBindingShape += ").*";
+                Config.ToolHeads = BuildRegexFromAssets(api, "config/toolsmith/regex/toolheads", ConfigUtility.AnyWildcardStringPrefix);
+                Config.TinkerableTools = BuildRegexFromAssets(api, "config/toolsmith/regex/tinkerabletools", ConfigUtility.AnyFirstCodeStartStringPrefix);
+                Config.SinglePartTools = BuildRegexFromAssets(api, "config/toolsmith/regex/singleparttools", ConfigUtility.AnyFirstCodeStartStringPrefix);
+                Config.BluntHeadedTools = BuildRegexFromAssets(api, "config/toolsmith/regex/bluntheadedtools", ConfigUtility.AnyFirstCodeStartStringPrefix);
+                Config.PartBlacklist = BuildRegexFromAssets(api, "config/toolsmith/regex/partblacklist", ConfigUtility.AnyWildcardStringPrefix);
+                Config.ToolsWithWoodInBindingShape = BuildRegexFromAssets(api, "config/toolsmith/regex/woodinbindingshapes", ConfigUtility.AnyWildcardStringPrefix);
             }
 
             if (Stats.EnableEdits) {
@@ -498,10 +448,22 @@ namespace Toolsmith {
                 Logger.Debug("Full Json Verification complete! All found errors will have been printed above.");
             }
 
-            SaveConfigToWorldData(api);
-            SaveStatsToWorldData(api);
+            SaveToWorldData(api, ToolsmithConstants.ToolsmithConfigKey, Config);
+            SaveToWorldData(api, ToolsmithConstants.ToolsmithStatsKey, Stats);
             SaveConfigAfterJsonAdditions(api);
             SaveStatsAfterJsonAdditions(api);
+        }
+
+        //Every entry any mod contributed under one regex asset path, joined into the single wildcard string the
+        //config matches codes against. The prefix differs per path - some match anywhere in a code, some only after
+        //the domain - so it is passed in rather than inferred.
+        private string BuildRegexFromAssets(ICoreAPI api, string assetPath, string prefix) {
+            var entries = new List<string>();
+            foreach (var asset in api.Assets.GetMany<List<string>>(api.Logger, assetPath)) {
+                entries.AddRange(asset.Value);
+            }
+
+            return prefix + string.Join(ConfigUtility.ConfigEntrySeparator, entries) + ConfigUtility.ConfigStringPostfix;
         }
 
         //Checks that every material this mod's own code names by constant actually has a stat block behind it once
@@ -586,25 +548,12 @@ namespace Toolsmith {
             }
         }
 
-        private void SaveConfigToWorldData(ICoreAPI api) {
-            string configJson = JsonConvert.SerializeObject(Config);
-            byte[] configBytes = System.Text.Encoding.UTF8.GetBytes(configJson);
-            string configBase64String = Convert.ToBase64String(configBytes);
-            api.World.Config.SetString(ToolsmithConstants.ToolsmithConfigKey, configBase64String);
-        }
-
-        private void SaveStatsToWorldData(ICoreAPI api) {
-            string statsJson = JsonConvert.SerializeObject(Stats);
-            byte[] statsBytes = System.Text.Encoding.UTF8.GetBytes(statsJson);
-            string statsBase64String = Convert.ToBase64String(statsBytes);
-            api.World.Config.SetString(ToolsmithConstants.ToolsmithStatsKey, statsBase64String);
-        }
-
-        private void SaveWoodInToolBindingToWorld(ICoreAPI api) {
-            string woodInBindingJson = JsonConvert.SerializeObject(ToolsWithWoodInBindingShapes);
-            byte[] woodInBindingBytes = System.Text.Encoding.UTF8.GetBytes(woodInBindingJson);
-            string woodInBindingBase64String = Convert.ToBase64String(woodInBindingBytes);
-            api.World.Config.SetString(ToolsmithConstants.ToolsmithWoodInToolBindingsData, woodInBindingBase64String);
+        //Config, stats and the wood-in-bindings list all reach the client the same way: serialized, base64'd, and
+        //stashed in world config, which is synced to every client on join.
+        private static void SaveToWorldData<T>(ICoreAPI api, string key, T value) {
+            string json = JsonConvert.SerializeObject(value);
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            api.World.Config.SetString(key, Convert.ToBase64String(bytes));
         }
 
         private void SaveConfigAfterJsonAdditions(ICoreAPI api) {
@@ -639,7 +588,8 @@ namespace Toolsmith {
             }
         }
 
-        //A bit of a fallback method so it at least gets populated with SOMETHING. While it originally is making a Regex method, it's easiest to just put the tool's code in here. This will likely let it work for most cases even if it has to use this method?
+        //Populates the list from the client's own assets when the server did not send one. The entries are tool codes
+        //rather than a built regex, which is what the membership check on this list actually wants.
         private void ClientAttemptBasicWoodInBindingsInit(ICoreAPI api) {
             Dictionary<AssetLocation, List<string>> toolsWithWoodInBindingShapes = api.Assets.GetMany<List<string>>(api.Logger, "config/toolsmith/regex/woodinbindingshapes");
             foreach ((AssetLocation loc, List<string> tools) in toolsWithWoodInBindingShapes) {
@@ -647,53 +597,35 @@ namespace Toolsmith {
             }
         }
 
+        //The tier shown on a binding's tooltip, banded from how much durability it actually contributes. Bands rather
+        //than a raw number so a player can compare two bindings at a glance without reading the multipliers.
+        private static int BindingTierForFactor(float totalFactor) {
+            if (totalFactor <= 1.0f) {
+                return 0;
+            } else if (totalFactor < 1.75f) {
+                return 1;
+            } else if (totalFactor < 2.5f) {
+                return 2;
+            } else if (totalFactor < 3f) {
+                return 3;
+            }
+
+            return 4;
+        }
+
         private void CalculateBindingTiers() {
             foreach (var binding in Stats.BindingParts) {
                 var bindingStats = Stats.BindingStats.Get(binding.Value.bindingStatTag);
-                if (bindingStats != null) {
-                    var bindingTotalFactor = bindingStats.baseHPfactor * (1 + bindingStats.selfHPBonus);
-                    switch(bindingTotalFactor) {
-                        case <= 1.0f:
-                            if (Config.DebugMessages) {
-                                Logger.Warning("Binding: " + binding.Key + " |Tier: " + 0);
-                            }
-                            if (!BindingTiers.ContainsKey(binding.Key)) {
-                                BindingTiers.Add(binding.Key, 0);
-                            }
-                            break;
-                        case < 1.75f:
-                            if (Config.DebugMessages) {
-                                Logger.Warning("Binding: " + binding.Key + " |Tier: " + 1);
-                            }
-                            if (!BindingTiers.ContainsKey(binding.Key)) {
-                                BindingTiers.Add(binding.Key, 1);
-                            }
-                            break;
-                        case < 2.5f:
-                            if (Config.DebugMessages) {
-                                Logger.Warning("Binding: " + binding.Key + " |Tier: " + 2);
-                            }
-                            if (!BindingTiers.ContainsKey(binding.Key)) {
-                                BindingTiers.Add(binding.Key, 2);
-                            }
-                            break;
-                        case < 3f:
-                            if (Config.DebugMessages) {
-                                Logger.Warning("Binding: " + binding.Key + " |Tier: " + 3);
-                            }
-                            if (!BindingTiers.ContainsKey(binding.Key)) {
-                                BindingTiers.Add(binding.Key, 3);
-                            }
-                            break;
-                        case >= 3f:
-                            if (Config.DebugMessages) {
-                                Logger.Warning("Binding: " + binding.Key + " |Tier: " + 4);
-                            }
-                            if (!BindingTiers.ContainsKey(binding.Key)) {
-                                BindingTiers.Add(binding.Key, 4);
-                            }
-                            break;
-                    }
+                if (bindingStats == null) {
+                    continue;
+                }
+
+                var tier = BindingTierForFactor(bindingStats.baseHPfactor * (1 + bindingStats.selfHPBonus));
+                if (Config.DebugMessages) {
+                    Logger.Warning("Binding: " + binding.Key + " |Tier: " + tier);
+                }
+                if (!BindingTiers.ContainsKey(binding.Key)) {
+                    BindingTiers.Add(binding.Key, tier);
                 }
             }
         }

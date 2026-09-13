@@ -1,37 +1,18 @@
 ﻿using Toolsmith.Compat;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Utils;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
-using Vintagestory.API.Datastructures;
 using Vintagestory.GameContent;
-using Vintagestory.Server;
 
 namespace Toolsmith.ToolTinkering.Behaviors {
+    //Marks a collectible as a tool head, and owns the in-hand craft that joins a head to a handle held in the offhand.
     public class CollectibleBehaviorToolHead : CollectibleBehaviorToolPartWithHealth {
-
-        //private bool crafting = false;
 
         public CollectibleBehaviorToolHead(CollectibleObject collObj) : base(collObj) {
 
         }
 
-        /*public override string GetHeldTpUseAnimation(ItemSlot activeHotbarSlot, Entity forEntity, ref EnumHandling bhHandling) {
-            if (crafting == true) {
-                bhHandling = EnumHandling.PreventSubsequent;
-                return "crafting";
-            }
-            
-            return null;
-        }*/ //Could this be what actually shows any animation for other players on a server? And the reason it was failing to sync the animation end was cause of this? Perhaps as is with this commented out, it will not display the animation for other players. Will need to test.
-        
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handHandling, ref EnumHandling handling) { //Handle the grinding code here as well as the tool itself! Probably can offload the core interaction to a helper utility function?
             var entPlayer = (byEntity as EntityPlayer);
 
@@ -109,17 +90,12 @@ namespace Toolsmith.ToolTinkering.Behaviors {
         public override void OnCreatedByCrafting(ItemSlot[] allInputslots, ItemSlot outputSlot, IRecipeBase byRecipe, ref EnumHandling bhHandling) { //TODO - This isn't called when a tool head is smithed. Buh! Have to move it elsewhere, or otherwise get this called.
             //This is still possibly important if somehow someone crafts a Tool Head.
 
-            bool isToolMetal = outputSlot.Itemstack.Collectible.IsCraftableMetal();
-            int baseDur = 1000; //Since we don't know the actual base durability YET for the tool, until it is crafted. So this is a placeholder.
-            int partDur = (int)(baseDur * ToolsmithModSystem.Config.HeadDurabilityMult);
+            //The tool this head becomes is what carries the real base durability, and it does not exist yet, so the
+            //head is given a standard one and recalculated when the tool is crafted.
+            int baseDur = ToolsmithConstants.PartDurabilityBase;
+            int partDur = TinkeringUtility.ScaleToHeadDurability(baseDur);
             int sharpness = ScientificSmithyCompat.CalculateMaxSharpness(outputSlot.Itemstack, baseDur);
-
-            int startingSharpness;
-            if (isToolMetal) {
-                startingSharpness = (int)(sharpness * ToolsmithConstants.StartingSharpnessMult);
-            } else {
-                startingSharpness = (int)(sharpness * ToolsmithConstants.NonMetalStartingSharpnessMult);
-            }
+            int startingSharpness = (int)(sharpness * outputSlot.Itemstack.Collectible.StartingSharpnessMult());
 
             outputSlot.Itemstack.SetPartCurrentDurability(partDur);
             outputSlot.Itemstack.SetPartMaxDurability(partDur);

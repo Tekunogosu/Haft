@@ -1,22 +1,15 @@
-﻿using ItemRarity;
-using ItemRarity.Rarities;
+﻿using ItemRarity.Rarities;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Client;
 using Toolsmith.Compat;
 using Toolsmith.Config;
 using Toolsmith.ToolTinkering.Drawbacks;
-using Toolsmith.ToolTinkering.Items;
 using Toolsmith.Utils;
-using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
-using Vintagestory.API.Datastructures;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
@@ -27,9 +20,12 @@ namespace Toolsmith.ToolTinkering.Behaviors {
 
         }
 
-        public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo) { //This only seems to get called on the clientside, which makes sense. Whoops, it can't be a catch-all to fix null tools like I thought, but it's still important to display the durabilities before the item's actually used.
-            if (TinkeringUtility.ShouldNotAccessStats(inSlot) || ToolsmithModSystem.IgnoreCodes.Count > 0 && ToolsmithModSystem.IgnoreCodes.Contains(inSlot.Itemstack.Collectible.Code.ToString())) { //I don't think it's possible for the itemstack to be null at this point, but JUST IN CASE I'll confirm it.
-                return; //If this item is in a DummyInventory or CreativeInventoryTab, it's likely not an actual item - but something rendering in a Handbook slot or creative inventory slot I believe. Lets just not mess with those, they won't have data anyway.
+        //Clientside only. Shows each part's durability in place of the single vanilla durability line.
+        public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo) {
+            //A stack in a handbook, creative or trader inventory has no attribute data worth reading, and writing
+            //defaults onto one would stamp stats on a display item.
+            if (TinkeringUtility.ShouldNotAccessStats(inSlot) || ToolsmithModSystem.IgnoreCodes.Count > 0 && ToolsmithModSystem.IgnoreCodes.Contains(inSlot.Itemstack.Collectible.Code.ToString())) {
+                return;
             }
 
             var curHeadDur = inSlot.Itemstack.GetToolheadCurrentDurability();
@@ -42,14 +38,16 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             var maxSharp = inSlot.Itemstack.GetToolMaxSharpness();
             
             bool didResetParts = false;
-            
-            //This extra reset parts bit might be redundant now after moving the resets into the Get calls themselves. It also might not ever call because it will always be > 0?
-            if (curHeadDur < 0) { //If this is 0 then assume something went wrong and reset things, it's a new item spawned in, or a player added the mod to their save.
-                inSlot.Itemstack.ResetNullHead(world); //Moved the client-half of resetting the tool head into this call. Can be safely called on both sides, and handle it over there. Make sure to mark the itemslot as dirty on the client though after using this.
+
+            //A negative durability means the tool has no part stats yet - spawned in creative, or already in a save
+            //when the mod was added. The reset is safe on either side; the slot is marked dirty afterwards so the
+            //client's copy reaches the server.
+            if (curHeadDur < 0) {
+                inSlot.Itemstack.ResetNullHead(world);
                 curHeadDur = inSlot.Itemstack.GetToolheadCurrentDurability();
                 didResetParts = true;
             }
-            if (maxHandleDur < 0 || maxBindingDur < 0) { //Same as above
+            if (maxHandleDur < 0 || maxBindingDur < 0) {
                 inSlot.Itemstack.ResetNullHandleOrBinding(world);
                 curHandleDur = inSlot.Itemstack.GetToolhandleCurrentDurability();
                 maxHandleDur = inSlot.Itemstack.GetToolhandleMaxDurability();
@@ -58,13 +56,14 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 didResetParts = true;
             }
 
-            //It would be loads easier to just add what I want to a new one...
+            //Built in a copy and swapped in at the end, since the vanilla durability line has to be found by index
+            //and removed before the part lines can go in its place.
             StringBuilder workingDsc = new StringBuilder();
             workingDsc.Append(dsc);
             int startIndex = 0;
             int endIndex = 0;
 
-            StringHelpers.FindTooltipVanillaDurabilityLine(ref startIndex, ref endIndex, workingDsc, world, withDebugInfo); //Moved this code originally from TinkerTools into it's own helper function.
+            StringHelpers.FindTooltipVanillaDurabilityLine(ref startIndex, ref endIndex, workingDsc, world, withDebugInfo);
 
             if (endIndex < workingDsc.Length) {
                 workingDsc.Remove(startIndex, endIndex - startIndex + 1); //Remove the durability line
@@ -115,10 +114,9 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             }
         }
 
-        //Now to break down the ingredients used in the craft... This may or may not be VERY interesting when the vanilla crafting recipes call OnCreatedByCrafting...
-        //Output Slot contains the completed tool, the input slots will - at minimum - have a Toolhead and Handle (which could simply be a stick), and may or may not have a binding.
-        //Should be true for even the Vanilla crafting recipes? Barring any changes to them but... probably can be accounted for with looping through the array.
-        //Order of the array cannot be assumed either cause of this.
+        //Builds a tool's stats from the parts that went into it. The input slots hold at minimum a head and a handle
+        //(which may be a plain stick) and may hold a binding. Their order is not fixed, so each part is identified by
+        //its behavior rather than by position.
         public override void OnCreatedByCrafting(ItemSlot[] allInputslots, ItemSlot outputSlot, IRecipeBase byRecipe, ref EnumHandling bhHandling) {
             //First, figure out what actually went into the tool. Investigate the Inputs and look for the individual behaviors. This will find the parts!
             ItemStack headStack = null;
@@ -136,9 +134,11 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                     handleStack = itemSlot.Itemstack.Clone();
                     handleStack.StackSize = 1;
                 } else if (TinkeringUtility.IsValidBinding(itemSlot.Itemstack)) { //And finally the (possible) binding! This isn't garenteed though remember, the others are.
-                    if (itemSlot.Itemstack.Block as BlockLiquidContainerBase != null) {
-                        liquidBinding = true;
-                        bindingStack = (itemSlot.Itemstack.Block as BlockLiquidContainerBase).GetContent(itemSlot.Itemstack);
+                    liquidBinding = itemSlot.Itemstack.Block as BlockLiquidContainerBase != null;
+                    if (liquidBinding) {
+                        //A liquid binding is not stored on the tool: only its stats carry over, since there is no
+                        //item to hand back when the tool comes apart.
+                        bindingStack = TinkeringUtility.GetBindingContent(itemSlot.Itemstack);
                     } else {
                         bindingStack = itemSlot.Itemstack.Clone();
                         bindingStack.StackSize = 1;
@@ -154,9 +154,9 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 ToolsmithModSystem.Logger.Error("Somehow crafted a Tinker Tool with a recipe that could not find a head, nor tool to copy data from.\nThe tool in question is: " + outputSlot.Itemstack.Collectible.Code.ToString() + "\nAttempting to just reset the Tool Head instead. This might result in fallback data of a Candle being assigned.");
                 outputSlot.Itemstack.ResetNullHead(ToolsmithModSystem.Api.World);
                 headStack = outputSlot.Itemstack.GetToolhead();
-            } else if (headStack == null && foundToolInput != null) { //Probably a safety check here, since I realized some recipes IE the whetstone from Working Classes craft a knife with the stone to produce a knife.
-                //Actually found an input that is a tool, so probably copy over the stats of that tool into the new one? Oh god I hope no one tries to use this with another mod that makes tool crafting need more tools. That just... will break everything.
-                //Though I can't help but ask, what if it's a recipe converting one tool to another type? I hope not. Not going to dwell on that until it actually might come up though.
+            } else if (headStack == null && foundToolInput != null) {
+                //A recipe consuming a finished tool and producing the same tool - Working Classes crafts a knife from
+                //a knife and a whetstone. Every stat carries straight across rather than being recalculated.
                 outputSlot.Itemstack.SetToolhead(foundToolInput.GetToolhead());
                 outputSlot.Itemstack.SetToolheadCurrentDurability(foundToolInput.GetToolheadCurrentDurability());
                 outputSlot.Itemstack.SetToolCurrentSharpness(foundToolInput.GetToolCurrentSharpness());
@@ -168,14 +168,14 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 outputSlot.Itemstack.SetToolhandleCurrentDurability(foundToolInput.GetToolhandleCurrentDurability());
                 outputSlot.Itemstack.SetToolhandleMaxDurability(foundToolInput.GetToolhandleMaxDurability());
                 var foundToolInputBinding = foundToolInput.GetToolbinding();
-                if (foundToolInputBinding != null) { //Whoops. It was a mistake not to be verifying that there even was a binding first. Fixed this hole though!
+                if (foundToolInputBinding != null) { //A tool built without a binding has none to carry over.
                     outputSlot.Itemstack.SetToolbinding(foundToolInputBinding);
                 }
                 outputSlot.Itemstack.SetToolbindingCurrentDurability(foundToolInput.GetToolbindingCurrentDurability());
                 outputSlot.Itemstack.SetToolbindingMaxDurability(foundToolInput.GetToolbindingMaxDurability());
                 outputSlot.Itemstack.SetSpeedBonus(foundToolInput.GetSpeedBonus());
                 outputSlot.Itemstack.SetGripChanceToDamage(foundToolInput.GetGripChanceToDamage());
-                return; //Mama mia. Maybe make this chunk another extension? If I ever have to do this again elsewhere.
+                return;
             } else {
                 isHeadMetal = headStack.Collectible.IsCraftableMetal();
             }
@@ -224,44 +224,26 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 binding = ToolsmithModSystem.Stats.BindingParts.Get(ToolsmithConstants.DefaultBindingPartKey);
             }
             var handleStats = ToolsmithModSystem.Stats.BaseHandleStats.Get(handle.handleStatTag);
+            //A null binding part means none was used, which is a valid way to build a tool rather than missing data.
+            var bindingStats = ToolsmithModSystem.Stats.BindingStats.Get(binding == null ? ToolsmithConstants.DefaultBindingStatKey : binding.bindingStatTag);
+            var stats = ToolsmithPartStatsHelpers.ResolveHandleStats(handleStats, handleStack, bindingStats);
 
-            GripStatDefines gripStats;
-            if (handleStack.HasHandleGripTag()) {
-                gripStats = ToolsmithModSystem.Stats.GripStats.Get(handleStack.GetHandleGripTag());
-            } else {
-                gripStats = ToolsmithModSystem.Stats.GripStats.Get(ToolsmithConstants.DefaultGripTag);
-            }
+            //Runs before the first GetBaseMaxDurability call, since a compat mod may change what that returns.
+            HandleExtraModCompat(allInputslots, outputSlot);
 
-            TreatmentStatDefines treatmentStats;
-            if (handleStack.HasHandleTreatmentTag()) {
-                treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.Get(handleStack.GetHandleTreatmentTag());
-            } else {
-                treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.Get(ToolsmithConstants.DefaultTreatmentTag);
-            }
-
-            BindingStatDefines bindingStats;
-            if (binding == null) {
-                bindingStats = ToolsmithModSystem.Stats.BindingStats.Get(ToolsmithConstants.DefaultBindingStatKey);//If binding is still null, none was used! Get those fallback stats.
-            } else {
-                bindingStats = ToolsmithModSystem.Stats.BindingStats.Get(binding.bindingStatTag);
-            }
-
-            MaterialStatDefines materialStats = handleStack.GetHandleMaterialStats();
-
-            //Various math and calculating the end effect of each part here.
-            HandleExtraModCompat(allInputslots, outputSlot); //Handle some mod compatability here! Anything that needs a little bit of extra handling before getting the first BaseMaxDurability.
-             
             var baseDur = outputSlot.Itemstack.Collectible.GetBaseMaxDurability(outputSlot.Itemstack);
             int headMaxDur = outputSlot.Itemstack.GetToolheadMaxDurability();
             //Read off the head rather than the tool being made: the head is what carries the smithing stats into the
             //finished tool, and reading the output stack here would give every tool the same sharpness.
             int maxSharpness = ScientificSmithyCompat.CalculateMaxSharpness(headStack, baseDur);
 
-            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(handleStats, treatmentStats, bindingStats, materialStats);
-            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(handleStats, bindingStats, materialStats);
+            var handleDur = ToolsmithPartStatsHelpers.CalculateHandleDurability(stats);
+            var bindingDur = ToolsmithPartStatsHelpers.CalculateBindingDurability(stats);
 
             //Apply the end results of that to the tool/parts. Could the parts themselves actually hold the stats...? Eh. Might be faster to just directly apply them to the tool and then update the current HP when it breaks.
-            var currentHeadPer = headStack.GetPartRemainingHPPercent(); //If this returns 0, then assume it's full durability since something is unset. Keep this assumption in mind!!!
+            //A zero percent means nothing has been recorded on the part yet, which is treated as full rather than as
+            //a part with no durability left.
+            var currentHeadPer = headStack.GetPartRemainingHPPercent();
             headStack.SetPartMaxDurability(headMaxDur);
             if (currentHeadPer <= 0) {
                 currentHeadPer = 1.0f;
@@ -297,8 +279,8 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             outputSlot.Itemstack.SetToolbindingMaxDurability((int)bindingDur);
             outputSlot.Itemstack.SetToolbindingCurrentDurability((int)bindingDur);
 
-            var speedBonus = ToolsmithPartStatsHelpers.CalculateSpeedBonus(handleStats, gripStats, materialStats);
-            var gripChanceDamage = ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(gripStats, treatmentStats);
+            var speedBonus = ToolsmithPartStatsHelpers.CalculateSpeedBonus(stats);
+            var gripChanceDamage = ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(stats);
             outputSlot.Itemstack.SetSpeedBonus(speedBonus);
             outputSlot.Itemstack.SetGripChanceToDamage(gripChanceDamage);
 
@@ -375,7 +357,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 bool isBluntTool = itemslot.Itemstack.Collectible.HasBehavior<CollectibleBehaviorToolBlunt>();
                 bool headBroke = false;
 
-                //Time for SHARPNESS and WEAR! Lets a go!
+                //Sharpness always drops; which parts take durability damage depends on how sharp the tool still was.
                 bool doDamageHead = false;
                 bool doubleHeadDamage = false;
                 bool doDamageHandle = false;
@@ -489,30 +471,21 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                 bhHandling = EnumHandling.PreventDefault; //This should prevent the clientside from running the vanilla damage calculations, but the serverside is still doing it's proper stuff above. Then the client will recieve the update, so there is no desync.
             }
 
-            //If neither of these conditions are hit, that means it's on the serverside and the item in question is on the ignore list. So, to prevent any issues (hopefully?), lets just let the default run normally.
+            //Falling through both branches means this is the server and the item is on the ignore list, so vanilla
+            //damage handling runs untouched.
         }
 
-        //Tyron and Co you are fucking amazing for this. Actually sending the BH the initial max durability like this is SO HELPFUL...
         public override int GetMaxDurability(ItemStack itemstack, int durability, ref EnumHandling bhHandling) {
             bhHandling = EnumHandling.PreventDefault;
-            return (int)((double)durability * ToolsmithModSystem.Config.HeadDurabilityMult);
+            return TinkeringUtility.ScaleToHeadDurability(durability);
         }
 
-        //THIS TOO! It's like- Holy crap, it's like it was made for me.
         public override float GetMiningSpeed(ItemStack itemstack, BlockSelection blockSel, Block block, IPlayer forPlayer, ref EnumHandling bhHandling) {
             bhHandling = EnumHandling.Handled;
 
-            float speedMult = 1f;
-            var sharpnessPer = itemstack.GetToolSharpnessPercent();
-            if (sharpnessPer >= 0.9) {
-                speedMult += speedMult * ToolsmithConstants.HighSharpnessSpeedBonusMult;
-            } else if (sharpnessPer <= 0.33) {
-                speedMult += speedMult * ToolsmithConstants.LowSharpnessSpeedMalusMult;
-            }
-
-            speedMult += speedMult * itemstack.GetSpeedBonus();
-
-            return speedMult;
+            //A tinkered tool adds what its handle and grip contribute, which a smithed one has no equivalent of.
+            var speedMult = TinkeringUtility.SharpnessMiningSpeedMultiplier(itemstack);
+            return speedMult + (speedMult * itemstack.GetSpeedBonus());
         }
     }
 }

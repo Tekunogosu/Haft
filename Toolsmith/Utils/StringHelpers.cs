@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 
 namespace Toolsmith.Utils {
     public static class StringHelpers {
@@ -83,10 +79,9 @@ namespace Toolsmith.Utils {
         }
 
         //Deletes the whole line that begins with the given text, including its trailing newline. Vanilla writes
-        //several tooltip lines this mod would rather render itself, and each of them has to be taken back out of
-        //the buffer before the replacement goes in. Finding them by the translated prefix rather than by an English
-        //literal is what keeps this working in another language: the prefix is asked of the same translation table
-        //vanilla used to write it.
+        //several tooltip lines this mod renders itself instead, and each has to come back out of the buffer before
+        //the replacement goes in. The prefix is looked up in the same translation table vanilla wrote the line from,
+        //so this keeps working in any language.
         //
         //Does nothing when the prefix is absent, so a tool that never had the line costs one scan and no special
         //case at the call site.
@@ -123,7 +118,7 @@ namespace Toolsmith.Utils {
                 if (tooltip[endIndex] == '\n') {
                     startIndex = endIndex + 1;
                 }
-                if (!withDebugInfo && tooltip[endIndex] == 'D') { //I don't know if this will work for any languages other then english? And I'm worried to find out, haha.
+                if (!withDebugInfo && tooltip[endIndex] == 'D') { //Finds the line by its English initial, so this does not locate the line in other languages.
                     foundLine = true;
                 }
                 if (withDebugInfo && debugFlag && tooltip[endIndex] == 'D') { //This whole bit is specifically searching for the English translated code... So this might cause issues in other languages. Oof.

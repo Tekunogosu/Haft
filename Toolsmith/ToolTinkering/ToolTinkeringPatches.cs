@@ -1,21 +1,14 @@
 ﻿using Cairo;
 using HarmonyLib;
-using ScientificSmithy.Behaviour;
-using SmithingPlus.Util;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Client;
 using Toolsmith.Client.Behaviors;
-using Toolsmith.Config;
 using Toolsmith.ToolTinkering.Behaviors;
-using Toolsmith.ToolTinkering.Drawbacks;
 using Toolsmith.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -33,7 +26,9 @@ namespace Toolsmith.ToolTinkering {
     public class ToolTinkeringTransitionalPropsPatches {
 
         [HarmonyPostfix]
-        [HarmonyPatch(nameof(CollectibleObject.GetTransitionableProperties))] //For NOW lets assume Result will likely always be Null and ignore the Result, just override it with the part's own.
+        //Replaces the result outright rather than appending: a part carrying a wet treatment has one transition, the
+        //drying of that treatment, and no vanilla transition to preserve alongside it.
+        [HarmonyPatch(nameof(CollectibleObject.GetTransitionableProperties))]
         private static void ToolPartTransitionalOverridePostfix(ref TransitionableProperties[] __result, IWorldAccessor world, ItemStack itemstack, Entity forEntity) {
             if (itemstack.Collectible.HasBehavior<ModularPartRenderingFromAttributes>()) {
                 if (itemstack.HasWetTreatment()) {
@@ -112,11 +107,7 @@ namespace Toolsmith.ToolTinkering {
                     continue;
                 }
 
-                var content = stack;
-                if (stack.Class == EnumItemClass.Block && (stack.Block as ILiquidInterface) != null) {
-                    content = (stack.Block as ILiquidInterface).GetContent(stack);
-                }
-
+                var content = TinkeringUtility.GetBindingContent(stack);
                 if (content?.Collectible?.Code == null) {
                     continue;
                 }
@@ -168,84 +159,93 @@ namespace Toolsmith.ToolTinkering {
     [HarmonyPatchCategory(ToolsmithModSystem.OffhandDominantInteractionUsePatchCategory)]
     public class OffhandDominantInteractionUsePatches {
 
+        //An item in the offhand can claim an interaction the main hand would otherwise handle - a whetstone honing
+        //the held tool, rather than the tool being used on the world. All four patches ask the same question first:
+        //is there such an item in the offhand, and does it want this particular interaction. Null when the answer is
+        //no, in which case the patch returns true and vanilla proceeds untouched.
+        private static CollectibleBehaviorOffhandDominantInteraction ClaimingOffhandBehavior(EntityAgent byEntity, ItemSlot slot, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent = false) {
+            if (byEntity == null || byEntity.LeftHandItemSlot?.Empty != false) {
+                return null;
+            }
+
+            var offhand = byEntity.LeftHandItemSlot.Itemstack.Collectible;
+            if (!offhand.HasBehavior<CollectibleBehaviorOffhandDominantInteraction>()) {
+                return null;
+            }
+
+            var bh = offhand.GetBehavior<CollectibleBehaviorOffhandDominantInteraction>();
+            if (bh.AskItemForHasInteractionAvailable(byEntity.LeftHandItemSlot, slot, byEntity, blockSel, entitySel, firstEvent)) {
+                return null;
+            }
+
+            return bh;
+        }
+
         [HarmonyPrefix]
         [HarmonyPatch(nameof(CollectibleObject.OnHeldUseStart))]
         private static bool OnHeldUseStartDominantOffhandInteractionPrefix(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, EnumHandInteract useType, bool firstEvent, ref EnumHandHandling handling) {
-            if (useType == EnumHandInteract.HeldItemInteract) {
-                if (byEntity != null && byEntity.LeftHandItemSlot?.Empty == false && byEntity.LeftHandItemSlot.Itemstack.Collectible.HasBehavior<CollectibleBehaviorOffhandDominantInteraction>()) {
-                    var bh = byEntity.LeftHandItemSlot.Itemstack.Collectible.GetBehavior<CollectibleBehaviorOffhandDominantInteraction>();
-                    if (bh.AskItemForHasInteractionAvailable(byEntity.LeftHandItemSlot, slot, byEntity, blockSel, entitySel, firstEvent)) {
-                        return true;
-                    }
-                    bh.OnHeldOffhandDominantStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
-                    return false;
-                }
+            if (useType != EnumHandInteract.HeldItemInteract) {
+                return true;
             }
 
-            return true;
+            var bh = ClaimingOffhandBehavior(byEntity, slot, blockSel, entitySel, firstEvent);
+            if (bh == null) {
+                return true;
+            }
+
+            bh.OnHeldOffhandDominantStart(slot, byEntity, blockSel, entitySel, firstEvent, ref handling);
+            return false;
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(nameof(CollectibleObject.OnHeldUseStep))]
         private static bool OnHeldUseStepDominantOffhandInteractionPrefix(ref EnumHandInteract __result, float secondsPassed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel) {
-            if (byEntity != null && byEntity.LeftHandItemSlot?.Empty == false && byEntity.LeftHandItemSlot.Itemstack.Collectible.HasBehavior<CollectibleBehaviorOffhandDominantInteraction>()) {
-                EnumHandInteract handUse = byEntity.Controls.HandUse;
-                if (handUse != EnumHandInteract.HeldItemAttack) {
-                    var bh = byEntity.LeftHandItemSlot.Itemstack.Collectible.GetBehavior<CollectibleBehaviorOffhandDominantInteraction>();
-                    if (bh.AskItemForHasInteractionAvailable(byEntity.LeftHandItemSlot, slot, byEntity, blockSel, entitySel)) {
-                        return true;
-                    }
-                    var retBool = bh.OnHeldOffhandDominantStep(secondsPassed, slot, byEntity, blockSel, entitySel);
-                    if (retBool) {
-                        __result = handUse;
-                    } else {
-                        __result = EnumHandInteract.None;
-                    }
-                    return false;
-                }
+            EnumHandInteract handUse = byEntity?.Controls.HandUse ?? EnumHandInteract.None;
+            if (handUse == EnumHandInteract.HeldItemAttack) {
+                return true;
             }
 
-            return true;
+            var bh = ClaimingOffhandBehavior(byEntity, slot, blockSel, entitySel);
+            if (bh == null) {
+                return true;
+            }
+
+            __result = bh.OnHeldOffhandDominantStep(secondsPassed, slot, byEntity, blockSel, entitySel) ? handUse : EnumHandInteract.None;
+            return false;
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(nameof(CollectibleObject.OnHeldUseCancel))]
         private static bool OnHeldUseCancelDominantOffhandInteractionPrefix(ref EnumHandInteract __result, float secondsPassed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, EnumItemUseCancelReason cancelReason) {
-            if (byEntity != null && byEntity.LeftHandItemSlot?.Empty == false && byEntity.LeftHandItemSlot.Itemstack.Collectible.HasBehavior<CollectibleBehaviorOffhandDominantInteraction>()) {
-                EnumHandInteract handUse = byEntity.Controls.HandUse;
-                if (handUse != EnumHandInteract.HeldItemAttack) {
-                    var bh = byEntity.LeftHandItemSlot.Itemstack.Collectible.GetBehavior<CollectibleBehaviorOffhandDominantInteraction>();
-                    if (bh.AskItemForHasInteractionAvailable(byEntity.LeftHandItemSlot, slot, byEntity, blockSel, entitySel)) {
-                        return true;
-                    }
-                    var retBool = bh.OnHeldOffhandDominantCancel(secondsPassed, slot, byEntity, blockSel, entitySel, cancelReason);
-                    if (retBool) {
-                        __result = EnumHandInteract.None;
-                    } else {
-                        __result = handUse;
-                    }
-                    return false;
-                }
+            EnumHandInteract handUse = byEntity?.Controls.HandUse ?? EnumHandInteract.None;
+            if (handUse == EnumHandInteract.HeldItemAttack) {
+                return true;
             }
 
-            return true;
+            var bh = ClaimingOffhandBehavior(byEntity, slot, blockSel, entitySel);
+            if (bh == null) {
+                return true;
+            }
+
+            //Cancel reads the opposite way round to Step: a behavior that handled the cancel ends the interaction.
+            __result = bh.OnHeldOffhandDominantCancel(secondsPassed, slot, byEntity, blockSel, entitySel, cancelReason) ? EnumHandInteract.None : handUse;
+            return false;
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(nameof(CollectibleObject.OnHeldUseStop))]
         private static bool OnHeldUseStopDominantOffhandInteractionPrefix(float secondsPassed, ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, EnumHandInteract useType) {
-            if (useType == EnumHandInteract.HeldItemInteract) {
-                if (byEntity != null && byEntity.LeftHandItemSlot?.Empty == false && byEntity.LeftHandItemSlot.Itemstack.Collectible.HasBehavior<CollectibleBehaviorOffhandDominantInteraction>()) {
-                    var bh = byEntity.LeftHandItemSlot.Itemstack.Collectible.GetBehavior<CollectibleBehaviorOffhandDominantInteraction>();
-                    if (bh.AskItemForHasInteractionAvailable(byEntity.LeftHandItemSlot, slot, byEntity, blockSel, entitySel)) {
-                        return true;
-                    }
-                    bh.OnHeldOffhandDominantStop(secondsPassed, slot, byEntity, blockSel, entitySel);
-                    return false;
-                }
+            if (useType != EnumHandInteract.HeldItemInteract) {
+                return true;
             }
 
-            return true;
+            var bh = ClaimingOffhandBehavior(byEntity, slot, blockSel, entitySel);
+            if (bh == null) {
+                return true;
+            }
+
+            bh.OnHeldOffhandDominantStop(secondsPassed, slot, byEntity, blockSel, entitySel);
+            return false;
         }
     }
 
@@ -304,7 +304,7 @@ namespace Toolsmith.ToolTinkering {
 
                 if (retCount == 2 && shadePathCount < 2 && codes[i].opcode == OpCodes.Call) {
                     if (codes[i - 1].opcode == OpCodes.Ldc_R8 && (double)codes[i - 1].operand == (double)(2)) { //If a Call code is preceeded by a float 2 being loaded, it is likely the ShadePath call we are looking for.
-                        if (codes[i - 2].opcode == OpCodes.Ldloc_2) { //Then just in case, lets see if before THAT was loading the textCtx on the stack. THEN we are certain. (probably? Hopefully.)
+                        if (codes[i - 2].opcode == OpCodes.Ldloc_2) { //Preceded by textCtx being loaded, which distinguishes this from other calls taking a literal 2.
                             shadePathCount++;
                             continue;
                         }
@@ -561,7 +561,8 @@ namespace Toolsmith.ToolTinkering {
         }
     }
 
-    //Patching ItemAxe to ideally keep marking all Wood Blocks as Dirty to send them to the client, hopefully solving the Ghost Trees once and for all and not causing an RNG desync in the process.
+    //Restricts ItemAxe's tree-felling BreakBlock to the server. Running it on both sides leaves the client's copy of
+    //felled blocks out of step with the server's - the ghost trees - and consumes client-side RNG that then desyncs.
     [HarmonyPatch(typeof(ItemAxe))]
     [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringItemAxePatchCategory)]
     public class ItemAxePatches {
@@ -692,8 +693,8 @@ namespace Toolsmith.ToolTinkering {
                 handleRenderTree.SetPartShapePath(handleStats.handleShapePath);
                 stack.SetHandleStatTag(handleStats.handleStatTag);
             }
-            stack.SetPartCurrentDurability(1000);
-            stack.SetPartMaxDurability(1000);
+            stack.SetPartCurrentDurability(ToolsmithConstants.PartDurabilityBase);
+            stack.SetPartMaxDurability(ToolsmithConstants.PartDurabilityBase);
 
             slot.MarkDirty();
             return true;

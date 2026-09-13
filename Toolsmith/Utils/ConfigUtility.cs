@@ -2,13 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Config;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.Util;
-using Vintagestory.Common;
 
 namespace Toolsmith.Utils {
     public static class ConfigUtility {
@@ -28,46 +25,16 @@ namespace Toolsmith.Utils {
         public static List<string> SplitBluntToolsConfig;
         public static List<string> SplitBlacklistConfig;
 
-        //Send a CollectibleObject's Code.toString() these to check if they are contained in the respective config. Used to assign the Behaviors at loadtime, probably better to look for the Behaviors themselves during runtime.
-        //Generally they are all doing the same thing but on a different filter from the config, unless otherwise noted!
+        //The pattern checks below take a CollectibleObject's Code.ToString() and answer whether it is in the
+        //respective config. They are used to assign behaviors at load time; at runtime, ask for the behavior itself.
+        //Each asks the same question of a different config string: does this code match the wildcard that config
+        //was built into.
+        private static bool MatchesConfigPattern(string pattern, string code) {
+            return code != null && WildcardUtil.Match(pattern, code);
+        }
+
         public static bool IsToolHead(string toolHead) {
-            if (toolHead == null) return false;
-
-            var match = WildcardUtil.Match(ToolsmithModSystem.Config.ToolHeads, toolHead);
-            return match;
-        }
-
-        public static bool IsToolHandle(string toolHandle, Dictionary<string, HandlePartDefines> dict) {
-            if (toolHandle == null) return false;
-
-            var match = dict.TryGetValue(toolHandle);
-            if (match == null) {
-                return false;
-            } else {
-                return match.enabled;
-            }
-        }
-
-        public static bool IsToolBinding(string toolBinding, Dictionary<string, BindingPartDefines> dict) {
-            if (toolBinding == null) return false;
-
-            var match = dict.TryGetValue(toolBinding);
-            if (match == null) {
-                return false;
-            } else {
-                return match.enabled;
-            }
-        }
-
-        public static bool IsValidGripMaterial(string gripMat, Dictionary<string, GripPartDefines> dict) {
-            if (gripMat == null) return false;
-
-            var match = dict.TryGetValue(gripMat);
-            if (match == null) {
-                return false;
-            } else {
-                return match.enabled;
-            }
+            return MatchesConfigPattern(ToolsmithModSystem.Config.ToolHeads, toolHead);
         }
 
         //Does the target satisfy everything the applied part demands? True when the applied part demands nothing,
@@ -100,140 +67,80 @@ namespace Toolsmith.Utils {
             return true;
         }
 
-        public static bool IsValidTreatmentMaterial(string treatmentMat, Dictionary<string,  TreatmentPartDefines> dict) {
-            if (treatmentMat == null) return false;
-
-            var match = dict.TryGetValue(treatmentMat);
-            if (match == null) {
-                return false;
-            } else {
-                return match.enabled;
-            }
-        }
-
         public static bool IsTinkerableTool(string tool) {
-            if (tool == null) return false;
-
-            var match = WildcardUtil.Match(ToolsmithModSystem.Config.TinkerableTools, tool);
-            return match;
+            return MatchesConfigPattern(ToolsmithModSystem.Config.TinkerableTools, tool);
         }
 
         public static bool IsSinglePartTool(string tool) {
-            if (tool == null) return false;
-
-            var match = WildcardUtil.Match(ToolsmithModSystem.Config.SinglePartTools, tool);
-            return match;
+            return MatchesConfigPattern(ToolsmithModSystem.Config.SinglePartTools, tool);
         }
 
         public static bool IsBluntTool(string tool) {
-            if (tool == null) return false;
-
-            var match = WildcardUtil.Match(ToolsmithModSystem.Config.BluntHeadedTools, tool);
-            return match;
+            return MatchesConfigPattern(ToolsmithModSystem.Config.BluntHeadedTools, tool);
         }
 
-        //Similar to the ones before, but this one is checking the blacklist string instead!
         public static bool IsOnBlacklist(string tool) {
-            if (tool == null) return false;
-
-            var match = WildcardUtil.Match(ToolsmithModSystem.Config.PartBlacklist, tool);
-            return match;
+            return MatchesConfigPattern(ToolsmithModSystem.Config.PartBlacklist, tool);
         }
 
         public static bool IsToolWithWoodInBindingShapes(string tool) {
-            if (tool == null) return false;
+            return MatchesConfigPattern(ToolsmithModSystem.Config.ToolsWithWoodInBindingShape, tool);
+        }
 
-            var match = WildcardUtil.Match(ToolsmithModSystem.Config.ToolsWithWoodInBindingShape, tool);
-            return match;
+        //A part is registered when the configs hold an entry for its code and that entry has not been switched off.
+        //One routine for all four kinds, so a part disabled in a config is disabled the same way whichever kind it is.
+        private static bool IsEnabledPart<T>(string code, Dictionary<string, T> dict) where T : ToolsmithPart {
+            if (code == null) {
+                return false;
+            }
+
+            return dict.TryGetValue(code)?.enabled == true;
+        }
+
+        public static bool IsToolHandle(string toolHandle, Dictionary<string, HandlePartDefines> dict) {
+            return IsEnabledPart(toolHandle, dict);
+        }
+
+        public static bool IsToolBinding(string toolBinding, Dictionary<string, BindingPartDefines> dict) {
+            return IsEnabledPart(toolBinding, dict);
+        }
+
+        public static bool IsValidGripMaterial(string gripMat, Dictionary<string, GripPartDefines> dict) {
+            return IsEnabledPart(gripMat, dict);
+        }
+
+        public static bool IsValidTreatmentMaterial(string treatmentMat, Dictionary<string, TreatmentPartDefines> dict) {
+            return IsEnabledPart(treatmentMat, dict);
+        }
+
+        //Takes a built wildcard string back apart into the entries it was made from, so mods can add to the list
+        //before it is reassembled. The prefix and postfix are stripped off the first and last entry respectively;
+        //everything between is already a bare entry.
+        private static List<string> SplitConfigString(string configString) {
+            var entries = configString.Split(ConfigEntrySeparator);
+            entries[0] = entries[0].Split('(').Last();
+            entries[entries.Length - 1] = entries[entries.Length - 1].Split(')').First();
+            return entries.ToList();
+        }
+
+        private static string JoinConfigString(List<string> entries, string prefix) {
+            return prefix + string.Join(ConfigEntrySeparator, entries) + ConfigStringPostfix;
         }
 
         public static void PrepareAndSplitConfigStrings() {
-            var dirtyHeadsSplit = ToolsmithModSystem.Config.ToolHeads.Split('|');
-            var dirtyTinkerSplit = ToolsmithModSystem.Config.TinkerableTools.Split("|");
-            var dirtySmithedSplit = ToolsmithModSystem.Config.SinglePartTools.Split("|");
-            var dirtyBluntSplit = ToolsmithModSystem.Config.BluntHeadedTools.Split("|");
-            var dirtyBlacklistSplit = ToolsmithModSystem.Config.PartBlacklist.Split("|");
-
-            var workingEntry = dirtyHeadsSplit[0];
-            dirtyHeadsSplit[0] = workingEntry.Split('(').Last();
-            workingEntry = dirtyTinkerSplit[0];
-            dirtyTinkerSplit[0] = workingEntry.Split('(').Last();
-            workingEntry = dirtySmithedSplit[0];
-            dirtySmithedSplit[0] = workingEntry.Split('(').Last();
-            workingEntry = dirtyBluntSplit[0];
-            dirtyBluntSplit[0] = workingEntry.Split('(').Last();
-            workingEntry = dirtyBlacklistSplit[0];
-            dirtyBlacklistSplit[0] = workingEntry.Split('(').Last();
-
-            var count = dirtyHeadsSplit.Length;
-            workingEntry = dirtyHeadsSplit[count - 1];
-            dirtyHeadsSplit[count - 1] = workingEntry.Split(')').First();
-            count = dirtyTinkerSplit.Length;
-            workingEntry = dirtyTinkerSplit[count - 1];
-            dirtyTinkerSplit[count - 1] = workingEntry.Split(')').First();
-            count = dirtySmithedSplit.Length;
-            workingEntry = dirtySmithedSplit[count - 1];
-            dirtySmithedSplit[count - 1] = workingEntry.Split(')').First();
-            count = dirtyBluntSplit.Length;
-            workingEntry = dirtyBluntSplit[count - 1];
-            dirtyBluntSplit[count - 1] = workingEntry.Split(')').First();
-            count = dirtyBlacklistSplit.Length;
-            workingEntry = dirtyBlacklistSplit[count - 1];
-            dirtyBlacklistSplit[count - 1] = workingEntry.Split(')').First();
-
-            SplitToolHeadsConfig = dirtyHeadsSplit.ToList();
-            SplitTinkerableToolsConfig = dirtyTinkerSplit.ToList();
-            SplitSmithedToolsConfig = dirtySmithedSplit.ToList();
-            SplitBluntToolsConfig = dirtyBluntSplit.ToList();
-            SplitBlacklistConfig = dirtyBlacklistSplit.ToList();
+            SplitToolHeadsConfig = SplitConfigString(ToolsmithModSystem.Config.ToolHeads);
+            SplitTinkerableToolsConfig = SplitConfigString(ToolsmithModSystem.Config.TinkerableTools);
+            SplitSmithedToolsConfig = SplitConfigString(ToolsmithModSystem.Config.SinglePartTools);
+            SplitBluntToolsConfig = SplitConfigString(ToolsmithModSystem.Config.BluntHeadedTools);
+            SplitBlacklistConfig = SplitConfigString(ToolsmithModSystem.Config.PartBlacklist);
         }
 
         public static void MergeAndSetConfigStrings() {
-            string completeHeads = AnyWildcardStringPrefix;
-            string completeTinkerTools = AnyFirstCodeStartStringPrefix;
-            string completeSmithedTools = AnyFirstCodeStartStringPrefix;
-            string completeBluntTools = AnyFirstCodeStartStringPrefix;
-            string completeBlacklist = AnyWildcardStringPrefix;
-
-            for (int i = 0; i < SplitToolHeadsConfig.Count; i++) {
-                completeHeads += SplitToolHeadsConfig[i];
-                if (i < SplitToolHeadsConfig.Count - 1) {
-                    completeHeads += ConfigEntrySeparator;
-                }
-            }
-            completeHeads += ConfigStringPostfix;
-
-            for (int i = 0; i < SplitTinkerableToolsConfig.Count; i++) {
-                completeTinkerTools += SplitTinkerableToolsConfig[i];
-                if (i < SplitTinkerableToolsConfig.Count - 1) {
-                    completeTinkerTools += ConfigEntrySeparator;
-                }
-            }
-            completeTinkerTools += ConfigStringPostfix;
-
-            for (int i = 0; i < SplitSmithedToolsConfig.Count; i++) {
-                completeSmithedTools += SplitSmithedToolsConfig[i];
-                if (i < SplitSmithedToolsConfig.Count - 1) {
-                    completeSmithedTools += ConfigEntrySeparator;
-                }
-            }
-            completeSmithedTools += ConfigStringPostfix;
-
-            for (int i = 0; i < SplitBluntToolsConfig.Count; i++) {
-                completeBluntTools += SplitBluntToolsConfig[i];
-                if (i < SplitBluntToolsConfig.Count - 1) {
-                    completeBluntTools += ConfigEntrySeparator;
-                }
-            }
-            completeBluntTools += ConfigStringPostfix;
-
-            for (int i = 0; i < SplitBlacklistConfig.Count; i++) {
-                completeBlacklist += SplitBlacklistConfig[i];
-                if (i < SplitBlacklistConfig.Count - 1) {
-                    completeBlacklist += ConfigEntrySeparator;
-                }
-            }
-            completeBlacklist += ConfigStringPostfix;
+            var completeHeads = JoinConfigString(SplitToolHeadsConfig, AnyWildcardStringPrefix);
+            var completeTinkerTools = JoinConfigString(SplitTinkerableToolsConfig, AnyFirstCodeStartStringPrefix);
+            var completeSmithedTools = JoinConfigString(SplitSmithedToolsConfig, AnyFirstCodeStartStringPrefix);
+            var completeBluntTools = JoinConfigString(SplitBluntToolsConfig, AnyFirstCodeStartStringPrefix);
+            var completeBlacklist = JoinConfigString(SplitBlacklistConfig, AnyWildcardStringPrefix);
 
             if (ToolsmithModSystem.Config.DebugMessages) {
                 ToolsmithModSystem.Logger.Warning("The complete config strings before setting them are: ");

@@ -3,19 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
-using Toolsmith;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 
 namespace Toolsmith.ToolTinkering {
-
-    //[HarmonyPatch(typeof(CollectibleObject))]
-    //[HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringDamagePatchCategory)]
-    public class ToolRenderingPatches { //For generic patches that might be rquired for Tool Rendering purposes! Not needed yet so leaving it commented out.
-
-    }
 
     [HarmonyPatch(typeof(ItemHoe))]
     [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringDamagePatchCategory)]

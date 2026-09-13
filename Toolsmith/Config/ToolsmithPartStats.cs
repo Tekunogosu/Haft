@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Toolsmith.Utils;
-using Vintagestory.GameContent;
+using Vintagestory.API.Common;
+using Vintagestory.API.Util;
 
 namespace Toolsmith.Config {
 
@@ -22,6 +20,17 @@ namespace Toolsmith.Config {
         public Dictionary<string, TreatmentStatDefines> TreatmentStats = new() { };
         public Dictionary<string, BindingStatDefines> BindingStats = new() { };
         public Dictionary<string, MaterialStatDefines> MaterialStats = new() { };
+    }
+
+    //The four stat blocks a finished tool's numbers are calculated from. Grouped because they are always wanted
+    //together and always resolved the same way: read the tag the stack carries, fall back to the default when it has
+    //none. Crafting a tool and rebuilding one that lost its stats both go through this, so the two cannot drift.
+    public class HandleStatBundle {
+        public HandleStatDefines Handle;
+        public GripStatDefines Grip;
+        public TreatmentStatDefines Treatment;
+        public BindingStatDefines Binding;
+        public MaterialStatDefines Material;
     }
 
     public static class ToolsmithPartStatsHelpers {
@@ -96,327 +105,166 @@ namespace Toolsmith.Config {
             return chance;
         }
 
-        public static void VerifyAndStoreDefinesInDict(List<HandlePartDefines> list, bool runFullCheck, ref Dictionary<string, HandlePartDefines> targetDict) {
+        //Resolves every stat block a handle and its binding contribute. handleStats is passed in rather than looked
+        //up, because callers reach it by different routes - a part define here, an already-resolved tag there - and
+        //only the four optional pieces need the same defaulting each time.
+        public static HandleStatBundle ResolveHandleStats(HandleStatDefines handleStats, ItemStack handle, BindingStatDefines bindingStats) {
+            return new HandleStatBundle {
+                Handle = handleStats,
+                Binding = bindingStats,
+                Grip = ToolsmithModSystem.Stats.GripStats.Get(handle.HasHandleGripTag() ? handle.GetHandleGripTag() : ToolsmithConstants.DefaultGripTag),
+                Treatment = ToolsmithModSystem.Stats.TreatmentStats.Get(handle.HasHandleTreatmentTag() ? handle.GetHandleTreatmentTag() : ToolsmithConstants.DefaultTreatmentTag),
+                Material = handle.GetHandleMaterialStats()
+            };
+        }
+
+        //The durability and bonus figures a tool inherits, all four from one bundle so no caller can pass a
+        //mismatched set of stat blocks to the individual calculations.
+        public static float CalculateHandleDurability(HandleStatBundle stats) {
+            return CalculateHandleDurability(stats.Handle, stats.Treatment, stats.Binding, stats.Material);
+        }
+
+        public static float CalculateBindingDurability(HandleStatBundle stats) {
+            return CalculateBindingDurability(stats.Handle, stats.Binding, stats.Material);
+        }
+
+        public static float CalculateSpeedBonus(HandleStatBundle stats) {
+            return CalculateSpeedBonus(stats.Handle, stats.Grip, stats.Material);
+        }
+
+        public static float CalculateGripChanceToDamage(HandleStatBundle stats) {
+            return CalculateGripChanceToDamage(stats.Grip, stats.Treatment);
+        }
+
+        //Stores every define of one kind into its dictionary, rejecting entries that cannot be used and reporting a
+        //duplicate id unless the config has edits enabled. One routine rather than one per type, so a define that is
+        //silently dropped is dropped for the same stated reason whichever kind it is.
+        //
+        //requiredField names the one field beyond the id that an entry is useless without - a part's stat tag - and
+        //returns null when it is missing. A kind with no such field passes null. fullCheck fills in unset numeric
+        //fields, and runs only when the config asks for it, since it is a dev-time verification rather than a load
+        //step.
+        public static void VerifyAndStoreDefines<T>(List<T> list, bool runFullCheck, ref Dictionary<string, T> targetDict, string kindName, System.Func<T, string> requiredField = null, string requiredFieldName = null, Action<T> fullCheck = null) where T : IToolsmithDefine {
             foreach (var entry in list) {
-                if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a HandlePartDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
+                if (entry.Id == null) {
+                    ToolsmithModSystem.Logger.Error("Attempted to read a " + kindName + " that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
                     continue;
                 }
 
-                if (entry.handleStatTag == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a HandlePartDefine for id \"" + entry.id + "\"that lacks a stat tag. Safely skipping this entry");
+                if (requiredField != null && requiredField(entry) == null) {
+                    ToolsmithModSystem.Logger.Error("Attempted to read a " + kindName + " for id \"" + entry.Id + "\" that lacks a " + requiredFieldName + ". Safely skipping this entry.");
                     continue;
                 }
 
-                if (!targetDict.ContainsKey(entry.id)) {
-                    targetDict[entry.id] = entry;
+                if (runFullCheck) { //Dev-environment verification, enabled from the base config for addons and compat.
+                    fullCheck?.Invoke(entry);
+                }
+
+                if (!targetDict.ContainsKey(entry.Id)) {
+                    targetDict[entry.Id] = entry;
                 } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a HandlePartDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
+                    ToolsmithModSystem.Logger.Error("Attempted to add a " + kindName + " that already exists in the Dictionary. There is a second entry for the code " + entry.Id + " being read from the mod files or compat from other mods.");
                 }
             }
+        }
+
+        //An unset numeric field defaults rather than dropping the entry: the stats come out wrong, but the part still
+        //works, and saying so is more useful than refusing to load it.
+        private static void DefaultIfUnset(ref float field, float fallback, string fieldName, string kindName, string id) {
+            if (field == -1.0f) {
+                ToolsmithModSystem.Logger.Error(fieldName + " for " + kindName + " id \"" + id + "\" has not been properly set. Defaulting to " + fallback + " and continuing, stats will be improper but still function.");
+                field = fallback;
+            }
+        }
+
+        private static void WarnIfUnset(string field, string unsetValue, string fieldName, string kindName, string id, string consequence) {
+            if (field == unsetValue) {
+                ToolsmithModSystem.Logger.Warning(kindName + " with id \"" + id + "\" appears to not have a " + fieldName + " set. " + consequence);
+            }
+        }
+
+        public static void VerifyAndStoreDefinesInDict(List<HandlePartDefines> list, bool runFullCheck, ref Dictionary<string, HandlePartDefines> targetDict) {
+            VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "HandlePartDefine", e => e.handleStatTag, "stat tag");
         }
 
         public static void VerifyAndStoreDefinesInDict(List<GripPartDefines> list, bool runFullCheck, ref Dictionary<string, GripPartDefines> targetDict) {
-            foreach (var entry in list) {
-                if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a GripPartDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
-                    continue;
-                }
-
-                if (entry.gripStatTag == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a GripPartDefine for id \"" + entry.id + "\"that lacks a stat tag. Safely skipping this entry");
-                    continue;
-                }
-
-                if (!targetDict.ContainsKey(entry.id)) {
-                    targetDict[entry.id] = entry;
-                } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a GripPartDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
-                }
-            }
+            VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "GripPartDefine", e => e.gripStatTag, "stat tag");
         }
 
         public static void VerifyAndStoreDefinesInDict(List<TreatmentPartDefines> list, bool runFullCheck, ref Dictionary<string, TreatmentPartDefines> targetDict) {
-            foreach (var entry in list) {
-                if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a TreatmentPartDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
-                    continue;
-                }
-
-                if (entry.treatmentStatTag == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a TreatmentPartDefine for id \"" + entry.id + "\"that lacks a stat tag. Safely skipping this entry");
-                    continue;
-                }
-
-                if (!targetDict.ContainsKey(entry.id)) {
-                    targetDict[entry.id] = entry;
-                } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a TreatmentPartDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
-                }
-            }
+            VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "TreatmentPartDefine", e => e.treatmentStatTag, "stat tag");
         }
 
         public static void VerifyAndStoreDefinesInDict(List<BindingPartDefines> list, bool runFullCheck, ref Dictionary<string, BindingPartDefines> targetDict) {
-            foreach (var entry in list) {
-                if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a BindingPartDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
-                    continue;
-                }
-
-                if (entry.bindingStatTag == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a BindingPartDefine for id \"" + entry.id + "\"that lacks a stat tag. Safely skipping this entry");
-                    continue;
-                }
-
-                if (!targetDict.ContainsKey(entry.id)) {
-                    targetDict[entry.id] = entry;
-                } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a BindingPartDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
-                }
-            }
+            VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "BindingPartDefine", e => e.bindingStatTag, "stat tag");
         }
 
         public static void VerifyAndStoreDefinesInDict(List<HandleStatDefines> list, bool runFullCheck, ref Dictionary<string, HandleStatDefines> targetDict) {
-            foreach (var entry in list) {
-                if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a HandleStatDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
-                    continue;
-                }
-
-                if (runFullCheck) { //Things in here don't need to run all the time unless in a dev environment. Can be enabled in the base config for easy verification for addons or compat.
-                    if (entry.baseHPfactor == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("BaseHPFactor for HandleStatDefine id \"" + entry.id + "\" has not been properly set. Defaulting to 1.0 and continuing, stats will be improper but still function.");
-                        entry.baseHPfactor = 1.0f;
-                    }
-
-                    if (entry.selfHPBonus == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("SelfHPBonus for HandleStatDefine id \"" + entry.id + "\" has not been properly set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
-                        entry.selfHPBonus = 0.0f;
-                    }
-
-                    if (entry.bindingHPBonus == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("BindingHPBonus for HandleStatDefine id \"" + entry.id + "\" has not been properly set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
-                        entry.bindingHPBonus = 0.0f;
-                    }
-
-                    if (entry.speedBonus == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("SpeedBonus for HandleStatDefine id \"" + entry.id + "\" has not been properly set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
-                        entry.speedBonus = 0.0f;
-                    }
-                }
-
-                if (!targetDict.ContainsKey(entry.id)) {
-                    targetDict[entry.id] = entry;
-                } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a HandleStatDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
-                }
-            }
+            VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "HandleStatDefine", fullCheck: e => {
+                DefaultIfUnset(ref e.baseHPfactor, 1.0f, "BaseHPFactor", "HandleStatDefine", e.id);
+                DefaultIfUnset(ref e.selfHPBonus, 0.0f, "SelfHPBonus", "HandleStatDefine", e.id);
+                DefaultIfUnset(ref e.bindingHPBonus, 0.0f, "BindingHPBonus", "HandleStatDefine", e.id);
+                DefaultIfUnset(ref e.speedBonus, 0.0f, "SpeedBonus", "HandleStatDefine", e.id);
+            });
         }
 
         public static void VerifyAndStoreDefinesInDict(List<MaterialStatDefines> list, bool runFullCheck, ref Dictionary<string, MaterialStatDefines> targetDict) {
             foreach (var entry in list) {
-                if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a MaterialStatDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
-                    continue;
-                }
-
                 //An older config, and every compat mod written against one, spells this hardnessFactor. Fold it in
                 //before the check below, so such an entry reads as complete rather than being reported unset.
                 if (entry.densityFactor == -1.0f && entry.hardnessFactor != -1.0f) {
                     entry.densityFactor = entry.hardnessFactor;
                 }
-
-                if (runFullCheck) {
-                    if (entry.densityFactor == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("DensityFactor for MaterialStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 1.0 and continuing, stats will be improper but still function.");
-                        entry.densityFactor = 1.0f;
-                    }
-
-                    if (entry.nailBindingBonus == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("NailBindingBonus for MaterialStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
-                        entry.nailBindingBonus = 0.0f;
-                    }
-                }
-
-                if (!targetDict.ContainsKey(entry.id)) {
-                    targetDict[entry.id] = entry;
-                } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a MaterialStatDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
-                }
             }
+
+            VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "MaterialStatDefine", fullCheck: e => {
+                DefaultIfUnset(ref e.densityFactor, 1.0f, "DensityFactor", "MaterialStatDefine", e.id);
+                DefaultIfUnset(ref e.nailBindingBonus, 0.0f, "NailBindingBonus", "MaterialStatDefine", e.id);
+            });
         }
 
         public static void VerifyAndStoreDefinesInDict(List<GripStatDefines> list, bool runFullCheck, ref Dictionary<string, GripStatDefines> targetDict) {
-            foreach (var entry in list) {
-                if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a GripStatDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
-                    continue;
+            VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "GripStatDefine", fullCheck: e => {
+                if (e.id != "plain") {
+                    WarnIfUnset(e.texturePath, "plain", "texturePath", "GripStatDefine", e.id, "It will lack a texture - is this intentional?");
+                    WarnIfUnset(e.langTag, "", "langTag", "GripStatDefine", e.id, "It will likely not localize properly.");
                 }
-
-                if (runFullCheck) {
-                    if (entry.id != "plain" && entry.texturePath == "plain") {
-                        ToolsmithModSystem.Logger.Warning("GripStatDefine with id \"" + entry.id + "\" appears to not have a texturePath set. It will lack a texture - is this intentional?");
-                    }
-
-                    if (entry.id != "plain" && entry.langTag == "") {
-                        ToolsmithModSystem.Logger.Warning("GripStatDefine with id \"" + entry.id + "\" appears to not have a langTag set. It will likely not localize properly.");
-                    }
-
-                    if (entry.speedBonus == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("SpeedBonus for GripStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
-                        entry.speedBonus = 0.0f;
-                    }
-
-                    if (entry.chanceToDamage == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("ChanceToDamage for GripStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 1.0 and continuing, stats will be improper but still function.");
-                        entry.chanceToDamage = 1.0f;
-                    }
-                }
-
-                if (!targetDict.ContainsKey(entry.id)) {
-                    targetDict[entry.id] = entry;
-                } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a GripStatDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
-                }
-            }
+                DefaultIfUnset(ref e.speedBonus, 0.0f, "SpeedBonus", "GripStatDefine", e.id);
+                DefaultIfUnset(ref e.chanceToDamage, 1.0f, "ChanceToDamage", "GripStatDefine", e.id);
+            });
         }
 
         public static void VerifyAndStoreDefinesInDict(List<TreatmentStatDefines> list, bool runFullCheck, ref Dictionary<string, TreatmentStatDefines> targetDict) {
-            foreach (var entry in list) {
-                if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a TreatmentStatDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
-                    continue;
+            VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "TreatmentStatDefine", fullCheck: e => {
+                if (e.id != "plain") {
+                    WarnIfUnset(e.langTag, "", "langTag", "TreatmentStatDefine", e.id, "It will likely not localize properly.");
                 }
-
-                if (runFullCheck) {
-                    if (entry.id != "plain" && entry.langTag == "") {
-                        ToolsmithModSystem.Logger.Warning("TreatmentStatDefine with id \"" + entry.id + "\" appears to not have a langTag set. It will likely not localize properly.");
-                    }
-
-                    if (entry.handleHPbonus == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("HandleHPBonus for TreatmentStatDefine with id \"" + entry.id + "\" has not been properly set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
-                        entry.handleHPbonus = 0.0f;
-                    }
-                }
-
-                if (!targetDict.ContainsKey(entry.id)) {
-                    targetDict[entry.id] = entry;
-                } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a TreatmentStatDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
-                }
-            }
+                DefaultIfUnset(ref e.handleHPbonus, 0.0f, "HandleHPBonus", "TreatmentStatDefine", e.id);
+            });
         }
 
         public static void VerifyAndStoreDefinesInDict(List<BindingStatDefines> list, bool runFullCheck, ref Dictionary<string, BindingStatDefines> targetDict) {
+            //A metal binding with no metalType cannot say what bits to return when it breaks, so it is dropped rather
+            //than stored - hence its own filter rather than a fullCheck, which only ever defaults a value.
+            var usable = new List<BindingStatDefines>();
             foreach (var entry in list) {
-                if (entry.id == null) {
-                    ToolsmithModSystem.Logger.Error("Attempted to read a BindingStatDefine that lacks an id assigned to it. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
-                    continue;
-                }
-
-                if (entry.isMetal && entry.metalType == null) {
+                if (entry.id != null && entry.isMetal && entry.metalType == null) {
                     ToolsmithModSystem.Logger.Error("The BindingStatDefine with id \"" + entry.id + "\" is a metal binding, but does not have a metalType set. Safely skipping this entry. Likely another mod with a compatability patch is causing this error.");
                     continue;
                 }
-
-                if (runFullCheck) {
-                    if (entry.id != "none" && entry.texturePath == "plain") {
-                        ToolsmithModSystem.Logger.Warning("BindingStatDefine with id \"" + entry.id + "\" appears to not have a texturePath set. It will lack a texture - is this intentional?");
-                    }
-
-                    if (entry.langTag == "") {
-                        ToolsmithModSystem.Logger.Warning("BindingStatDefine with id \"" + entry.id + "\" appears to not have a langTag set. It will likely not localize properly.");
-                    }
-
-                    if (entry.baseHPfactor == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("BaseHPFactor for BindingStatDefine with id \"" + entry.id + "\" has not been set. Defaulting to 1.0 and continuing, stats will be improper but still function.");
-                        entry.baseHPfactor = 1.0f;
-                    }
-
-                    if (entry.selfHPBonus == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("SelfHPBonus for BindingStatDefine with id \"" + entry.id + "\" has not been set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
-                        entry.selfHPBonus = 0.0f;
-                    }
-
-                    if (entry.handleHPBonus == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("HandleHPBonus for BindingStatDefine with id \"" + entry.id + "\" has not been set. Defaulting to 0.0 and continuing, stats will be improper but still function.");
-                        entry.handleHPBonus = 0.0f;
-                    }
-
-                    if (entry.recoveryPercent == -1.0f) {
-                        ToolsmithModSystem.Logger.Error("RecoveryPercent for BindingStatDefine with id \"" + entry.id + "\" has not been set. Defaulting to 1.0 and continuing, stats will be improper but still function.");
-                        entry.recoveryPercent = 1.0f;
-                    }
-                }
-
-                if (!targetDict.ContainsKey(entry.id)) {
-                    targetDict[entry.id] = entry;
-                } else if (!ToolsmithModSystem.Stats.EnableEdits) {
-                    ToolsmithModSystem.Logger.Error("Attempted to add a BindingStatDefine that already exists in the Dictionary. There is a second entry for the code " + entry.id + " being read from the mod files or compat from other mods.");
-                }
+                usable.Add(entry);
             }
+
+            VerifyAndStoreDefines(usable, runFullCheck, ref targetDict, "BindingStatDefine", fullCheck: e => {
+                if (e.id != "none") {
+                    WarnIfUnset(e.texturePath, "plain", "texturePath", "BindingStatDefine", e.id, "It will lack a texture - is this intentional?");
+                }
+                WarnIfUnset(e.langTag, "", "langTag", "BindingStatDefine", e.id, "It will likely not localize properly.");
+                DefaultIfUnset(ref e.baseHPfactor, 1.0f, "BaseHPFactor", "BindingStatDefine", e.id);
+                DefaultIfUnset(ref e.selfHPBonus, 0.0f, "SelfHPBonus", "BindingStatDefine", e.id);
+                DefaultIfUnset(ref e.handleHPBonus, 0.0f, "HandleHPBonus", "BindingStatDefine", e.id);
+                DefaultIfUnset(ref e.recoveryPercent, 1.0f, "RecoveryPercent", "BindingStatDefine", e.id);
+            });
         }
-
     }
-
-    /*public class HandlePartDefines {
-        public string handleStatTag;
-        public bool canHaveGrip = false;
-        public string handleShapePath = "";
-        public bool canBeTreated = false;
-        public float dryingTimeMult = 1.0f;
-    }*/
-
-    /*public class GripPartDefines {
-        public string gripStatTag;
-        public string gripShapePath = "";
-        public string gripTextureOverride = "";
-    }*/
-
-    /*public class TreatmentPartDefines {
-        public string treatmentStatTag;
-        public int dryingHours; //Base number of hours it takes to dry a handle, multiplied by the handle's drying time multiplier when applied.
-        public bool isLiquid = false;
-        public float litersUsed = 0.0f;
-    }*/
-
-    /*public class BindingPartDefines {
-        public string bindingStatTag;
-        public string bindingShapePath = "";
-        public string bindingTextureOverride = "";
-    }*/
-
-    /*public class HandleStatDefines { //In an effort to keep things similarly vanilla for durability values, the baseHPfactor is a multiplier on the base durability of the tool-to-be-crafted
-        public string id; //An ID to help access and find what it is - make sure this is the same as the Dictionary Key. It might help to keep an id associated with the stats.
-        public float baseHPfactor; //It's the main part of Handles and Bindings.
-        public float selfHPBonus; //For more advanced handles, provides an additional multiplier for the handle's health as a bonus ontop
-        public float bindingHPBonus; //Advanced handles can provide a small bonus to the Binding's HP
-        public float speedBonus; //Advanced handles can make it easier to use the tool as well!
-    }*/
-
-    /*public class GripStatDefines {
-        public string id;
-        public string texturePath = "plain";
-        public string langTag = ""; //A tag to set for localization purposes that describes the grip on the tool IE: "grip-cloth" for cloth
-        public float speedBonus; //The best speed bonuses come from the grip of the tool. If you can hold it better, you can use it faster...
-        public float chanceToDamage; //And more efficiently too. Gives the handle a chance to ignore damage!
-    }*/
-
-    /*public class TreatmentStatDefines {
-        public string id;
-        public string langTag = ""; //A tag to set for localization purposes that describes the treatment on the tool IE: "treatment-wax" for wax
-        public float handleHPbonus; //Treating the handle makes it last longer
-    }*/
-
-    /*public class BindingStatDefines {
-        public string id;
-        public string texturePath = "plain";
-        public string langTag = "";
-        public float baseHPfactor;
-        public float selfHPBonus;
-        public float handleHPBonus;
-        public float recoveryPercent; //If the HP is below this percent, then the binding is ruined if another part breaks
-        public bool isMetal; //If true and the bindings break, try and return some bits
-        public string metalType; //For ease of returning the bits, the material/metal variant of bits to return!
-    }*/
 }

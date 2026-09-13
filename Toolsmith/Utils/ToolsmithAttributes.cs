@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace Toolsmith.Utils {
-    public static class ToolsmithAttributes { //Try to keep all attributes Camel Case! Don't want to make that mistake again and actually push it to people's saves...
-        //Going to properly define constants for the Attributes. Just like the hardcoded x5 situation for toolheads before, lets get ontop of the bad practices now and clean them up :P
-        //All the Attributes for a Tinkered Tool, it's various parts, durabilities and max durabilities, plus the two important stats they can get from higher quality parts.
+    //Every attribute name this mod writes, as a constant rather than a literal at each call site.
+    //
+    //These names are saved world data: renaming one silently orphans the value on every existing item, so a name here
+    //is fixed once it has shipped. New ones are camel case, matching the rest.
+    public static class ToolsmithAttributes {
         public const string ToolHead = "tinkeredToolHead";
         public const string ToolSharpnessCurrent = "toolSharpnessCurrent"; //For both the tool and the head alone
         public const string ToolSharpnessMax = "toolSharpnessMax"; //For both the tool and the head alone

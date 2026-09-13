@@ -1,15 +1,12 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Toolsmith.Config {
     //Most stats here are required and expected unless otherwise stated!
-    public class ToolsmithStat {
+    public class ToolsmithStat : IToolsmithDefine {
         [JsonProperty]
-        public string id = null; //An ID to help access and find what it is - make sure this is the same as the Dictionary Key. It might help to keep an id associated with the stats.
+        public string id = null;
+
+        public string Id => id; //An ID to help access and find what it is - make sure this is the same as the Dictionary Key. It might help to keep an id associated with the stats.
 
         //What this stat block IS, as arbitrary labels, matched against a part's requiresTags. On a material this is
         //how "wood" and "metal" become gateable without a handle part existing per material. Same free-string rule as

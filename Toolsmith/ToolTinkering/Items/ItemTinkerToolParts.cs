@@ -1,26 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using Toolsmith.Client;
 using Toolsmith.Utils;
 using Vintagestory.API.Common;
-using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
 using Vintagestory.API.Datastructures;
 
 namespace Toolsmith.ToolTinkering.Items {
+    //A head and handle joined but not yet bound: the intermediate a tool is finished from, with a binding in the
+    //offhand or on a workbench.
     public class ItemTinkerToolParts : Item, IModularPartRenderer {
-        //protected bool crafting = false;
-
-        /*public override string GetHeldTpUseAnimation(ItemSlot activeHotbarSlot, Entity forEntity) {
-            if (crafting) {
-                return "craftingwinding";
-            }
-
-            return null;
-        }*/
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handling) {
             var entPlayer = (byEntity as EntityPlayer);
