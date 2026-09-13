@@ -72,7 +72,12 @@ namespace Toolsmith.ToolTinkering.Behaviors {
 
                     dsc.AppendLine(Lang.Get("toolhandletotalmult", StringHelpers.ColorForMultiplier(totalHandleMult), float.Truncate(totalHandleMult * 100) / 100));
                     dsc.AppendLine(Lang.Get("toolhandlebindingbonus", StringHelpers.ColorForBonus(handleStats.bindingHPBonus), Math.Round(handleStats.bindingHPBonus * 100)));
-                    dsc.AppendLine(Lang.Get("toolhandleusespeedbonus", StringHelpers.ColorForBonus(handleStats.speedBonus), Math.Round(handleStats.speedBonus * 100)));
+                    //Speed comes from the tier AND from what the handle is made of, so the line has to show the sum.
+                    //Reading only the tier would tell a meteoric iron handle it swings like every other metal one,
+                    //which is precisely the thing that makes it worth seeking out.
+                    var speedMaterialStats = inSlot.Itemstack.GetHandleMaterialStats();
+                    var totalSpeedBonus = handleStats.speedBonus + (speedMaterialStats?.speedBonus ?? 0.0f);
+                    dsc.AppendLine(Lang.Get("toolhandleusespeedbonus", StringHelpers.ColorForBonus(totalSpeedBonus), Math.Round(totalSpeedBonus * 100)));
                     if (inSlot.Itemstack.HasHandleTreatmentTag()) {
                         var treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.Get(inSlot.Itemstack.GetHandleTreatmentTag());
                         if (treatmentStats != null) {
@@ -196,9 +201,18 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                     //Same two refusals, in order: a handle already wearing a grip, then a grip this handle cannot
                     //take. The second is what lets a smooth metal handle demand an adhesive-backed grip while a
                     //wooden one accepts any - see the tag comment on ToolsmithPart.
+                    //Three refusals now, and the last one runs the check in the other direction. A grip can demand
+                    //things of the handle - the original case - and a handle can demand things of the grip, which is
+                    //what lets a polished metal handle insist on a grip that has been backed with an adhesive. The
+                    //grip's side has to be answered from the STACK rather than its part define, since the adhesive is
+                    //an attribute stamped on it.
+                    var gripPartDefine = ToolsmithModSystem.Stats.GripParts[gripOrTreatmentSlot.Itemstack.Collectible.Code.Path];
+                    var handlePartDefine = ToolsmithModSystem.Stats.BaseHandleParts.Get(handleSlot.Itemstack.Collectible.Code.Path);
                     if (handleSlot.Itemstack.HasHandleGripTag() ||
-                            !ConfigUtility.TagsSatisfy(ToolsmithModSystem.Stats.GripParts[gripOrTreatmentSlot.Itemstack.Collectible.Code.Path]?.requiresTags,
-                                                       handleSlot.Itemstack.GetHandleProvidedTags())) {
+                            !ConfigUtility.TagsSatisfy(gripPartDefine?.requiresTags,
+                                                       handleSlot.Itemstack.GetHandleProvidedTags()) ||
+                            !ConfigUtility.TagsSatisfy(handlePartDefine?.requiresTags,
+                                                       gripOrTreatmentSlot.Itemstack.GetGripProvidedTags())) {
                         outputSlot.Itemstack = null;
                         outputSlot.Itemstack = new ItemStack(ToolsmithModSystem.Api.World.GetBlock(new AssetLocation("game:air")));
                         outputSlot.Itemstack.SetDisposeMeNowPlease();

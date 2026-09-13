@@ -72,6 +72,7 @@
 	"toolsmith:item-metalhandle": "Metal Tool Handle",
 	"toolsmith:item-sandpaper": "Sandpaper",
 
+	"game:gripadhesivebacked": "<font color=\"#99c9f9\">Backed with {0} - will hold on a smooth handle.</font>",
 	"game:grip-twine": "Twine",
 	"game:grip-cloth": "Cloth",
 	"game:grip-leather": "Leather",

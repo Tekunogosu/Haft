@@ -70,9 +70,17 @@ namespace Toolsmith.Config {
             return bindingDur;
         }
 
-        //A better handle and a better grip both make the tool quicker to swing, and the two stack.
-        public static float CalculateSpeedBonus(HandleStatDefines handleStats, GripStatDefines gripStats) {
-            return handleStats.speedBonus + gripStats.speedBonus;
+        //A better handle and a better grip both make the tool quicker to swing, and what the handle is MADE of has a
+        //say too. All three stack additively, so a material penalty can be offset by a good grip rather than being
+        //an inescapable tax on using metal at all.
+        public static float CalculateSpeedBonus(HandleStatDefines handleStats, GripStatDefines gripStats, MaterialStatDefines materialStats = null) {
+            var speed = handleStats.speedBonus + gripStats.speedBonus;
+
+            if (materialStats != null) {
+                speed += materialStats.speedBonus;
+            }
+
+            return speed;
         }
 
         //The chance the handle takes damage at all. Two independent things can prevent a knock landing: a grip that

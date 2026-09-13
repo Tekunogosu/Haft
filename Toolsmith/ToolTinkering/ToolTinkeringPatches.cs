@@ -19,6 +19,7 @@ using Toolsmith.ToolTinkering.Drawbacks;
 using Toolsmith.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
@@ -59,6 +60,11 @@ namespace Toolsmith.ToolTinkering {
         [HarmonyPrefix]
         [HarmonyPatch(nameof(CollectibleObject.ConsumeCraftingIngredients))]
         private static bool ConsumeCraftingIngredientsModularPartPrefix(ItemSlot[] slots, ItemSlot outputSlot, GridRecipe matchingRecipe, ref bool __result) {
+            //Backing a grip with an adhesive produces the same grip carrying an attribute, so there is no new item
+            //whose behaviour could catch this. Grips have no behaviour of their own either - attaching one to roughly
+            //130 items to serve a single recipe group would cost far more than reading the recipe here.
+            StampAdhesiveOnBackedGrip(slots, outputSlot, matchingRecipe);
+
             if (outputSlot.Itemstack.HasDisposeMeNowPlease()) {
                 outputSlot.Itemstack = null;
                 outputSlot.MarkDirty();
@@ -68,6 +74,59 @@ namespace Toolsmith.ToolTinkering {
             }
 
             return true;
+        }
+
+        //A backed grip is the same item as a plain one, so without a line saying so the two are indistinguishable in
+        //an inventory. Grips carry no behaviour of their own to hang this on, hence the patch.
+        [HarmonyPostfix]
+        [HarmonyPatch(nameof(CollectibleObject.GetHeldItemInfo))]
+        private static void GetHeldItemInfoAdhesiveGripPostfix(ItemSlot inSlot, StringBuilder dsc) {
+            var stack = inSlot?.Itemstack;
+            if (stack == null || !stack.HasGripAdhesiveTag()) {
+                return;
+            }
+
+            var adhesive = stack.GetGripAdhesiveTag();
+            if (string.IsNullOrEmpty(adhesive)) {
+                return;
+            }
+
+            dsc.AppendLine(Lang.Get("gripadhesivebacked", Lang.Get("item-" + adhesive)));
+        }
+
+        private static void StampAdhesiveOnBackedGrip(ItemSlot[] slots, ItemSlot outputSlot, GridRecipe matchingRecipe) {
+            if (matchingRecipe?.RecipeGroup != ToolsmithConstants.AdhesiveGripRecipeGroup) {
+                return;
+            }
+
+            var output = outputSlot?.Itemstack;
+            if (output?.Collectible?.Code == null || !ToolsmithModSystem.Stats.GripParts.ContainsKey(output.Collectible.Code.Path)) {
+                return;
+            }
+
+            //Which adhesive was used is worth keeping rather than a bare flag: it is what a tint would key off, and
+            //what a later mechanic would read to tell hide glue from pitch.
+            foreach (var slot in slots) {
+                var stack = slot?.Itemstack;
+                if (stack?.Collectible == null) {
+                    continue;
+                }
+
+                var content = stack;
+                if (stack.Class == EnumItemClass.Block && (stack.Block as ILiquidInterface) != null) {
+                    content = (stack.Block as ILiquidInterface).GetContent(stack);
+                }
+
+                if (content?.Collectible?.Code == null) {
+                    continue;
+                }
+
+                var bindingPart = ToolsmithModSystem.Stats.BindingParts.TryGetValue(content.Collectible.Code.Path);
+                if (bindingPart != null && bindingPart.bindingStatTag == ToolsmithConstants.AdhesiveBindingStatTag) {
+                    output.SetGripAdhesiveTag(content.Collectible.Code.Path);
+                    return;
+                }
+            }
         }
 
         [HarmonyPrefix]

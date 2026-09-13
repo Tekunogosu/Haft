@@ -297,7 +297,7 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             outputSlot.Itemstack.SetToolbindingMaxDurability((int)bindingDur);
             outputSlot.Itemstack.SetToolbindingCurrentDurability((int)bindingDur);
 
-            var speedBonus = ToolsmithPartStatsHelpers.CalculateSpeedBonus(handleStats, gripStats);
+            var speedBonus = ToolsmithPartStatsHelpers.CalculateSpeedBonus(handleStats, gripStats, materialStats);
             var gripChanceDamage = ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(gripStats, treatmentStats);
             outputSlot.Itemstack.SetSpeedBonus(speedBonus);
             outputSlot.Itemstack.SetGripChanceToDamage(gripChanceDamage);

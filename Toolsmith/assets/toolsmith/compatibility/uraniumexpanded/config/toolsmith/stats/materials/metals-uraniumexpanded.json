@@ -6,7 +6,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.36
 	},
 	{
 		"id": "ferrousuranium",
@@ -15,7 +16,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.22
 	},
 	{
 		"id": "uraniumsteel",
@@ -24,6 +26,7 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.18
 	}
 ]

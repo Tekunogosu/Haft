@@ -592,7 +592,7 @@ namespace Toolsmith.Utils {
                 itemStack.SetToolbindingMaxDurability((int)bindingDur);
             }
 
-            itemStack.SetSpeedBonus(ToolsmithPartStatsHelpers.CalculateSpeedBonus(handleStats, gripStats));
+            itemStack.SetSpeedBonus(ToolsmithPartStatsHelpers.CalculateSpeedBonus(handleStats, gripStats, materialStats));
             itemStack.SetGripChanceToDamage(ToolsmithPartStatsHelpers.CalculateGripChanceToDamage(gripStats, treatmentStats));
         }
 
@@ -940,6 +940,38 @@ namespace Toolsmith.Utils {
 
         public static bool HasHandleTreatmentTag(this ItemStack itemStack) {
             return itemStack.Attributes.HasAttribute(ToolsmithAttributes.HandleTreatmentTag);
+        }
+
+        public static void SetGripAdhesiveTag(this ItemStack itemStack, string tag) {
+            itemStack.Attributes.SetString(ToolsmithAttributes.GripAdhesiveTag, tag);
+        }
+
+        public static string GetGripAdhesiveTag(this ItemStack itemStack) {
+            return itemStack.Attributes.GetString(ToolsmithAttributes.GripAdhesiveTag);
+        }
+
+        public static bool HasGripAdhesiveTag(this ItemStack itemStack) {
+            return itemStack.Attributes.HasAttribute(ToolsmithAttributes.GripAdhesiveTag);
+        }
+
+        //What a grip offers a handle it is being attached to: its part define's tags, plus "adhesive-backed" when it
+        //has actually been backed with one. The adhesive is a stack attribute rather than a part, so a rule about it
+        //has to be answered from the stack - reading only the part define would miss it entirely.
+        public static HashSet<string> GetGripProvidedTags(this ItemStack grip) {
+            var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (grip?.Collectible?.Code != null) {
+                var part = ToolsmithModSystem.Stats.GripParts.TryGetValue(grip.Collectible.Code.Path);
+                if (part?.providesTags != null) {
+                    tags.AddRange(part.providesTags);
+                }
+            }
+
+            if (grip.HasGripAdhesiveTag()) {
+                tags.Add(ToolsmithConstants.AdhesiveBackedTag);
+            }
+
+            return tags;
         }
 
         public static void SetReadyToBlue(this ItemStack itemStack) {

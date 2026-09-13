@@ -46,6 +46,14 @@ namespace Toolsmith.Config {
 
         [JsonProperty]
         public float nailBindingBonus = -1.0f; //A denser material holds a nail better. Only ever applied to metal bindings - a rope wrap does not care what it is tightened around.
+
+        //How the material itself affects swing speed, added to whatever the handle tier and grip contribute.
+        //Density and speed are not the same axis: metal is dense and slow to swing, so metals carry a penalty here
+        //while being far more durable. Meteoric iron is the exception the field exists for - it is the one metal
+        //light enough to swing well, which is what makes it worth seeking out over plain iron.
+        //0.0 is neutral, which is what every wood has: a wooden handle's speed comes from its tier, not its species.
+        [JsonProperty]
+        public float speedBonus = 0.0f;
     }
 
     public class GripStatDefines : ToolsmithStat {

@@ -127,6 +127,7 @@ namespace Toolsmith {
             }
 
             var handleRecipes = GenerateHandleRecipes(api);
+            var adhesiveGripRecipes = GenerateAdhesiveGripRecipes(api);
             //var sandpaperRecipes = GenerateSandpaperRecipes(api);
 
             if (toolRecipes != null && toolRecipes.Count > 0) {
@@ -134,6 +135,9 @@ namespace Toolsmith {
             }
             if (handleRecipes != null && handleRecipes.Count > 0) {
                 api.World.GridRecipes.AddRange(handleRecipes);
+            }
+            if (adhesiveGripRecipes != null && adhesiveGripRecipes.Count > 0) {
+                api.World.GridRecipes.AddRange(adhesiveGripRecipes);
             }
             /*if (sandpaperRecipes != null && sandpaperRecipes.Count > 0) {
                 api.World.GridRecipes.AddRange(sandpaperRecipes);
@@ -182,6 +186,66 @@ namespace Toolsmith {
             } else {
                 return null;
             }
+        }
+
+        //Backs a grip with an adhesive, so it will stick to a handle too smooth to grab on its own. The result is the
+        //SAME grip item carrying an adhesive attribute, not a separate treated variant: there are around 130 grip part
+        //defines resolving to only five stat blocks, so a treated twin per grip would mean 130 new defines and 130 new
+        //recipes, and would oblige every future grip to ship one. An attribute is inherited by every grip that exists
+        //or is ever added, for one recipe shape.
+        //
+        //The adhesives are read from the binding parts rather than a list of their own, since those already define
+        //which glues exist and how much of each is used, and a mod adding a glue there gets this for free.
+        private List<GridRecipe> GenerateAdhesiveGripRecipes(ICoreAPI api) {
+            var list = new List<GridRecipe>();
+
+            if (GripList == null || BindingList == null || LiquidContainers.Count == 0) {
+                return null;
+            }
+
+            foreach (var binding in BindingList) {
+                var bindingPart = ToolsmithModSystem.Stats.BindingParts.TryGetValue(binding.Code.Path);
+                if (bindingPart == null || !bindingPart.isLiquid) {
+                    continue;
+                }
+
+                var bindingStats = ToolsmithModSystem.Stats.BindingStats.TryGetValue(bindingPart.bindingStatTag);
+                if (bindingStats == null || bindingStats.id != ToolsmithConstants.AdhesiveBindingStatTag) {
+                    continue;
+                }
+
+                ITreeAttribute liquidProps = new TreeAttribute();
+                var liqProps = liquidProps.GetOrAddTreeAttribute("liquidContainerProps");
+                var reqCont = liqProps.GetOrAddTreeAttribute("requiresContent");
+                reqCont.SetString("type", "item");
+                reqCont.SetString("code", binding.Code);
+                liqProps.SetFloat("requiresLitres", bindingPart.litersUsed);
+
+                foreach (var gripMat in GripList) {
+                    foreach (var container in LiquidContainers) {
+                        var recipe = new GridRecipe {
+                            IngredientPattern = "ga",
+                            Width = 2,
+                            Height = 1,
+                            Ingredients = new Dictionary<string, CraftingRecipeIngredient> {
+                                ["g"] = new CraftingRecipeIngredient { Type = gripMat.ItemClass, Code = gripMat.Code },
+                                ["a"] = new CraftingRecipeIngredient { Type = container.ItemClass, Code = container.Code }
+                            },
+                            Attributes = new JsonObject(JToken.Parse(liquidProps.ToJsonToken())),
+                            RecipeGroup = 4,
+                            ShowInCreatedBy = true,
+                            Shapeless = true,
+                            Name = "Back " + gripMat.Code + " with " + binding.Code + " so it will hold on a smooth handle.",
+                            Output = new CraftingRecipeIngredient { Type = gripMat.ItemClass, Code = gripMat.Code }
+                        };
+
+                        recipe.Resolve(api.World, "Generating Toolsmith Adhesive-Grip Recipe for " + gripMat.Code + " backed with " + binding.Code);
+                        list.Add(recipe);
+                    }
+                }
+            }
+
+            return list.Count > 0 ? list : null;
         }
 
         private List<GridRecipe> GenerateHandleRecipes(ICoreAPI api) {

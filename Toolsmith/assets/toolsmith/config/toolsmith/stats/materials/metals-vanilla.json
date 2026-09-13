@@ -6,7 +6,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.37
 	},
 	{
 		"id": "silver",
@@ -15,7 +16,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.2
 	},
 	{
 		"id": "zinc",
@@ -24,7 +26,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.14
 	},
 	{
 		"id": "lead",
@@ -33,7 +36,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.22
 	},
 	{
 		"id": "electrum",
@@ -42,7 +46,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.29
 	},
 	{
 		"id": "copper",
@@ -51,7 +56,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.17
 	},
 	{
 		"id": "tin",
@@ -60,7 +66,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.14
 	},
 	{
 		"id": "molybdochalkos",
@@ -69,7 +76,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.18
 	},
 	{
 		"id": "brass",
@@ -78,7 +86,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.16
 	},
 	{
 		"id": "bismuthbronze",
@@ -87,7 +96,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.15
 	},
 	{
 		"id": "bismuth",
@@ -96,7 +106,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.19
 	},
 	{
 		"id": "tinbronze",
@@ -105,7 +116,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.14
 	},
 	{
 		"id": "cupronickel",
@@ -114,7 +126,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.17
 	},
 	{
 		"id": "blackbronze",
@@ -123,7 +136,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.17
 	},
 	{
 		"id": "nickel",
@@ -132,7 +146,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.17
 	},
 	{
 		"id": "iron",
@@ -141,7 +156,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.15
 	},
 	{
 		"id": "meteoriciron",
@@ -150,7 +166,8 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": 0.05
 	},
 	{
 		"id": "steel",
@@ -159,6 +176,7 @@
 		"providesTags": [
 			"metal",
 			"smooth"
-		]
+		],
+		"speedBonus": -0.15
 	}
 ]

@@ -77,6 +77,9 @@ namespace Toolsmith.Utils {
         //heat - and the part then air-cools. Nothing is quenched: the layer forms while hot and cooling is incidental,
         //which is why this needs a temperature reached rather than a timed sequence.
         public const float BluingTemperature = 300.0f;
+        public const int AdhesiveGripRecipeGroup = 4; //The generated recipe group that backs a grip with an adhesive. Groups 2 and 3 are grips and treatments.
+        public const string AdhesiveBindingStatTag = "glue"; //The binding stat block whose members count as adhesives for backing a grip. Vanilla pitch glue plus whatever Butchery and friends add under the same tag.
+        public const string AdhesiveBackedTag = "adhesive-backed"; //What a grip provides once it has been backed with an adhesive. A handle too smooth for a grip to grab demands this in its requiresTags.
         public const string BluingTreatmentTag = "blued";
         public const float BluingCooledTemperature = 100.0f; //A handle must fall below this before it counts as cooled and can be blued. Stops a piece straight off the anvil blueing on its way down, which would make the finish something the player received rather than something they did.
 

@@ -39,6 +39,6 @@
 		"baseHPfactor": 2.0,
 		"selfHPBonus": 0.15,
 		"bindingHPBonus": 0.4,
-		"speedBonus": -0.15
+		"speedBonus": 0.0
 	}
 ]
