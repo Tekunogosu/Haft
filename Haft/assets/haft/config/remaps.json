@@ -4,7 +4,13 @@
 	// it. Without these remaps a world saved under the old name loses every
 	// handle, whetstone, workbench and grindstone in it - placed block entities
 	// are discarded outright as their chunks load.
-	"haft:v1.3.0rename": [
+	//
+	// The key is suffixed -b because the first one was burned. A build that
+	// shipped two dlls stopped the mod registering, so every entry under
+	// "v1.3.0rename" failed against items that did not exist yet - and the game
+	// still recorded the key as applied, so it was skipped forever after. A
+	// remap key is one-shot per save: to re-run one, give it a new name.
+	"haft:v1.3.0rename-b": [
 		// Items. A stack in an inventory or container stores its code, so every
 		// one the mod ever registered has to resolve to its haft: equivalent.
 		"/iir remapq toolsmith:sandpaper haft:sandpaper force",
@@ -23,28 +29,24 @@
 		"/iir remapq toolsmith:whetstone-basalt haft:whetstone-basalt force",
 		"/iir remapq toolsmith:whetstone-peridotite haft:whetstone-peridotite force",
 
-		// Blocks, including the orientation variants a placed block stores.
-		"/bir remapq toolsmith:workbench haft:workbench force",
+		// Blocks. Only the orientation variants exist as registered blocks - there
+		// is no bare "workbench" or "grindstone-granite" to remap onto.
 		"/bir remapq toolsmith:workbench-north haft:workbench-north force",
 		"/bir remapq toolsmith:workbench-east haft:workbench-east force",
 		"/bir remapq toolsmith:workbench-south haft:workbench-south force",
 		"/bir remapq toolsmith:workbench-west haft:workbench-west force",
-		"/bir remapq toolsmith:grindstone-granite haft:grindstone-granite force",
 		"/bir remapq toolsmith:grindstone-granite-north haft:grindstone-granite-north force",
 		"/bir remapq toolsmith:grindstone-granite-east haft:grindstone-granite-east force",
 		"/bir remapq toolsmith:grindstone-granite-south haft:grindstone-granite-south force",
 		"/bir remapq toolsmith:grindstone-granite-west haft:grindstone-granite-west force",
-		"/bir remapq toolsmith:grindstone-sandstone haft:grindstone-sandstone force",
 		"/bir remapq toolsmith:grindstone-sandstone-north haft:grindstone-sandstone-north force",
 		"/bir remapq toolsmith:grindstone-sandstone-east haft:grindstone-sandstone-east force",
 		"/bir remapq toolsmith:grindstone-sandstone-south haft:grindstone-sandstone-south force",
 		"/bir remapq toolsmith:grindstone-sandstone-west haft:grindstone-sandstone-west force",
-		"/bir remapq toolsmith:grindstone-shale haft:grindstone-shale force",
 		"/bir remapq toolsmith:grindstone-shale-north haft:grindstone-shale-north force",
 		"/bir remapq toolsmith:grindstone-shale-east haft:grindstone-shale-east force",
 		"/bir remapq toolsmith:grindstone-shale-south haft:grindstone-shale-south force",
 		"/bir remapq toolsmith:grindstone-shale-west haft:grindstone-shale-west force",
-		"/bir remapq toolsmith:grindstone-andesite haft:grindstone-andesite force",
 		"/bir remapq toolsmith:grindstone-andesite-north haft:grindstone-andesite-north force",
 		"/bir remapq toolsmith:grindstone-andesite-east haft:grindstone-andesite-east force",
 		"/bir remapq toolsmith:grindstone-andesite-south haft:grindstone-andesite-south force",
