@@ -1,0 +1,32 @@
+[
+	{
+		"op": "addeach",
+		"path": "/ingredient/allowedVariants/-",
+		"file": "haft:recipes/smithing/metalhandle.json",
+		"value": [
+			"uranium",
+			"ferrousuranium",
+			"uraniumsteel"
+		],
+		"dependsOn": [
+			{
+				"modid": "uraniumexpanded"
+			}
+		]
+	},
+	{
+		"op": "addeach",
+		"path": "/behaviors/1/properties/textures/0/values/-",
+		"file": "haft:itemtypes/handles/metalhandle.json",
+		"value": [
+			"game:block/metal/ingot/uranium",
+			"game:block/metal/plate/ferrousuranium",
+			"game:block/metal/plate/uraniumsteel"
+		],
+		"dependsOn": [
+			{
+				"modid": "uraniumexpanded"
+			}
+		]
+	}
+]

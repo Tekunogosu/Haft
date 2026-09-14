@@ -1,0 +1,53 @@
+{
+	// The mod was renamed from "toolsmith" to "haft" in 1.3.0. A modid IS the
+	// asset domain in Vintage Story, so every item and block code changed with
+	// it. Without these remaps a world saved under the old name loses every
+	// handle, whetstone, workbench and grindstone in it - placed block entities
+	// are discarded outright as their chunks load.
+	"haft:v1.3.0rename": [
+		// Items. A stack in an inventory or container stores its code, so every
+		// one the mod ever registered has to resolve to its haft: equivalent.
+		"/iir remapq toolsmith:sandpaper haft:sandpaper force",
+		"/iir remapq toolsmith:tinkertoolparts haft:tinkertoolparts force",
+		"/iir remapq toolsmith:carpentedhandle haft:carpentedhandle force",
+		"/iir remapq toolsmith:crudehandle haft:crudehandle force",
+		"/iir remapq toolsmith:handle haft:handle force",
+		"/iir remapq toolsmith:metalhandle haft:metalhandle force",
+		"/iir remapq toolsmith:fabricstrips-rawhide haft:fabricstrips-rawhide force",
+		"/iir remapq toolsmith:fabricstrips-cloth haft:fabricstrips-cloth force",
+		"/iir remapq toolsmith:fabricstrips-leather haft:fabricstrips-leather force",
+		"/iir remapq toolsmith:fabricstrips-sturdy haft:fabricstrips-sturdy force",
+		"/iir remapq toolsmith:whetstone-chert haft:whetstone-chert force",
+		"/iir remapq toolsmith:whetstone-granite haft:whetstone-granite force",
+		"/iir remapq toolsmith:whetstone-andesite haft:whetstone-andesite force",
+		"/iir remapq toolsmith:whetstone-basalt haft:whetstone-basalt force",
+		"/iir remapq toolsmith:whetstone-peridotite haft:whetstone-peridotite force",
+
+		// Blocks, including the orientation variants a placed block stores.
+		"/bir remapq toolsmith:workbench haft:workbench force",
+		"/bir remapq toolsmith:workbench-north haft:workbench-north force",
+		"/bir remapq toolsmith:workbench-east haft:workbench-east force",
+		"/bir remapq toolsmith:workbench-south haft:workbench-south force",
+		"/bir remapq toolsmith:workbench-west haft:workbench-west force",
+		"/bir remapq toolsmith:grindstone-granite haft:grindstone-granite force",
+		"/bir remapq toolsmith:grindstone-granite-north haft:grindstone-granite-north force",
+		"/bir remapq toolsmith:grindstone-granite-east haft:grindstone-granite-east force",
+		"/bir remapq toolsmith:grindstone-granite-south haft:grindstone-granite-south force",
+		"/bir remapq toolsmith:grindstone-granite-west haft:grindstone-granite-west force",
+		"/bir remapq toolsmith:grindstone-sandstone haft:grindstone-sandstone force",
+		"/bir remapq toolsmith:grindstone-sandstone-north haft:grindstone-sandstone-north force",
+		"/bir remapq toolsmith:grindstone-sandstone-east haft:grindstone-sandstone-east force",
+		"/bir remapq toolsmith:grindstone-sandstone-south haft:grindstone-sandstone-south force",
+		"/bir remapq toolsmith:grindstone-sandstone-west haft:grindstone-sandstone-west force",
+		"/bir remapq toolsmith:grindstone-shale haft:grindstone-shale force",
+		"/bir remapq toolsmith:grindstone-shale-north haft:grindstone-shale-north force",
+		"/bir remapq toolsmith:grindstone-shale-east haft:grindstone-shale-east force",
+		"/bir remapq toolsmith:grindstone-shale-south haft:grindstone-shale-south force",
+		"/bir remapq toolsmith:grindstone-shale-west haft:grindstone-shale-west force",
+		"/bir remapq toolsmith:grindstone-andesite haft:grindstone-andesite force",
+		"/bir remapq toolsmith:grindstone-andesite-north haft:grindstone-andesite-north force",
+		"/bir remapq toolsmith:grindstone-andesite-east haft:grindstone-andesite-east force",
+		"/bir remapq toolsmith:grindstone-andesite-south haft:grindstone-andesite-south force",
+		"/bir remapq toolsmith:grindstone-andesite-west haft:grindstone-andesite-west force"
+	]
+}

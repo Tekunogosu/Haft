@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using Cake.Common;
 using Cake.Common.IO;
@@ -26,7 +26,7 @@ namespace CakeBuild
 
     public class BuildContext : FrostingContext
     {
-        public const string ProjectName = "Toolsmith";
+        public const string ProjectName = "Haft";
         public string BuildConfiguration { get; }
         public string Version { get; }
         public string Name { get; }

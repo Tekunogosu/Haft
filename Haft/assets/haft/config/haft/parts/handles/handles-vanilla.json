@@ -1,0 +1,53 @@
+[
+	{
+		"id": "stick",
+		"handleStatTag": "stick",
+		"canHaveGrip": false,
+		"handleShapePath": "haft:shapes/item/parts/handles/stick/handle",
+		"canBeTreated": false,
+		"dryingTimeMult": 1.0
+	},
+	{
+		"id": "bone",
+		"handleStatTag": "bone",
+		"canHaveGrip": true,
+		"handleShapePath": "haft:shapes/item/parts/handles/bone/handle",
+		"canBeTreated": false,
+		"dryingTimeMult": 1.0
+	},
+	{
+		"id": "crudehandle",
+		"handleStatTag": "crude",
+		"canHaveGrip": true,
+		"handleShapePath": "haft:shapes/item/parts/handles/crude/handle",
+		"canBeTreated": false,
+		"dryingTimeMult": 1.0
+	},
+	{
+		"id": "handle",
+		"handleStatTag": "handle",
+		"canHaveGrip": true,
+		"handleShapePath": "haft:shapes/item/parts/handles/regular/handle",
+		"canBeTreated": true,
+		"dryingTimeMult": 1.0
+	},
+	{
+		"id": "carpentedhandle",
+		"handleStatTag": "professional",
+		"canHaveGrip": true,
+		"handleShapePath": "haft:shapes/item/parts/handles/fine/handle",
+		"canBeTreated": true,
+		"dryingTimeMult": 2.0
+	},
+	{
+		"id": "metalhandle",
+		"handleStatTag": "metal",
+		"canHaveGrip": true,
+		"handleShapePath": "haft:shapes/item/parts/handles/fine/handle",
+		"canBeTreated": true,
+		"dryingTimeMult": 2.0,
+		"requiresTags": [
+			"adhesive-backed"
+		]
+	}
+]

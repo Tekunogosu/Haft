@@ -1,0 +1,26 @@
+[
+	{
+		"file": "game:itemtypes/tool/bow.json",
+		"op": "add",
+		"path": "/textures",
+		"value": {},
+		"enabled": true,
+		"side": "client"
+	},
+	{
+		"file": "game:itemtypes/tool/bow.json",
+		"op": "add",
+		"path": "/textures/aged",
+		"value": { "base": "haft:block/tools/toolpurpleheart" },
+		"enabled": true,
+		"side": "client"
+	},
+	{
+		"file": "game:itemtypes/tool/bow.json",
+		"op": "add",
+		"path": "/textures/bone",
+		"value": { "base": "haft:block/tools/toolpurpleheart" },
+		"enabled": true,
+		"side": "client"
+	}
+]

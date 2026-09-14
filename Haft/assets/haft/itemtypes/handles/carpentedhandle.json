@@ -1,0 +1,76 @@
+{
+	"code": "carpentedhandle",
+	"tags": ["haft-part", "haft-handle"],
+	"maxstacksize": 4,
+	"behaviors": [
+		{
+			"name": "GroundStorable",
+			"properties": {
+				"layout": "Quadrants",
+				"collisionBox": {
+					"x1": 0, "y1": 0, "z1": 0,
+					"x2": 1, "y2": 0.125, "z2": 1
+				}
+			}
+		},
+		{
+			"name": "haft:ModularPartRenderingFromAttributes",
+			"properties": {
+				"textures": [
+					{
+						"code": "wood",
+						"Default": "haft:block/tools/tooloak",
+						"values": [
+							"haft:block/tools/toolaged",
+							"haft:block/tools/toolbirch",
+							"haft:block/tools/tooloak",
+							"haft:block/tools/toolmaple",
+							"haft:block/tools/toolpine",
+							"haft:block/tools/toolacacia",
+							"haft:block/tools/toolkapok",
+							"haft:block/tools/toolbaldcypress",
+							"haft:block/tools/toollarch",
+							"haft:block/tools/toolredwood",
+							"haft:block/tools/toolebony",
+							"haft:block/tools/toolwalnut",
+							"haft:block/tools/toolpurpleheart"
+						]
+					}
+				],
+				"skipCreativeInventoryAdditions": false,
+				"creativeTabs": [ "general", "items" ]
+			}
+		}
+	],
+	"attributes": {
+		"rackable": true,
+		"toolrackTransform": {
+			"translation": { "x": 0, "y": 0.6, "z":0 },
+			"scale": 1.25
+		},
+		"handbook": {
+			"groupBy": ["carpentedhandle"]
+		}
+	},
+	"storageFlags" : 257,
+	"shape": { "base": "haft:item/parts/handles/fine/handle" },
+	"creativeinventory": { "general": ["*"], "items": ["*"] },
+	"tpHandTransform": {
+		"translation": { "x": 0, "y": 0, "z": 0.5 },
+		"rotation": { "x": 0, "y": 0, "z": 0 },
+		"origin": { "x": 0, "y": 0, "z": 0 },
+		"scale": 0.58
+	},
+	"guiTransform": {
+		"translation": { "x": 0, "y": 0, "z": 0 },
+		"rotation": { "x": -115, "y": -9, "z": 110 },
+		"origin": { "x": 1.07, "y": -0.175, "z": 0.75 },
+		"scale": 2.55
+	},
+	"groundTransform": {
+		"translation": { "x": 0, "y": 0, "z": 0 },
+		"rotation": { "x": 0, "y": 0, "z": 0 },
+		"origin": { "x": 0.5, "y": 0, "z": 0.5 },
+		"scale": 5
+	}
+}

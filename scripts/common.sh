@@ -4,7 +4,7 @@
 # this machine rather than on its own. Both overridable, so a machine that keeps
 # things elsewhere is not forced into this layout.
 
-TESTBED="${TOOLSMITH_TESTBED:-/mnt/media/testbed/toolsmith}"
+TESTBED="${HAFT_TESTBED:-/mnt/media/testbed/toolsmith}"
 GAME="${VINTAGE_STORY:-$HOME/.local/share/vintagestory}"
 
 SERVER_DATA="$TESTBED/server"
@@ -39,21 +39,21 @@ require_game() {
 # that is no longer produced.
 mod_id() {
 	python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["modid"])' \
-		"$REPO/Toolsmith/modinfo.json" || die "could not read the modid from Toolsmith/modinfo.json"
+		"$REPO/Haft/modinfo.json" || die "could not read the modid from Haft/modinfo.json"
 }
 
 mod_zip() {
 	version=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' \
-		"$REPO/Toolsmith/modinfo.json") || die "could not read the version from Toolsmith/modinfo.json"
+		"$REPO/Haft/modinfo.json") || die "could not read the version from Haft/modinfo.json"
 	printf '%s/Releases/%s_%s.zip' "$REPO" "$(mod_id)" "$version"
 }
 
 # Mods installed alongside ours in the testbed, by filename, taken from the real
-# install. These are the ones Toolsmith actually has to keep working with:
+# install. These are the ones Haft actually has to keep working with:
 # PrimitiveSurvival declares tool: "spear" on its fishing spears and is why the
 # spear work needed a blacklist entry, SmithingPlus and its material cache are
 # referenced by the reforging path, and Butchery supplies the bone tool heads.
-TESTBED_EXTRA_MODS="${TOOLSMITH_EXTRA_MODS:-primitivesurvival_5.1.3.zip smithingplus_1.9.0-rc.1.zip smithingplusmaterialcache_1.1.0.zip butchering_1.14.3.zip}"
+TESTBED_EXTRA_MODS="${HAFT_EXTRA_MODS:-primitivesurvival_5.1.3.zip smithingplus_1.9.0-rc.1.zip smithingplusmaterialcache_1.1.0.zip butchering_1.14.3.zip}"
 
 # Copies the extra mods in if they are not already there. Kept separate from
 # install_mod so a wipe restores them without a rebuild being involved.
