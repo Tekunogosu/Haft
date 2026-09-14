@@ -74,10 +74,15 @@ namespace Toolsmith.Config {
         [JsonProperty]
         public float handleHPbonus = -1.0f; //Treating the handle makes it last longer
     
-        //A treated surface resists wear as well as lasting longer: this is the share of handle damage the treatment
-        //shrugs off entirely, multiplied into the same chanceToDamage roll a grip feeds. Scales with the effort the
-        //treatment takes, so a wipe of grease saves a little and a proper blued finish saves the most.
-        //0.0 means no reduction, which is what every wood treatment has until someone decides otherwise.
+        //The share of handle damage the treatment shrugs off entirely, multiplied into the same chanceToDamage roll
+        //a grip feeds. 0.0 means no reduction.
+        //
+        //This is the axis that separates the two kinds of finish, and the split is deliberate. A wood treatment soaks
+        //into the material, so it both strengthens the handle and sheds wear - it carries a handleHPbonus AND a
+        //reduction. Bluing does not: it converts the surface to a layer of magnetite a few microns deep, which
+        //passivates the steel against corrosion without changing its strength at all. A blued part is exactly as
+        //strong as an unblued one, so bluing carries reduction ONLY and leaves handleHPbonus at zero.
+        //Structural gains belong to tempering, which is a real change to the metal rather than to its surface.
         [JsonProperty]
         public float chanceToDamageReduction = 0.0f;
 }

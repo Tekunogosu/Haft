@@ -6,7 +6,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.07
 	},
 	{
 		"id": "pine",
@@ -15,7 +16,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.025
 	},
 	{
 		"id": "redwood",
@@ -24,7 +26,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.045
 	},
 	{
 		"id": "baldcypress",
@@ -33,7 +36,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.03
 	},
 	{
 		"id": "aged",
@@ -42,7 +46,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.02
 	},
 	{
 		"id": "larch",
@@ -51,7 +56,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.02
 	},
 	{
 		"id": "walnut",
@@ -60,7 +66,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.02
 	},
 	{
 		"id": "birch",
@@ -69,7 +76,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.015
 	},
 	{
 		"id": "oak",
@@ -78,7 +86,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.0
 	},
 	{
 		"id": "maple",
@@ -87,7 +96,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": 0.005
 	},
 	{
 		"id": "acacia",
@@ -96,7 +106,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": -0.005
 	},
 	{
 		"id": "purpleheart",
@@ -105,7 +116,8 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": -0.015
 	},
 	{
 		"id": "ebony",
@@ -114,6 +126,7 @@
 		"providesTags": [
 			"wood",
 			"porous"
-		]
+		],
+		"speedBonus": -0.04
 	}
 ]

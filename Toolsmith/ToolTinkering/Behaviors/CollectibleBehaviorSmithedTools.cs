@@ -152,5 +152,12 @@ namespace Toolsmith.ToolTinkering.Behaviors {
             bhHandling = EnumHandling.Handled;
             return TinkeringUtility.SharpnessMiningSpeedMultiplier(itemstack);
         }
+
+        //The tooltip asks GetMiningSpeedModifier rather than GetMiningSpeed, so it needs the same answer or a
+        //sharpened tool reads as no faster than a dull one.
+        public override float GetMiningSpeedModifier(ItemStack itemstack, ref EnumHandling bhHandling) {
+            bhHandling = EnumHandling.Handled;
+            return GlobalConstants.ToolMiningSpeedModifier * TinkeringUtility.SharpnessMiningSpeedMultiplier(itemstack);
+        }
     }
 }

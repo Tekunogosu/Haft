@@ -45,7 +45,7 @@
 		"canHaveGrip": true,
 		"handleShapePath": "toolsmith:shapes/item/parts/handles/fine/handle",
 		"canBeTreated": true,
-		"dryingTimeMult": 0.5,
+		"dryingTimeMult": 2.0,
 		"requiresTags": [
 			"adhesive-backed"
 		]

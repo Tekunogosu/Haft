@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -39,6 +40,28 @@ namespace Toolsmith.Utils {
 
         //Does the target satisfy everything the applied part demands? True when the applied part demands nothing,
         //which is the common case and the reason adding this breaks nothing that already works.
+        //Whether a requirement list names this specific tag as one of its alternatives. Used to tell a follow-on
+        //treatment (oil over bluing, which asks for "blued") apart from one that merely happens to be applicable,
+        //so only the former is allowed onto an already-treated handle.
+        public static bool TagsRequireAnyOf(string[] requiredTags, string tag) {
+            if (requiredTags == null || string.IsNullOrEmpty(tag)) {
+                return false;
+            }
+
+            foreach (var required in requiredTags) {
+                if (string.IsNullOrEmpty(required)) {
+                    continue;
+                }
+                foreach (var alternative in required.Split('|')) {
+                    if (string.Equals(alternative.Trim(), tag, StringComparison.OrdinalIgnoreCase)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public static bool TagsSatisfy(string[] requiredTags, ICollection<string> providedTags) {
             if (requiredTags == null || requiredTags.Length == 0) {
                 return true;
@@ -49,11 +72,25 @@ namespace Toolsmith.Utils {
                     continue;
                 }
 
+                //A requirement may list alternatives separated by '|', satisfied if ANY of them is present. Oil
+                //needs this: it goes on bare wood or over a blued metal surface, and TreatmentParts is keyed by
+                //item code, so one oil entry has to cover both rather than splitting into two.
+                var alternatives = required.Split('|');
+
                 var found = false;
                 if (providedTags != null) {
-                    foreach (var provided in providedTags) {
-                        if (string.Equals(provided, required, StringComparison.OrdinalIgnoreCase)) {
-                            found = true;
+                    foreach (var alternative in alternatives) {
+                        var wanted = alternative.Trim();
+                        if (wanted.Length == 0) {
+                            continue;
+                        }
+                        foreach (var provided in providedTags) {
+                            if (string.Equals(provided, wanted, StringComparison.OrdinalIgnoreCase)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) {
                             break;
                         }
                     }
@@ -184,6 +221,34 @@ namespace Toolsmith.Utils {
         //edits are gone is a player noticing a tool stopped working days later.
         //A failed backup must never stop the mod from loading: the config reset still happens, it just
         //happens unprotected, and that is strictly better than refusing to start.
+        //Whether the config file on disk has a different SET OF KEYS than the type it deserializes into - a key
+        //added by a mod upgrade, or one retired by it. Only the names are compared; values are deliberately ignored,
+        //because a value the user changed is theirs to keep and a value the mod rebuilds (the regex strings) differs
+        //on almost every start. Comparing values instead produced one worthless backup per server start.
+        //
+        //Returns false on any read or parse failure: a backup is a safety net, and a corrupt or unreadable file is
+        //not a reason to refuse to start.
+        public static bool ConfigKeysDifferFromDefaults<T>(ICoreAPI api, string filename) where T : new() {
+            try {
+                string configPath = Path.Combine(api.GetOrCreateDataPath("ModConfig"), filename);
+                if (!File.Exists(configPath)) { //A first run has no file, so no keys to have drifted.
+                    return false;
+                }
+
+                var onDisk = JObject.Parse(File.ReadAllText(configPath));
+                var expected = JObject.FromObject(new T());
+
+                var onDiskKeys = onDisk.Properties().Select(prop => prop.Name);
+                var expectedKeys = expected.Properties().Select(prop => prop.Name);
+
+                return !onDiskKeys.OrderBy(name => name, StringComparer.Ordinal)
+                    .SequenceEqual(expectedKeys.OrderBy(name => name, StringComparer.Ordinal), StringComparer.Ordinal);
+            } catch (Exception e) {
+                ToolsmithModSystem.Logger.Warning("Could not compare the keys in " + filename + " against the current defaults, so no backup was taken. Reason: " + e.Message);
+                return false;
+            }
+        }
+
         public static void BackupConfigFile(ICoreAPI api, string filename, string reason) {
             try {
                 string configPath = Path.Combine(api.GetOrCreateDataPath("ModConfig"), filename);

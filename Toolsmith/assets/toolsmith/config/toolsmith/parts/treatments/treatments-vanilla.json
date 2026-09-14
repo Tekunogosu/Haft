@@ -4,14 +4,20 @@
 		"treatmentStatTag": "fat",
 		"dryingHours": 12,
 		"isLiquid": false,
-		"litersUsed": 0.0
+		"litersUsed": 0.0,
+		"requiresTags": [
+			"wood"
+		]
 	},
 	{
 		"id": "fat-rendered",
 		"treatmentStatTag": "fat",
 		"dryingHours": 12,
 		"isLiquid": false,
-		"litersUsed": 0.0
+		"litersUsed": 0.0,
+		"requiresTags": [
+			"wood"
+		]
 	},
 	{
 		"id": "beeswax",
@@ -30,7 +36,7 @@
 		"isLiquid": true,
 		"litersUsed": 0.1,
 		"requiresTags": [
-			"wood"
+			"wood|blued"
 		]
 	},
 	{
@@ -40,7 +46,7 @@
 		"isLiquid": true,
 		"litersUsed": 0.1,
 		"requiresTags": [
-			"wood"
+			"wood|blued"
 		]
 	}
 ]

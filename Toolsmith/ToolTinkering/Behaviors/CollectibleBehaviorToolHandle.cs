@@ -231,7 +231,19 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                         bhHandling = EnumHandling.Handled;
                     }
                 } else {
-                    if (handleSlot.Itemstack.HasHandleGripTag() || handleSlot.Itemstack.HasHandleTreatmentTag()) {
+                    //An already-treated handle normally refuses a second treatment. The exception is a treatment that
+                    //explicitly asks for the finish already on it - oil over bluing - which is a genuine follow-on
+                    //process rather than a second coat. A grip still blocks treating, since the grip covers the
+                    //surface being worked on.
+                    var pendingTreatment = TinkeringUtility.GetBindingContent(gripOrTreatmentSlot.Itemstack);
+                    var pendingStats = pendingTreatment?.Collectible?.Code == null
+                        ? null
+                        : ToolsmithModSystem.Stats.TreatmentParts.TryGetValue(pendingTreatment.Collectible.Code.Path);
+                    var buildsOnCurrentTreatment = handleSlot.Itemstack.HasHandleTreatmentTag()
+                        && pendingStats?.requiresTags != null
+                        && ConfigUtility.TagsRequireAnyOf(pendingStats.requiresTags, handleSlot.Itemstack.GetHandleTreatmentTag());
+
+                    if (handleSlot.Itemstack.HasHandleGripTag() || (handleSlot.Itemstack.HasHandleTreatmentTag() && !buildsOnCurrentTreatment)) {
                         RefuseCraft(outputSlot, ref bhHandling);
                     } else {
                         ITreeAttribute handlePartTree = multiPartTree.GetPartAndTransformRenderTree(ToolsmithAttributes.ModularPartHandleName);
@@ -252,7 +264,20 @@ namespace Toolsmith.ToolTinkering.Behaviors {
                             return;
                         }
 
-                        var treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.TryGetValue(treatmentStatPair.treatmentStatTag);
+                        //A follow-on treatment names the combined result rather than replacing the finish outright:
+                        //oil over a blued handle is "blued-oiled", not plain "oil", so the handle keeps the bluing it
+                        //already has. Falls back to the plain stat when no combined one is configured.
+                        var resolvedStatTag = treatmentStatPair.treatmentStatTag;
+                        if (buildsOnCurrentTreatment) {
+                            var combinedTag = handleSlot.Itemstack.GetHandleTreatmentTag() + "-" + treatmentStatPair.treatmentStatTag;
+                            if (ToolsmithModSystem.Stats.TreatmentStats.ContainsKey(combinedTag)) {
+                                resolvedStatTag = combinedTag;
+                            } else {
+                                ToolsmithModSystem.Logger.Warning("No combined treatment stat '" + combinedTag + "' is configured, so applying " + treatmentStatPair.treatmentStatTag + " over " + handleSlot.Itemstack.GetHandleTreatmentTag() + " will replace it rather than build on it.");
+                            }
+                        }
+
+                        var treatmentStats = ToolsmithModSystem.Stats.TreatmentStats.TryGetValue(resolvedStatTag);
                         var handleStatPair = ToolsmithModSystem.Stats.BaseHandleParts.TryGetValue(handleSlot.Itemstack.Collectible.Code.Path);
                         outputSlot.Itemstack.SetHandleTreatmentTag(treatmentStats.id);
                         outputSlot.Itemstack.SetWetTreatment((int)(treatmentStatPair.dryingHours * handleStatPair.dryingTimeMult));

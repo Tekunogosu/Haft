@@ -58,6 +58,12 @@
 		}
 	],
 	"attributes": {
+		"forgable": true,
+		"inForgeTransform": {
+			"translation": { "x": 0, "y": 0.015, "z": -0.1 },
+			"rotation": { "x": 0, "y": 105, "z": 0 },
+			"origin": { "x": 0.57, "y": 0.28, "z": 0.57 }
+		},
 		"rackable": true,
 		"toolrackTransform": {
 			"translation": {

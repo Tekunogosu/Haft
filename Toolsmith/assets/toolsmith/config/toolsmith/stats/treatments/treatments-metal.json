@@ -2,7 +2,13 @@
 	{
 		"id": "blued",
 		"langTag": "treatment-blued",
-		"handleHPbonus": 0.55,
-		"chanceToDamageReduction": 0.15
+		"handleHPbonus": 0.0,
+		"chanceToDamageReduction": 0.2
+	},
+	{
+		"id": "blued-oiled",
+		"langTag": "treatment-blued-oiled",
+		"handleHPbonus": 0.0,
+		"chanceToDamageReduction": 0.3
 	}
 ]

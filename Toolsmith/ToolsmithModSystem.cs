@@ -504,8 +504,15 @@ namespace Toolsmith {
                             Config = new ToolsmithConfigs();
                         }
                     }
+                    //A key added or retired by a mod upgrade is the only thing besides a version bump worth copying
+                    //the file aside for. Values are deliberately not compared: the regex strings are blanked here and
+                    //rebuilt from the shipped assets every start, so comparing values produced one identical backup
+                    //per server start and buried the rare one that preserved something.
+                    if (!DoesConfigNeedRegen && ConfigUtility.ConfigKeysDifferFromDefaults<ToolsmithConfigs>(api, ConfigUtility.ConfigFilename)) {
+                        ConfigUtility.BackupConfigFile(api, ConfigUtility.ConfigFilename, "the settings in the file no longer match the ones this version defines, so it is being rewritten");
+                    }
+
                     if (!DoesConfigNeedRegen && !Config.EnableEditsForRegex) {
-                        ConfigUtility.BackupConfigFile(api, ConfigUtility.ConfigFilename, "EnableEditsForRegex is false, so the regex strings are rebuilt from the shipped defaults");
                         ToolsmithConfigsHelpers.ResetRegexStrings(ref Config);
                     }
                 }

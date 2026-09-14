@@ -796,6 +796,13 @@ namespace Toolsmith.Utils {
                 tags.AddRange(materialStats.providesTags);
             }
 
+            //A finish the handle already carries is itself something a later treatment can require. Bluing is the
+            //case that needs it: the oxide layer is porous on its own and is traditionally sealed with oil, so oil
+            //asks for a blued surface rather than for bare metal.
+            if (handle != null && handle.HasHandleTreatmentTag()) {
+                tags.Add(handle.GetHandleTreatmentTag());
+            }
+
             return tags;
         }
 

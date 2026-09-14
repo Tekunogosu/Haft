@@ -1,4 +1,5 @@
-﻿
+﻿using System;
+
 namespace Toolsmith.Config {
     public class ToolsmithConfigs {
         public bool AutoUpdateConfigsOnVersionChange = true;

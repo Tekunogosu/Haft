@@ -9,18 +9,18 @@
 		"id": "fat",
 		"langTag": "treatment-fat",
 		"handleHPbonus": 0.2,
-		"chanceToDamageReduction": 0.04
+		"chanceToDamageReduction": 0.05
 	},
 	{
 		"id": "wax",
 		"langTag": "treatment-wax",
 		"handleHPbonus": 0.5,
-		"chanceToDamageReduction": 0.07
+		"chanceToDamageReduction": 0.09
 	},
 	{
 		"id": "oil",
 		"langTag": "treatment-oil",
 		"handleHPbonus": 0.65,
-		"chanceToDamageReduction": 0.1
+		"chanceToDamageReduction": 0.125
 	}
 ]

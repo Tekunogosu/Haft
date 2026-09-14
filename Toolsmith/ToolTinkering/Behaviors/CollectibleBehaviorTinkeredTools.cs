@@ -482,10 +482,16 @@ namespace Toolsmith.ToolTinkering.Behaviors {
 
         public override float GetMiningSpeed(ItemStack itemstack, BlockSelection blockSel, Block block, IPlayer forPlayer, ref EnumHandling bhHandling) {
             bhHandling = EnumHandling.Handled;
+            return TinkeringUtility.TinkeredToolMiningSpeedMultiplier(itemstack);
+        }
 
-            //A tinkered tool adds what its handle and grip contribute, which a smithed one has no equivalent of.
-            var speedMult = TinkeringUtility.SharpnessMiningSpeedMultiplier(itemstack);
-            return speedMult + (speedMult * itemstack.GetSpeedBonus());
+        //GetMiningSpeed is what the game asks when the tool actually swings; GetMiningSpeedModifier is what it asks
+        //when building the tooltip. They are separate methods, so overriding only the first left the tooltip showing
+        //vanilla's flat constant for every tool - the same numbers regardless of handle, grip or material, even
+        //though mining really was faster. Both now come from one place so they cannot drift apart again.
+        public override float GetMiningSpeedModifier(ItemStack itemstack, ref EnumHandling bhHandling) {
+            bhHandling = EnumHandling.Handled;
+            return GlobalConstants.ToolMiningSpeedModifier * TinkeringUtility.TinkeredToolMiningSpeedMultiplier(itemstack);
         }
     }
 }

@@ -453,6 +453,14 @@ namespace Toolsmith.ToolTinkering {
             return (int)((double)durability * ToolsmithModSystem.Config.HeadDurabilityMult);
         }
 
+        //Everything a tinkered tool's parts contribute to mining speed: its sharpness, plus the handle, grip and
+        //material bonus stored on the stack. Both the swing path and the tooltip read this, so the number shown is
+        //by construction the number applied.
+        public static float TinkeredToolMiningSpeedMultiplier(ItemStack itemstack) {
+            var speedMult = SharpnessMiningSpeedMultiplier(itemstack);
+            return speedMult + (speedMult * itemstack.GetSpeedBonus());
+        }
+
         //How much a tool's sharpness alone changes its mining speed. A keen edge cuts faster and a dull one drags;
         //between those bands sharpness costs nothing. A tinkered tool adds its handle's speed bonus on top of this,
         //which is the only way the two tool kinds differ here.

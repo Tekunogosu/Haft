@@ -33,13 +33,19 @@ require_game() {
 		die "Vintage Story not found at '$GAME'. Set VINTAGE_STORY to the folder holding VintagestoryServer.dll."
 }
 
-# The packaged zip's name carries the version from modinfo.json, so it moves on
-# every version bump. Read it rather than hardcoding it, or the first bump leaves
-# both scripts copying a file that is no longer produced.
+# The packaged zip's name carries BOTH the modid and the version from
+# modinfo.json, so it moves on a version bump and on a rename. Read both rather
+# than hardcoding either, or the next change leaves the scripts copying a file
+# that is no longer produced.
+mod_id() {
+	python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["modid"])' \
+		"$REPO/Toolsmith/modinfo.json" || die "could not read the modid from Toolsmith/modinfo.json"
+}
+
 mod_zip() {
 	version=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' \
 		"$REPO/Toolsmith/modinfo.json") || die "could not read the version from Toolsmith/modinfo.json"
-	printf '%s/Releases/toolsmith_%s.zip' "$REPO" "$version"
+	printf '%s/Releases/%s_%s.zip' "$REPO" "$(mod_id)" "$version"
 }
 
 # Mods installed alongside ours in the testbed, by filename, taken from the real
@@ -70,7 +76,7 @@ install_extra_mods() {
 # this on every launch so there is no separate build step to forget.
 #
 # build.sh runs the Cake build, which validates the JSON assets, publishes, and
-# packages Releases/toolsmith_<version>.zip -- the same zip a player installs.
+# packages Releases/<modid>_<version>.zip -- the same zip a player installs.
 # Testing that artifact rather than an unpacked bin/ folder is the point: an
 # asset missing from the package is invisible until something loads the zip.
 install_mod() {
@@ -83,6 +89,40 @@ install_mod() {
 	zip=$(mod_zip)
 	[ -f "$zip" ] || die "the build did not produce $zip"
 
-	cp "$zip" "$target/Mods/toolsmith.zip" || die "could not copy the mod into $target/Mods"
-	printf 'mod:    %s -> %s/Mods/toolsmith.zip\n' "$(basename "$zip")" "$target"
+	# Installed under the zip's own name rather than a fixed one. A stale copy
+	# under the previous name would otherwise sit alongside this build and load
+	# beside it, which is exactly what happens after a modid change.
+	installed="$target/Mods/$(basename "$zip")"
+	remove_stale_mod_copies "$target" "$(basename "$zip")"
+
+	cp "$zip" "$installed" || die "could not copy the mod into $target/Mods"
+	printf 'mod:    %s -> %s\n' "$(basename "$zip")" "$installed"
+}
+
+# Deletes any previously installed copy of OUR mod from the testbed, matching on
+# the modid recorded inside each zip rather than on its filename, so a copy left
+# behind by an older name or dropped in by a mod manager is caught too. The zip
+# being installed now is skipped, and the other mods listed in
+# TESTBED_EXTRA_MODS are never considered.
+remove_stale_mod_copies() {
+	target="$1"
+	keep="$2"
+	ours=$(mod_id)
+
+	for existing in "$target"/Mods/*.zip; do
+		[ -e "$existing" ] || continue
+		[ "$(basename "$existing")" = "$keep" ] && continue
+
+		existing_id=$(unzip -p "$existing" modinfo.json 2>/dev/null |
+			python3 -c 'import sys,re; m=re.search(r"\"modid\"\s*:\s*\"([^\"]+)\"", sys.stdin.read(), re.I); print(m.group(1) if m else "")' 2>/dev/null)
+
+		# Match the current modid, and also the name this mod shipped under
+		# before the rename, so an old toolsmith_*.zip is cleared out.
+		case "$existing_id" in
+			"$ours"|toolsmith)
+				rm -f "$existing" &&
+					printf 'mod:    removed stale %s (modid %s)\n' "$(basename "$existing")" "$existing_id"
+				;;
+		esac
+	done
 }

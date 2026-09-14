@@ -52,6 +52,16 @@ namespace Toolsmith.ToolTinkering {
     [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringCraftingPatchCategory)]
     public class ToolTinkeringCraftingPatches {
 
+        //Stamping the adhesive has to happen here as well as in ConsumeCraftingIngredients. OnCreatedByCrafting is
+        //what fills the output slot the player is looking at BEFORE they take the craft, so without this the preview
+        //shows a plain grip and only the taken item says it is backed. ConsumeCraftingIngredients still does it too,
+        //because that is the call that survives paths which never build a preview.
+        [HarmonyPostfix]
+        [HarmonyPatch(nameof(CollectibleObject.OnCreatedByCrafting))]
+        private static void OnCreatedByCraftingAdhesiveGripPostfix(ItemSlot[] allInputSlots, ItemSlot outputSlot, IRecipeBase byRecipe) {
+            StampAdhesiveOnBackedGrip(allInputSlots, outputSlot, byRecipe as GridRecipe);
+        }
+
         [HarmonyPrefix]
         [HarmonyPatch(nameof(CollectibleObject.ConsumeCraftingIngredients))]
         private static bool ConsumeCraftingIngredientsModularPartPrefix(ItemSlot[] slots, ItemSlot outputSlot, GridRecipe matchingRecipe, ref bool __result) {
@@ -81,21 +91,25 @@ namespace Toolsmith.ToolTinkering {
                 return;
             }
 
-            var adhesive = stack.GetGripAdhesiveTag();
-            if (string.IsNullOrEmpty(adhesive)) {
+            if (string.IsNullOrEmpty(stack.GetGripAdhesiveTag())) {
                 return;
             }
 
-            dsc.AppendLine(Lang.Get("gripadhesivebacked", Lang.Get("item-" + adhesive)));
+            dsc.AppendLine(Lang.Get("gripadhesivebacked"));
         }
 
         private static void StampAdhesiveOnBackedGrip(ItemSlot[] slots, ItemSlot outputSlot, GridRecipe matchingRecipe) {
-            if (matchingRecipe?.RecipeGroup != ToolsmithConstants.AdhesiveGripRecipeGroup) {
+            if (slots == null || matchingRecipe?.RecipeGroup != ToolsmithConstants.AdhesiveGripRecipeGroup) {
                 return;
             }
 
             var output = outputSlot?.Itemstack;
             if (output?.Collectible?.Code == null || !ToolsmithModSystem.Stats.GripParts.ContainsKey(output.Collectible.Code.Path)) {
+                return;
+            }
+
+            //Called from both the preview and the consume path, so the second call has nothing left to do.
+            if (output.HasGripAdhesiveTag()) {
                 return;
             }
 
@@ -636,7 +650,12 @@ namespace Toolsmith.ToolTinkering {
                 return;
             }
 
-            __state = __instance.SelectedRecipe?.Ingredient?.Code?.EndVariant();
+            //The metal comes from the work item on the anvil, not from the recipe's ingredient code. The metal handle
+            //recipe is declared once against "ingot-*", so its Ingredient.Code stays the unresolved wildcard and
+            //EndVariant() on it returns a literal "*" - which is why every handle but iron came out Unknown, iron
+            //only reading correctly because it is the fallback. The work item is always concrete: the anvil builds it
+            //as workitem-{metal} in TryPlaceOn, so its own variant names the metal actually being worked.
+            __state = __instance.WorkItemStack?.Collectible?.GetMetalMaterial();
         }
 
         [HarmonyPostfix]
@@ -675,6 +694,18 @@ namespace Toolsmith.ToolTinkering {
 
             //Everything the grid path sets on a freshly made handle, because a smithed one has been through none of
             //it: the render tree, the material, the shape and stat tags, and a starting durability.
+            ApplyMaterialAndRenderTree(stack, metal);
+            stack.SetPartCurrentDurability(ToolsmithConstants.PartDurabilityBase);
+            stack.SetPartMaxDurability(ToolsmithConstants.PartDurabilityBase);
+
+            slot.MarkDirty();
+            return true;
+        }
+
+        //The material tag plus the render tree that makes a handle LOOK like that material. Shared with the recipe
+        //selector preview, which needs exactly this and nothing else - a preview stack must not be given durability,
+        //since it is a display clone that never becomes a real item.
+        internal static void ApplyMaterialAndRenderTree(ItemStack stack, string metal) {
             ITreeAttribute multiPartTree = stack.GetMultiPartRenderTree();
             ITreeAttribute handlePartAndTransformTree = multiPartTree.GetPartAndTransformRenderTree(ToolsmithAttributes.ModularPartHandleName);
             ITreeAttribute handleRenderTree = handlePartAndTransformTree.GetPartRenderTree();
@@ -693,11 +724,77 @@ namespace Toolsmith.ToolTinkering {
                 handleRenderTree.SetPartShapePath(handleStats.handleShapePath);
                 stack.SetHandleStatTag(handleStats.handleStatTag);
             }
-            stack.SetPartCurrentDurability(ToolsmithConstants.PartDurabilityBase);
-            stack.SetPartMaxDurability(ToolsmithConstants.PartDurabilityBase);
+        }
+    }
 
-            slot.MarkDirty();
-            return true;
+    //The anvil's recipe selector renders each recipe's Output.ResolvedItemstack directly. That works in vanilla
+    //because a tool head is a separate registered item per metal - pickaxehead-copper carries its own texture, so
+    //the dialog gets the right colour for free. Toolsmith's metal handle is one item for all 18 metals, with the
+    //metal held as a stack attribute and the texture chosen at render time, so the recipe's output stack is blank
+    //and every preview falls back to the default texture (iron).
+    //
+    //The fix goes on the DIALOG rather than on BlockEntityAnvil.OpenDialog, for two reasons found the hard way:
+    //OpenDialog copies the stacks into a local list before a postfix could touch them, so the change would never be
+    //seen; and Output.ResolvedItemstack is the recipe registry's own shared instance, which CheckIfFinished also
+    //reads when producing the real item - writing a stamped stack back there would make every future handle come out
+    //as whichever metal was previewed last. Cloning into the dialog's own array avoids both.
+    //
+    //Cosmetic and client-side only. The real handle is stamped in CheckIfFinished from the work item on the anvil.
+    [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringCraftingPatchCategory)]
+    public class AnvilRecipeSelectorPreviewPatches {
+
+        private static bool loggedPreviewFailure = false;
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GuiDialogBlockEntityRecipeSelector), MethodType.Constructor,
+            new Type[] { typeof(string), typeof(ItemStack[]), typeof(Action<int>), typeof(Action), typeof(BlockPos), typeof(ICoreClientAPI) })]
+        private static void StampMetalOnPreviewStacks(ItemStack[] recipeOutputs, BlockPos blockEntityPos, ICoreClientAPI capi) {
+            try {
+                if (recipeOutputs == null || capi == null || blockEntityPos == null) {
+                    return;
+                }
+
+                //Only the anvil's selector should be touched. Any other block opening this same dialog is left alone.
+                var anvil = capi.World.BlockAccessor.GetBlockEntity(blockEntityPos) as BlockEntityAnvil;
+                var metal = anvil?.WorkItemStack?.Collectible?.GetMetalMaterial();
+                if (string.IsNullOrEmpty(metal)) {
+                    return;
+                }
+
+                for (int i = 0; i < recipeOutputs.Length; i++) {
+                    var output = recipeOutputs[i];
+                    if (output?.Collectible?.Code == null) {
+                        continue;
+                    }
+                    if (!ToolsmithModSystem.Stats.BaseHandleParts.ContainsKey(output.Collectible.Code.Path)) {
+                        continue;
+                    }
+                    if (output.HasHandleMaterialTag()) {
+                        continue;
+                    }
+
+                    //Clone before stamping: this array element still points at the recipe registry's shared output
+                    //stack, and mutating it would leak this metal into every other anvil and into the finished item.
+                    var preview = output.Clone();
+                    AnvilSmithedHandlePatches.ApplyMaterialAndRenderTree(preview, metal);
+                    recipeOutputs[i] = preview;
+
+                    if (ToolsmithModSystem.Config.DebugMessages) {
+                        ToolsmithModSystem.Logger.Debug("Anvil recipe preview [" + i + "]: " + output.Collectible.Code.Path +
+                            " -> metal '" + metal + "'" +
+                            ", clone is separate instance: " + (!ReferenceEquals(preview, output)) +
+                            ", source left unstamped: " + (!output.HasHandleMaterialTag()) +
+                            ", preview tag: " + (preview.GetHandleMaterialTag() ?? "null"));
+                    }
+                }
+            } catch (Exception e) {
+                //A broken preview must never stop the anvil from working - the dialog still opens and the handles
+                //just show the default texture, exactly as they did before this patch existed.
+                if (!loggedPreviewFailure) {
+                    loggedPreviewFailure = true;
+                    ToolsmithModSystem.Logger.Warning("Could not stamp the metal onto the anvil recipe selector previews, so they will show the default texture. Cosmetic only. Reason: " + e.Message);
+                }
+            }
         }
     }
 
@@ -710,31 +807,22 @@ namespace Toolsmith.ToolTinkering {
     [HarmonyPatchCategory(ToolsmithModSystem.ToolTinkeringCraftingPatchCategory)]
     public class ForgeBluingPatches {
 
-        private static readonly FieldInfo ForgeContentsField = AccessTools.Field(typeof(BlockEntityForge), "contents");
-        private static readonly FieldInfo ForgeFuelLevelField = AccessTools.Field(typeof(BlockEntityForge), "fuelLevel");
-        private static readonly FieldInfo ForgeBurningField = AccessTools.Field(typeof(BlockEntityForge), "burning");
-
-        private static bool warnedAboutForgeField = false;
-
-        private static ItemStack ForgeContents(BlockEntityForge forge) {
-            //A wrong field name here would fail silently forever, so say so once rather than never bluing anything
-            //and leaving no trace of why.
-            if (ForgeContentsField == null) {
-                if (!warnedAboutForgeField) {
-                    warnedAboutForgeField = true;
-                    ToolsmithModSystem.Logger.Error("Could not find the 'contents' field on BlockEntityForge. Charcoal bluing will never trigger. The field has likely been renamed in this game version.");
-                }
-                return null;
-            }
-
-            return ForgeContentsField.GetValue(forge) as ItemStack;
-        }
+        //BlockEntityForge exposes everything this needs as public API: WorkItemStack, FuelLevel and IsBurning. An
+        //earlier version read private fields named contents, fuelLevel and burning reflectively; none of the three
+        //exist. The stack lives in an InventoryGeneric, and "contents" is only a tree-attribute key in
+        //FromTreeAttributes, not a field. Reflection here bought nothing and hid the mistake until load time.
 
         [HarmonyPostfix]
-        [HarmonyPatch(typeof(BlockEntityForge), "OnGameTick")]
+        [HarmonyPatch(typeof(BlockEntityForge), "OnCommonTick200ms")]
         private static void BlueHandleAtTemperature(BlockEntityForge __instance) {
-            //contents is private on BlockEntityForge, so it is read reflectively rather than through a property.
-            var stack = ForgeContents(__instance);
+            //OnCommonTick200ms is the forge's own tick, registered on both sides every 200ms. There is no OnGameTick
+            //on BlockEntityForge - naming one made Harmony throw at startup, which took the whole mod down with it.
+            //Bluing is an authoritative state change, so it is left to the server.
+            if (__instance?.Api == null || __instance.Api.Side != EnumAppSide.Server) {
+                return;
+            }
+
+            var stack = __instance.WorkItemStack;
             if (stack?.Collectible?.Code == null) {
                 return;
             }
@@ -757,13 +845,7 @@ namespace Toolsmith.ToolTinkering {
             //be hot would blue the instant it touched a forge - including one just off the anvil, which passes through
             //300C on its way down from working heat. Requiring live fuel is what makes bluing a thing the player
             //chooses to do rather than something that happens to them.
-            if (!(ForgeBurningField?.GetValue(__instance) is bool burning) || !burning) {
-                return;
-            }
-            //fuelLevel is read as a number without assuming int or float - guessing the wrong one would silently
-            //switch bluing off rather than fail loudly.
-            var fuelValue = ForgeFuelLevelField?.GetValue(__instance);
-            if (fuelValue == null || Convert.ToSingle(fuelValue) <= 0f) {
+            if (!__instance.IsBurning || __instance.FuelLevel <= 0f) {
                 return;
             }
 
