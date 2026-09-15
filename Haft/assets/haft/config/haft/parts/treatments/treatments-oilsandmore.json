@@ -1,0 +1,52 @@
+[
+	{
+		"id": "plantoil-flax",
+		"treatmentStatTag": "oil",
+		"dryingHours": 24,
+		"isLiquid": true,
+		"litersUsed": 0.1,
+		"requiresTags": [
+			"wood|blued"
+		]
+	},
+	{
+		"id": "plantoil-walnut",
+		"treatmentStatTag": "oil",
+		"dryingHours": 24,
+		"isLiquid": true,
+		"litersUsed": 0.1,
+		"requiresTags": [
+			"wood"
+		]
+	},
+	{
+		"id": "woodfinish",
+		"treatmentStatTag": "oil",
+		"dryingHours": 24,
+		"isLiquid": true,
+		"litersUsed": 0.05,
+		"requiresTags": [
+			"wood|blued"
+		]
+	},
+	{
+		"id": "woodfinish-flax",
+		"treatmentStatTag": "oil",
+		"dryingHours": 24,
+		"isLiquid": true,
+		"litersUsed": 0.05,
+		"requiresTags": [
+			"wood|blued"
+		]
+	},
+	{
+		"id": "woodfinish-walnut",
+		"treatmentStatTag": "oil",
+		"dryingHours": 24,
+		"isLiquid": true,
+		"litersUsed": 0.05,
+		"requiresTags": [
+			"wood"
+		]
+	}
+]

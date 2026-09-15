@@ -1,0 +1,52 @@
+[
+	{
+		"id": "fat",
+		"treatmentStatTag": "fat",
+		"dryingHours": 12,
+		"isLiquid": false,
+		"litersUsed": 0.0,
+		"requiresTags": [
+			"wood"
+		]
+	},
+	{
+		"id": "fat-rendered",
+		"treatmentStatTag": "fat",
+		"dryingHours": 12,
+		"isLiquid": false,
+		"litersUsed": 0.0,
+		"requiresTags": [
+			"wood"
+		]
+	},
+	{
+		"id": "beeswax",
+		"treatmentStatTag": "wax",
+		"dryingHours": 12,
+		"isLiquid": false,
+		"litersUsed": 0.0,
+		"requiresTags": [
+			"wood"
+		]
+	},
+	{
+		"id": "oilportion-flax",
+		"treatmentStatTag": "oil",
+		"dryingHours": 24,
+		"isLiquid": true,
+		"litersUsed": 0.1,
+		"requiresTags": [
+			"wood|blued"
+		]
+	},
+	{
+		"id": "oilportion-olive",
+		"treatmentStatTag": "oil",
+		"dryingHours": 24,
+		"isLiquid": true,
+		"litersUsed": 0.1,
+		"requiresTags": [
+			"wood"
+		]
+	}
+]

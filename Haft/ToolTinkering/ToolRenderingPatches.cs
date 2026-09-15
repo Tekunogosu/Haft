@@ -1,0 +1,36 @@
+﻿using HarmonyLib;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
+using Vintagestory.API.Common;
+using Vintagestory.GameContent;
+
+namespace Haft.ToolTinkering {
+
+    [HarmonyPatch(typeof(ItemHoe))]
+    [HarmonyPatchCategory(HaftModSystem.ToolTinkeringDamagePatchCategory)]
+    public class ToolRenderingHoePatches {
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(nameof(ItemHoe.OnLoaded))]
+        public static IEnumerable<CodeInstruction> ItemHoeOnLoadedCallBase(IEnumerable<CodeInstruction> instructions) {
+            var codes = new List<CodeInstruction>(instructions);
+
+            var addBaseCall = new List<CodeInstruction> {
+                CodeInstruction.LoadArgument(0),
+                CodeInstruction.LoadArgument(1),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(CollectibleObject), "OnLoaded", new Type[1] { typeof(ICoreAPI) }))
+            };
+
+            if (codes.Count <= 5) {
+                HaftModSystem.Logger?.Warning("Haft: ItemHoe.OnLoaded IL has fewer instructions than expected ({0}); skipping base-call insertion.", codes.Count);
+                return instructions;
+            }
+
+            codes.InsertRange(5, addBaseCall);
+
+            return codes.AsEnumerable();
+        }
+    }
+}

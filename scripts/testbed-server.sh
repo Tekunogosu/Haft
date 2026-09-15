@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the Toolsmith testbed server against its own data directory, rebuilding
+# Runs the Haft testbed server against its own data directory, rebuilding
 # and installing the mod first. Runs in the foreground: Ctrl+C stops it.
 #
 #   testbed-server.sh [start]   build, install, launch  (default)
@@ -12,13 +12,13 @@
 set -euo pipefail
 . "$(dirname "$(readlink -f "$0")")/common.sh"
 
-WORLD="$SERVER_DATA/Saves/toolsmith.vcdbs"
+WORLD="$SERVER_DATA/Saves/haft.vcdbs"
 CONFIG="$SERVER_DATA/serverconfig.json"
 
 # The server settings a testbed wants, as opposed to a public server's. Written
 # once, on first run; after that the file is the user's to edit.
 #
-# Nothing here shapes the world: Toolsmith changes what tools are made of, not
+# Nothing here shapes the world: Haft changes what tools are made of, not
 # what the world looks like, so the testbed generates an ordinary survival world.
 seed_config() {
 	[ -f "$CONFIG" ] && return 0
@@ -39,11 +39,11 @@ seed_config() {
 	    cfg["WorldConfig"] = {}
 	wc = cfg["WorldConfig"]
 	wc["SaveFileLocation"] = world
-	wc["WorldName"] = "toolsmith"
+	wc["WorldName"] = "haft"
 
 	# A testbed is for one person walking around in it, so the gates that exist
 	# for public servers only get in the way here.
-	cfg["ServerName"] = "Toolsmith testbed"
+	cfg["ServerName"] = "Haft testbed"
 	cfg["Port"] = port
 	cfg["WhitelistMode"] = "off"
 	cfg["AdvertiseServer"] = False
@@ -104,7 +104,7 @@ case "${1:-start}" in
 		printf 'wipe:   world deleted, config and mods kept\n'
 		;;
 	wipe-all)
-		# Also the configs. Toolsmith regenerates ModConfig/Toolsmith.json at
+		# Also the configs. Haft regenerates ModConfig/Haft.json at
 		# boot, so this is how to get back to the shipped defaults after editing
 		# the live one by hand.
 		rm -rf "$SERVER_DATA/Saves" "$SERVER_DATA/Cache" "$SERVER_DATA/Logs" \

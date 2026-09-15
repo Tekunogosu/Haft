@@ -13,7 +13,7 @@
 set -euo pipefail
 . "$(dirname "$(readlink -f "$0")")/common.sh"
 
-HOST="${TOOLSMITH_HOST:-localhost:$TESTBED_PORT}"
+HOST="${HAFT_HOST:-localhost:$TESTBED_PORT}"
 MODE="${1:-connect}"
 
 # Takes the real install's settings, credentials included, and points the copy
@@ -78,7 +78,7 @@ require_game
 
 case "$MODE" in
 	connect) args=(--connect "$HOST") ;;
-	solo)    args=(--openWorld toolsmith) ;;
+	solo)    args=(--openWorld haft) ;;
 	menu)    args=() ;;
 	*)       die "usage: $(basename "$0") {connect|solo|menu}" ;;
 esac
@@ -90,7 +90,7 @@ install_extra_mods "$CLIENT_DATA"
 
 case "$MODE" in
 	connect) printf 'connect: %s\n' "$HOST" ;;
-	solo)    printf 'world:  local "toolsmith"\n' ;;
+	solo)    printf 'world:  local "haft"\n' ;;
 	menu)    printf 'start:  main menu\n' ;;
 esac
 

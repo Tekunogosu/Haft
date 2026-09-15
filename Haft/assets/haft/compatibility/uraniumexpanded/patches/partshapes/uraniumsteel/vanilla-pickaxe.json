@@ -1,0 +1,26 @@
+[
+	{
+		"op": "addmerge",
+		"path": "/shapeByType/*-uraniumsteel",
+		"value": {
+			"base": "haft:item/parts/pickaxe/heads/advanced"
+		},
+		"file": "game:itemtypes/toolhead/pickaxehead.json",
+		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
+	},
+	{
+		"op": "remove",
+		"path": "/shapeByType/*",
+		"file": "game:itemtypes/toolhead/pickaxehead.json",
+		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
+	},
+	{
+		"op": "addmerge",
+		"path": "/shapeByType/*",
+		"value": {
+			"base": "haft:item/parts/pickaxe/heads/simple"
+		},
+		"file": "game:itemtypes/toolhead/pickaxehead.json",
+		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
+	}
+]
