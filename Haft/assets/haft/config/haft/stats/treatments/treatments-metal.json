@@ -6,7 +6,7 @@
 		"chanceToDamageReduction": 0.2
 	},
 	{
-		"id": "blued-oiled",
+		"id": "blued-oil",
 		"langTag": "treatment-blued-oiled",
 		"handleHPbonus": 0.0,
 		"chanceToDamageReduction": 0.3

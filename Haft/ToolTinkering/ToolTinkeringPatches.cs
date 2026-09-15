@@ -8,6 +8,7 @@ using System.Reflection.Emit;
 using System.Text;
 using Haft.Client;
 using Haft.Client.Behaviors;
+using Haft.Compat;
 using Haft.ToolTinkering.Behaviors;
 using Haft.Utils;
 using Vintagestory.API.Client;
@@ -16,6 +17,7 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
@@ -634,19 +636,146 @@ namespace Haft.ToolTinkering {
     //handle taken off an anvil would carry no material at all and silently read as oak. The anvil finishing a work
     //item is the only moment where the metal it was worked from is still known, so the material is stamped on here.
     //
-    //The metal has to be captured in the PREFIX: by the time CheckIfFinished returns, the work item has been consumed
-    //and the output placed, so reading the recipe afterwards finds nothing. The postfix then looks for the finished
-    //handle in the player's hands or the anvil's own slot and tags it.
+    //The output stack is a LOCAL inside CheckIfFinished - cloned from the recipe, then either handed to the player or
+    //spawned on the ground - so no prefix or postfix can reach the one item that was actually made. A transpiler
+    //injects a call right after that clone is stored, which is the only point where the finished stack and the work
+    //item it came from are both in scope. Stamping there covers the dropped case identically to the carried one.
+    //
+    //The hotbar search below is the fallback for when the injection does not happen, and it is a guess: it stamps the
+    //first hotbar stack that looks like a handle part, which on a full hotbar can be a stack of sticks. It is kept
+    //only so that a transpiler broken by a game update degrades to the old behaviour instead of losing the material
+    //entirely, and it logs when it runs so that the broken injection is visible rather than silent.
     [HarmonyPatchCategory(HaftModSystem.ToolTinkeringCraftingPatchCategory)]
     public class AnvilSmithedHandlePatches {
 
+        //Set by the injected call, read and cleared by the postfix. CheckIfFinished runs on the server thread and the
+        //injection sits between the prefix and the postfix of the same call, so the flag never spans two crafts.
+        [ThreadStatic] private static bool stampedByInjection;
+
+        private static bool loggedMissingInjection = false;
+
+        //A latch alone reports the first miss and nothing after it, which reads the same whether the injection broke
+        //once or on every craft. The count distinguishes those without filling the log on a genuinely broken build.
+        private static int missedInjectionCount = 0;
+        private const int MissedInjectionLogInterval = 25;
+
+        //Injected into CheckIfFinished immediately after the output stack is cloned into its local. Both the finished
+        //stack and the work item are in scope at that point - the work item is not nulled until several instructions
+        //later - so the metal can be read and stamped onto the exact item the player is about to receive.
+        public static void StampSmithedHandle(ItemStack output, BlockEntityAnvil anvil) {
+            try {
+                stampedByInjection = false;
+
+                if (output?.Collectible?.Code == null || anvil == null) {
+                    return;
+                }
+                if (!HaftModSystem.Stats.BaseHandleParts.ContainsKey(output.Collectible.Code.Path)) {
+                    return; //Not one of ours. Every other smithing recipe finishes untouched.
+                }
+                if (output.HasHandleMaterialTag()) {
+                    return;
+                }
+
+                var metal = anvil.WorkItemStack?.Collectible?.GetMetalMaterial();
+                if (string.IsNullOrEmpty(metal)) {
+                    return;
+                }
+
+                ApplyMaterialAndRenderTree(output, metal);
+                output.SetPartCurrentDurability(HaftConstants.PartDurabilityBase);
+                output.SetPartMaxDurability(HaftConstants.PartDurabilityBase);
+                stampedByInjection = true;
+            } catch (Exception e) {
+                //A throw here would propagate into CheckIfFinished and cost the player the item they just smithed.
+                //Leaving the flag clear lets the postfix's hotbar search have a go instead.
+                HaftModSystem.Logger.Warning("Could not stamp the metal onto a smithed handle at the anvil. Reason: " + e.Message);
+            }
+        }
+
+        [HarmonyTranspiler]
+        [HarmonyPatch(typeof(BlockEntityAnvil), "CheckIfFinished")]
+        public static IEnumerable<CodeInstruction> CheckIfFinishedTranspiler(IEnumerable<CodeInstruction> instructions) {
+            var codes = new List<CodeInstruction>(instructions);
+            var cloneMethod = AccessTools.Method(typeof(ItemStack), nameof(ItemStack.Clone));
+
+            //The anchor is the store that follows the recipe output's Clone(). Matching the store rather than the call
+            //is what makes the insert land after the local holds the stack, so the injected call can read it back.
+            int indexAfterStore = -1;
+            for (int i = 0; i < codes.Count - 1; i++) {
+                if (codes[i].opcode == OpCodes.Callvirt && (MethodInfo)codes[i].operand == cloneMethod
+                    && codes[i + 1].IsStloc()) {
+                    indexAfterStore = i + 2;
+                    break;
+                }
+            }
+
+            if (indexAfterStore < 0) {
+                HaftModSystem.Logger.Error("The anvil CheckIfFinished transpiler could not find where the finished stack is stored, so a smithed handle cannot be stamped at the moment it is made. Falling back to searching the hotbar afterwards, which can stamp the wrong item. This usually means the game updated and the method changed.");
+                return codes.AsEnumerable();
+            }
+
+            //Reload the stack that was just stored, push the anvil, and call the hook with both. The matching load has
+            //to be built from the store's own opcode, since the compiler picks a short form for the first few slots.
+            var loadInstruction = BuildLoadForStore(codes[indexAfterStore - 1]);
+            if (loadInstruction == null) {
+                HaftModSystem.Logger.Error("The anvil CheckIfFinished transpiler found where the finished stack is stored but could not read back which local it went into, so a smithed handle cannot be stamped at the moment it is made. Falling back to searching the hotbar afterwards, which can stamp the wrong item.");
+                return codes.AsEnumerable();
+            }
+
+            var injected = new List<CodeInstruction>() {
+                loadInstruction,
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(AnvilSmithedHandlePatches), nameof(StampSmithedHandle)))
+            };
+
+            //Any label on the instruction the insert displaces has to stay pointing at that position, or a branch
+            //that targeted it would jump over the injected call.
+            injected[0].labels.AddRange(codes[indexAfterStore].labels);
+            codes[indexAfterStore].labels.Clear();
+
+            codes.InsertRange(indexAfterStore, injected);
+            return codes.AsEnumerable();
+        }
+
+        //The load that reads back whatever local a store wrote to. Harmony has IsStloc to recognise the store but no
+        //helper to invert one, and the short forms carry their slot in the opcode rather than in an operand.
+        private static CodeInstruction BuildLoadForStore(CodeInstruction store) {
+            if (store.opcode == OpCodes.Stloc_0) return new CodeInstruction(OpCodes.Ldloc_0);
+            if (store.opcode == OpCodes.Stloc_1) return new CodeInstruction(OpCodes.Ldloc_1);
+            if (store.opcode == OpCodes.Stloc_2) return new CodeInstruction(OpCodes.Ldloc_2);
+            if (store.opcode == OpCodes.Stloc_3) return new CodeInstruction(OpCodes.Ldloc_3);
+            if (store.opcode == OpCodes.Stloc_S) return new CodeInstruction(OpCodes.Ldloc_S, store.operand);
+            if (store.opcode == OpCodes.Stloc) return new CodeInstruction(OpCodes.Ldloc, store.operand);
+            return null;
+        }
+
+        //CheckIfFinished is called on every hammer blow, not only on the one that completes the shape. Everything it
+        //does is wrapped in a guard that vanilla checks and this prefix has to match, or __state gets built for a
+        //craft that is not going to happen: the body is skipped, the injected call never runs, and the postfix reads
+        //that as a failed stamp and warns about an item nobody made yet.
+        private static readonly MethodInfo MatchesRecipeMethod = AccessTools.Method(typeof(BlockEntityAnvil), "MatchesRecipe");
+
         [HarmonyPrefix]
         [HarmonyPatch(typeof(BlockEntityAnvil), "CheckIfFinished")]
-        private static void CaptureMetalBeforeFinishing(BlockEntityAnvil __instance, out string __state) {
+        private static void CaptureMetalBeforeFinishing(BlockEntityAnvil __instance, out SmithedHandleState __state) {
             __state = null;
 
-            var outputCode = __instance?.SelectedRecipe?.Output?.Code;
+            if (__instance == null || __instance.Api?.World is not IServerWorldAccessor) {
+                return;
+            }
+
+            //SelectedRecipe is computed - it scans every smithing recipe on each access - so it is read once here and
+            //the result reused, rather than being touched again for the output code below.
+            var selectedRecipe = __instance.SelectedRecipe;
+            var outputCode = selectedRecipe?.Output?.Code;
             if (outputCode == null || !HaftModSystem.Stats.BaseHandleParts.ContainsKey(outputCode.Path)) {
+                return;
+            }
+
+            //The shape has to actually be complete. MatchesRecipe is private, so it is called by reflection; if that
+            //ever stops resolving, the safe reading is "not finished", which costs a stamp on a real craft rather
+            //than warning on every blow of every unfinished one.
+            if (MatchesRecipeMethod?.Invoke(__instance, null) is not true) {
                 return;
             }
 
@@ -655,37 +784,73 @@ namespace Haft.ToolTinkering {
             //EndVariant() on it returns a literal "*" - which is why every handle but iron came out Unknown, iron
             //only reading correctly because it is the fallback. The work item is always concrete: the anvil builds it
             //as workitem-{metal} in TryPlaceOn, so its own variant names the metal actually being worked.
-            __state = __instance.WorkItemStack?.Collectible?.GetMetalMaterial();
+            var metal = __instance.WorkItemStack?.Collectible?.GetMetalMaterial();
+            if (string.IsNullOrEmpty(metal)) {
+                return;
+            }
+
+            __state = new SmithedHandleState { Metal = metal, OutputPath = outputCode.Path };
+        }
+
+        //What the fallback search needs to identify the finished handle: the metal to stamp, and the code of the item
+        //the recipe produces so that nothing else in the hotbar can be mistaken for it.
+        private class SmithedHandleState {
+            public string Metal;
+            public string OutputPath;
         }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(BlockEntityAnvil), "CheckIfFinished")]
-        private static void StampMaterialOnSmithedHandle(BlockEntityAnvil __instance, IPlayer byPlayer, string __state) {
-            if (string.IsNullOrEmpty(__state)) {
+        private static void StampMaterialOnSmithedHandle(BlockEntityAnvil __instance, IPlayer byPlayer, SmithedHandleState __state) {
+            //The injected call already stamped the exact stack that was made, so there is nothing to search for.
+            if (stampedByInjection) {
+                stampedByInjection = false;
                 return;
             }
 
+            if (__state == null) {
+                return;
+            }
+
+            //Reaching here with a handle recipe means the injection did not run: either the transpiler failed to find
+            //its anchor, or the hook threw. Both are already logged at the point they happened, so this line names
+            //the consequence rather than the cause, and carries the count because a single latched warning hid how
+            //often it was firing - which is what made a per-blow false positive read as one failed craft.
+            missedInjectionCount++;
+            if (!loggedMissingInjection) {
+                loggedMissingInjection = true;
+                HaftModSystem.Logger.Warning("A handle was smithed but could not be stamped as it was made, so Haft is falling back to searching the hotbar for it. The search only matches a single untagged stack of the exact item the recipe makes, so it stamps nothing rather than the wrong thing - but a handle that finds no match keeps the default texture and reads as oak. Further occurrences are counted, not logged.");
+            } else if (missedInjectionCount % MissedInjectionLogInterval == 0) {
+                HaftModSystem.Logger.Warning("Haft has now fallen back to the hotbar search for a smithed handle " + missedInjectionCount + " times.");
+            }
+
             var handSlot = byPlayer?.InventoryManager?.ActiveHotbarSlot;
-            if (TryStamp(handSlot, __state)) {
+            if (TryStamp(handSlot, __state.Metal, __state.OutputPath)) {
                 return;
             }
 
             //Not in hand - a full hotbar drops the output on the ground instead, and the player picks it up later.
             if (byPlayer?.InventoryManager != null) {
                 foreach (var slot in byPlayer.InventoryManager.GetHotbarInventory()) {
-                    if (TryStamp(slot, __state)) {
+                    if (TryStamp(slot, __state.Metal, __state.OutputPath)) {
                         return;
                     }
                 }
             }
         }
 
-        private static bool TryStamp(ItemSlot slot, string metal) {
+        private static bool TryStamp(ItemSlot slot, string metal, string expectedPath) {
             var stack = slot?.Itemstack;
             if (stack?.Collectible?.Code == null) {
                 return false;
             }
-            if (!HaftModSystem.Stats.BaseHandleParts.ContainsKey(stack.Collectible.Code.Path)) {
+            //Only the item this recipe actually produces. Without this the search stamps the first handle PART it
+            //meets, and a stick is a handle part, so a hotbar carrying sticks gets them tagged with the metal.
+            if (stack.Collectible.Code.Path != expectedPath) {
+                return false;
+            }
+            //A smithed handle always arrives on its own. A stack of them is something the player already had.
+            if (stack.StackSize != 1) {
                 return false;
             }
             if (stack.HasHandleMaterialTag()) {
@@ -875,6 +1040,10 @@ namespace Haft.ToolTinkering {
 
             stack.SetHandleTreatmentTag(HaftConstants.BluingTreatmentTag);
             __instance.MarkDirty(true);
+
+            if (HaftModSystem.Api.ModLoader.IsModEnabled("xskills")) {
+                XSkillsCompat.AwardBluingExperience(__instance.Api.World, __instance.Pos);
+            }
         }
     }
 }

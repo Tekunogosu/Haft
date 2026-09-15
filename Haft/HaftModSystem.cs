@@ -10,6 +10,7 @@ using Haft.ToolTinkering;
 using Haft.ToolTinkering.Behaviors;
 using Haft.ToolTinkering.Blocks;
 using Haft.ToolTinkering.Items;
+using Haft.Compat;
 using Haft.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -70,9 +71,9 @@ namespace Haft {
         }
 
         public override void Start(ICoreAPI api) {
-            if (api.ModLoader.IsModEnabled("smithingplus")) {
+            if (SmithingPlusCompat.IsLoaded(api.ModLoader)) {
                 Logger.VerboseDebug("Smithing Plus found, trying to patch in attributes to the forgettable config!");
-                HandleSmithingPlusStartCompat(api);
+                SmithingPlusCompat.AddHaftAttributesToForgettableConfig(api, Logger);
                 api.World.Config.SetBool(HaftConstants.SmithWithBitsEnabled, false); //If Smithing Plus is enabled, just always defer to it for Smithing With Bits.
             } else {
                 api.World.Config.SetBool(HaftConstants.SmithWithBitsEnabled, Config.UseBitsForSmithing); //If it's not, then check the config.
@@ -578,20 +579,6 @@ namespace Haft {
             } catch (Exception e) {
                 Mod.Logger.Error("Could not save stats after processing the Json additions.");
                 Mod.Logger.Error(e);
-            }
-        }
-
-        private void HandleSmithingPlusStartCompat(ICoreAPI api) {
-            SmithingPlus.Core SPCore = api.ModLoader.GetModSystem<SmithingPlus.Core>();
-            if (SPCore != null) {
-                if (!SmithingPlus.Core.Config.GetToolRepairForgettableAttributes.Contains<string>("tinkeredToolHead")) {
-                    SmithingPlus.Core.Config.ToolRepairForgettableAttributes = SmithingPlus.Core.Config.ToolRepairForgettableAttributes + HaftAttributes.HaftForgettableAttributes;
-                    Logger.VerboseDebug("Added Haft Attributes to Smithing Plus's Forgettable Attributes config!");
-                } else {
-                    Logger.VerboseDebug("Found possible presence of existing configs already in Smithing Plus for Haft, forgoing the addition! If you have issues, please reset the ToolRepairForgettableAttributes line in the Smithing Plus config.");
-                }
-            } else {
-                Logger.Error("Found Smithing Plus loaded, but could not retrieve the Core ModLoader for it! Auto compatability will not work.");
             }
         }
 

@@ -46,7 +46,7 @@
 		"isLiquid": true,
 		"litersUsed": 0.1,
 		"requiresTags": [
-			"wood|blued"
+			"wood"
 		]
 	}
 ]

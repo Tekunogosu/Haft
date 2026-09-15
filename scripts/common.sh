@@ -4,7 +4,7 @@
 # this machine rather than on its own. Both overridable, so a machine that keeps
 # things elsewhere is not forced into this layout.
 
-TESTBED="${HAFT_TESTBED:-/mnt/media/testbed/toolsmith}"
+TESTBED="${HAFT_TESTBED:-/mnt/media/testbed/haft}"
 GAME="${VINTAGE_STORY:-$HOME/.local/share/vintagestory}"
 
 SERVER_DATA="$TESTBED/server"
@@ -22,7 +22,7 @@ REAL_DATA="${VINTAGE_STORY_DATA:-$HOME/.config/VintagestoryData}"
 # Takes effect for the server only when serverconfig.json is written, which is
 # on first run or after wipe-all. An existing testbed carries its old port until
 # then, so testbed-server.sh corrects the file in place on every start.
-TESTBED_PORT="${TOOLSMITH_PORT:-42470}"
+TESTBED_PORT="${HAFT_PORT:-42470}"
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -51,9 +51,14 @@ mod_zip() {
 # Mods installed alongside ours in the testbed, by filename, taken from the real
 # install. These are the ones Haft actually has to keep working with:
 # PrimitiveSurvival declares tool: "spear" on its fishing spears and is why the
-# spear work needed a blacklist entry, SmithingPlus and its material cache are
-# referenced by the reforging path, and Butchery supplies the bone tool heads.
-TESTBED_EXTRA_MODS="${HAFT_EXTRA_MODS:-primitivesurvival_5.1.3.zip smithingplus_1.9.0-rc.1.zip smithingplusmaterialcache_1.1.0.zip butchering_1.14.3.zip}"
+# spear work needed a blacklist entry, SmithingPlusPlus is referenced by the
+# reforging path, and Butchery supplies the bone tool heads.
+#
+# SmithingPlusPlus is a maintained fork of SmithingPlus. Haft's compat resolves
+# either one, but the fork is what gets tested, because it is what is actually
+# being run. It also absorbs the old smithingplusmaterialcache mod, which is why
+# that is no longer listed separately.
+TESTBED_EXTRA_MODS="${HAFT_EXTRA_MODS:-primitivesurvival_5.1.3.zip smithingplusplus_1.10.3.zip butchering_1.14.3.zip}"
 
 # Copies the extra mods in if they are not already there. Kept separate from
 # install_mod so a wipe restores them without a rebuild being involved.
@@ -79,6 +84,11 @@ install_extra_mods() {
 # packages Releases/<modid>_<version>.zip -- the same zip a player installs.
 # Testing that artifact rather than an unpacked bin/ folder is the point: an
 # asset missing from the package is invisible until something loads the zip.
+#
+# Calling this once per target rebuilds once per target, which is wasteful but
+# not wrong: the package is reproducible, so every build of unchanged source
+# lands the same bytes in every target. That is what makes comparing an
+# installed copy against Releases/ by hash meaningful.
 install_mod() {
 	target="$1"
 	mkdir -p "$target/Mods"

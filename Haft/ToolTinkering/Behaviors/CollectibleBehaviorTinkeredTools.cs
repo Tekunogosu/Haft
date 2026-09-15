@@ -185,7 +185,7 @@ namespace Haft.ToolTinkering.Behaviors {
                 if (headStack.Attributes.HasAttribute("temperature")) {
                     headStack.Attributes.RemoveAttribute("temperature");
                 }
-                if (HaftModSystem.Api.ModLoader.IsModEnabled("smithingplus")) { //If Smithing Plus is found, clear it's errant data as well or else it will compound due to how it reassigns it when the head breaks.
+                if (SmithingPlusCompat.IsLoaded(HaftModSystem.Api.ModLoader)) { //If Smithing Plus is found, clear it's errant data as well or else it will compound due to how it reassigns it when the head breaks.
                     if (headStack.Attributes.HasAttribute("repairedToolStack")) {
                         headStack.Attributes.RemoveAttribute("repairedToolStack");
                     }

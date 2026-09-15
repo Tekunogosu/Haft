@@ -25,6 +25,7 @@ namespace Haft.Utils {
         public const string DefaultGripFallbackTexture = "game:block/cloth/reedrope";
         public const string LightTreatementOverlayPath = "haft:block/overlays/lighter";
         public const string DarkTreatementOverlayPath = "haft:block/overlays/darker";
+        public const string BluedTreatementOverlayPath = "haft:block/overlays/blued"; //Bluing colours the metal rather than darkening it, so it overrides the light/dark choice the other treatments make.
 
         public const float TimeToCraftTinkerTool = 2.5f;
         public const float StartingSharpnessMult = 0.85f;

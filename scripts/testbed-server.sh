@@ -12,7 +12,7 @@
 set -euo pipefail
 . "$(dirname "$(readlink -f "$0")")/common.sh"
 
-WORLD="$SERVER_DATA/Saves/toolsmith.vcdbs"
+WORLD="$SERVER_DATA/Saves/haft.vcdbs"
 CONFIG="$SERVER_DATA/serverconfig.json"
 
 # The server settings a testbed wants, as opposed to a public server's. Written
@@ -39,7 +39,7 @@ seed_config() {
 	    cfg["WorldConfig"] = {}
 	wc = cfg["WorldConfig"]
 	wc["SaveFileLocation"] = world
-	wc["WorldName"] = "toolsmith"
+	wc["WorldName"] = "haft"
 
 	# A testbed is for one person walking around in it, so the gates that exist
 	# for public servers only get in the way here.
@@ -104,7 +104,7 @@ case "${1:-start}" in
 		printf 'wipe:   world deleted, config and mods kept\n'
 		;;
 	wipe-all)
-		# Also the configs. Toolsmith regenerates ModConfig/Toolsmith.json at
+		# Also the configs. Haft regenerates ModConfig/Haft.json at
 		# boot, so this is how to get back to the shipped defaults after editing
 		# the live one by hand.
 		rm -rf "$SERVER_DATA/Saves" "$SERVER_DATA/Cache" "$SERVER_DATA/Logs" \

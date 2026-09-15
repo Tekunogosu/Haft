@@ -265,8 +265,13 @@ namespace Haft.ToolTinkering.Behaviors {
                         }
 
                         //A follow-on treatment names the combined result rather than replacing the finish outright:
-                        //oil over a blued handle is "blued-oiled", not plain "oil", so the handle keeps the bluing it
+                        //oil over a blued handle is "blued-oil", not plain "oil", so the handle keeps the bluing it
                         //already has. Falls back to the plain stat when no combined one is configured.
+                        //
+                        //The combined id is DERIVED - existing treatment tag, a dash, then the incoming treatment's
+                        //stat tag - so a TreatmentStatDefine meant to be found here must be named for the stat tag
+                        //("oil"), never for the treatment's English participle ("oiled"). Naming it "blued-oiled"
+                        //is why this lookup silently missed and stripped the bluing it was written to preserve.
                         var resolvedStatTag = treatmentStatPair.treatmentStatTag;
                         if (buildsOnCurrentTreatment) {
                             var combinedTag = handleSlot.Itemstack.GetHandleTreatmentTag() + "-" + treatmentStatPair.treatmentStatTag;
@@ -283,7 +288,12 @@ namespace Haft.ToolTinkering.Behaviors {
                         outputSlot.Itemstack.SetWetTreatment((int)(treatmentStatPair.dryingHours * handleStatPair.dryingTimeMult));
                         outputSlot.Itemstack.Collectible.SetTransitionState(outputSlot.Itemstack, EnumTransitionType.Dry, 0);
 
-                        if (treatmentStatPair.isLiquid) {
+                        //Bluing is a colour change, not a darkening, so it picks its overlay by what the treatment IS
+                        //rather than by whether it went on wet. Covers the oiled follow-on too - "blued-oil" is still
+                        //a blued handle - which is why this tests the tag's prefix rather than the whole tag.
+                        if (resolvedStatTag.StartsWithOrdinal(HaftConstants.BluingTreatmentTag)) {
+                            handleTextureTree.SetPartTexturePathFromKey("wood-overlay", HaftConstants.BluedTreatementOverlayPath);
+                        } else if (treatmentStatPair.isLiquid) {
                             handleTextureTree.SetPartTexturePathFromKey("wood-overlay", HaftConstants.DarkTreatementOverlayPath);
                         } else if (!treatmentStatPair.isLiquid) {
                             handleTextureTree.SetPartTexturePathFromKey("wood-overlay", HaftConstants.LightTreatementOverlayPath);

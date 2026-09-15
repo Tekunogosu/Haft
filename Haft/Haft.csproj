@@ -20,8 +20,18 @@
 		<HintPath>..\..\Other Mod's DLLs for Integration Purposes\ScientificSmithy\ScientificSmithy.dll</HintPath>
 		<Private>False</Private>
 	</Reference>
+	<!-- This is the SmithingPlusPlus fork's build, which is the maintained one. It ships the same assembly name,
+	     namespace and Core type as upstream Smithing Plus, so this single reference satisfies both at runtime. -->
 	<Reference Include="SmithingPlus">
 		<HintPath>..\..\Other Mod's DLLs for Integration Purposes\SmithingPlus\SmithingPlus.dll</HintPath>
+		<Private>false</Private>
+	</Reference>
+	<Reference Include="xlib">
+		<HintPath>..\..\Other Mod's DLLs for Integration Purposes\XSkills\xlib.dll</HintPath>
+		<Private>false</Private>
+	</Reference>
+	<Reference Include="xskills">
+		<HintPath>..\..\Other Mod's DLLs for Integration Purposes\XSkills\xskills.dll</HintPath>
 		<Private>false</Private>
 	</Reference>
     <Reference Include="VintagestoryAPI">
