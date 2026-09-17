@@ -1,0 +1,512 @@
+{
+	"textureWidth": 8,
+	"textureHeight": 8,
+	"textures": {
+		"material": "game:item/resource/string"
+	},
+	"elements": [
+		{
+			"name": "origin",
+			"from": [
+				8.0,
+				0.0,
+				8.0
+			],
+			"to": [
+				8.0,
+				0.0,
+				8.0
+			],
+			"rotationOrigin": [
+				8.0,
+				0.0,
+				8.0
+			],
+			"children": [
+				{
+					"name": "BowGrip",
+					"from": [
+						-1.9,
+						-0.5,
+						-0.5
+					],
+					"to": [
+						-1.9,
+						-0.5,
+						-0.5
+					],
+					"rotationOrigin": [
+						0.0,
+						0.0,
+						-0.5
+					],
+					"children": [
+						{
+							"name": "BowLimbUp",
+							"from": [
+								3.4,
+								0.1,
+								0.1
+							],
+							"to": [
+								3.4,
+								0.1,
+								0.1
+							],
+							"rotationOrigin": [
+								3.4,
+								0.5,
+								0.5
+							],
+							"rotationY": -16.5,
+							"children": [
+								{
+									"name": "BowTipUp",
+									"from": [
+										5.5,
+										0.1,
+										0.1
+									],
+									"to": [
+										5.5,
+										0.1,
+										0.1
+									],
+									"rotationOrigin": [
+										5.5,
+										0.4,
+										0.4
+									],
+									"rotationY": -22.5,
+									"children": [
+										{
+											"name": "BowStringUp1",
+											"from": [
+												-1.4,
+												0.2,
+												0.5
+											],
+											"to": [
+												6.8,
+												0.4,
+												0.7
+											],
+											"rotationOrigin": [
+												6.8,
+												0.3,
+												0.6
+											],
+											"rotationY": 40.8,
+											"faces": {
+												"north": {
+													"texture": "#material",
+													"uv": [
+														0.0,
+														0.0,
+														8.0,
+														0.25
+													]
+												},
+												"east": {
+													"texture": "#material",
+													"uv": [
+														2.75,
+														0.0,
+														3.0,
+														0.25
+													]
+												},
+												"south": {
+													"texture": "#material",
+													"uv": [
+														0.0,
+														0.0,
+														8.0,
+														0.25
+													]
+												},
+												"west": {
+													"texture": "#material",
+													"uv": [
+														2.25,
+														0.0,
+														2.5,
+														0.25
+													]
+												},
+												"up": {
+													"texture": "#material",
+													"uv": [
+														0.0,
+														0.0,
+														8.0,
+														0.25
+													]
+												},
+												"down": {
+													"texture": "#material",
+													"uv": [
+														0.0,
+														0.0,
+														8.0,
+														0.25
+													]
+												}
+											},
+											"children": [
+												{
+													"name": "BowStringUp2",
+													"from": [
+														-4.8,
+														0.0,
+														0.0
+													],
+													"to": [
+														0.0,
+														0.2,
+														0.2
+													],
+													"rotationOrigin": [
+														-3.0,
+														0.1,
+														0.1
+													],
+													"faces": {
+														"north": {
+															"texture": "#material",
+															"uv": [
+																2.25,
+																0.0,
+																7.25,
+																0.25
+															]
+														},
+														"east": {
+															"texture": "#material",
+															"uv": [
+																3.25,
+																0.0,
+																3.5,
+																0.25
+															]
+														},
+														"south": {
+															"texture": "#material",
+															"uv": [
+																2.0,
+																0.0,
+																7.0,
+																0.25
+															]
+														},
+														"west": {
+															"texture": "#material",
+															"uv": [
+																4.25,
+																0.0,
+																4.5,
+																0.25
+															]
+														},
+														"up": {
+															"texture": "#material",
+															"uv": [
+																1.75,
+																0.0,
+																6.75,
+																0.25
+															]
+														},
+														"down": {
+															"texture": "#material",
+															"uv": [
+																2.75,
+																0.0,
+																7.75,
+																0.25
+															]
+														}
+													},
+													"children": [
+														{
+															"name": "BowNock",
+															"from": [
+																0.1,
+																-0.1,
+																-0.14
+															],
+															"to": [
+																2.1,
+																0.3,
+																0.26
+															],
+															"rotationOrigin": [
+																1.1,
+																0.1,
+																0.06
+															],
+															"faces": {
+																"north": {
+																	"texture": "#material",
+																	"uv": [
+																		2.25,
+																		1.75,
+																		4.25,
+																		2.0
+																	]
+																},
+																"east": {
+																	"texture": "#material",
+																	"uv": [
+																		4.0,
+																		0.75,
+																		4.25,
+																		1.0
+																	]
+																},
+																"south": {
+																	"texture": "#material",
+																	"uv": [
+																		1.75,
+																		0.75,
+																		3.75,
+																		1.0
+																	]
+																},
+																"west": {
+																	"texture": "#material",
+																	"uv": [
+																		1.5,
+																		1.0,
+																		1.75,
+																		1.25
+																	]
+																},
+																"up": {
+																	"texture": "#material",
+																	"uv": [
+																		4.5,
+																		0.5,
+																		6.5,
+																		0.75
+																	]
+																},
+																"down": {
+																	"texture": "#material",
+																	"uv": [
+																		4.0,
+																		1.0,
+																		6.0,
+																		1.25
+																	]
+																}
+															},
+															"rotationY": -3.0
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "BowLimbDown",
+							"from": [
+								-5.9,
+								0.1,
+								0.1
+							],
+							"to": [
+								-5.9,
+								0.1,
+								0.1
+							],
+							"rotationOrigin": [
+								0.1,
+								0.4,
+								0.4
+							],
+							"rotationY": 16.5,
+							"children": [
+								{
+									"name": "BowTipDown",
+									"from": [
+										-6.9,
+										0.1,
+										0.1
+									],
+									"to": [
+										-6.9,
+										0.1,
+										0.1
+									],
+									"rotationOrigin": [
+										0.5,
+										0.4,
+										0.4
+									],
+									"rotationY": 22.5,
+									"children": [
+										{
+											"name": "BowStringDown1",
+											"from": [
+												0.6,
+												0.2,
+												0.5
+											],
+											"to": [
+												8.8,
+												0.4,
+												0.7
+											],
+											"rotationOrigin": [
+												0.6,
+												0.3,
+												0.6
+											],
+											"rotationY": -40.8,
+											"faces": {
+												"north": {
+													"texture": "#material",
+													"uv": [
+														0.0,
+														0.0,
+														8.0,
+														0.25
+													]
+												},
+												"east": {
+													"texture": "#material",
+													"uv": [
+														2.75,
+														0.0,
+														3.0,
+														0.25
+													]
+												},
+												"south": {
+													"texture": "#material",
+													"uv": [
+														0.0,
+														0.0,
+														8.0,
+														0.25
+													]
+												},
+												"west": {
+													"texture": "#material",
+													"uv": [
+														3.25,
+														0.0,
+														3.5,
+														0.25
+													]
+												},
+												"up": {
+													"texture": "#material",
+													"uv": [
+														0.0,
+														0.0,
+														8.0,
+														0.25
+													]
+												},
+												"down": {
+													"texture": "#material",
+													"uv": [
+														0.0,
+														0.0,
+														8.0,
+														0.25
+													]
+												}
+											},
+											"children": [
+												{
+													"name": "BowStringDown2",
+													"from": [
+														8.2,
+														0.0,
+														0.0
+													],
+													"to": [
+														13.0,
+														0.2,
+														0.2
+													],
+													"rotationOrigin": [
+														8.2,
+														0.0,
+														0.0
+													],
+													"faces": {
+														"north": {
+															"texture": "#material",
+															"uv": [
+																2.0,
+																0.0,
+																7.0,
+																0.25
+															]
+														},
+														"east": {
+															"texture": "#material",
+															"uv": [
+																2.75,
+																0.0,
+																3.0,
+																0.25
+															]
+														},
+														"south": {
+															"texture": "#material",
+															"uv": [
+																2.75,
+																0.0,
+																7.75,
+																0.25
+															]
+														},
+														"west": {
+															"texture": "#material",
+															"uv": [
+																3.5,
+																0.0,
+																3.75,
+																0.25
+															]
+														},
+														"up": {
+															"texture": "#material",
+															"uv": [
+																1.75,
+																0.0,
+																6.75,
+																0.25
+															]
+														},
+														"down": {
+															"texture": "#material",
+															"uv": [
+																1.0,
+																0.0,
+																6.0,
+																0.25
+															]
+														}
+													}
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

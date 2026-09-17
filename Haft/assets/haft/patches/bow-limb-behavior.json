@@ -1,0 +1,57 @@
+[
+	{
+		"file": "game:itemtypes/toolhead/bowstave.json",
+		"op": "addmerge",
+		"path": "/behaviorsByType/*-long-raw/-",
+		"value": { "name": "haft:BowLimb" },
+		"enabled": true
+	},
+	{
+		"file": "game:itemtypes/toolhead/bowstave.json",
+		"op": "addmerge",
+		"path": "/behaviorsByType/*-long-raw/-",
+		"value": { "name": "haft:ModularPartRenderingFromAttributes", "properties": { "skipCreativeInventoryAdditions": true } },
+		"enabled": true
+	},
+	{
+		"file": "game:itemtypes/toolhead/bowstave.json",
+		"op": "addmerge",
+		"path": "/behaviorsByType/*-long-dry/-",
+		"value": { "name": "haft:ModularPartRenderingFromAttributes", "properties": { "skipCreativeInventoryAdditions": true } },
+		"enabled": true
+	},
+	{
+		"file": "game:itemtypes/toolhead/bowstave.json",
+		"op": "addmerge",
+		"path": "/behaviorsByType/*-long-dry/-",
+		"value": { "name": "haft:BowLimb" },
+		"enabled": true
+	},
+	{
+		"file": "game:itemtypes/toolhead/bowstave.json",
+		"op": "addmerge",
+		"path": "/behaviorsByType/*-recurve-raw",
+		"value": [
+			{ "name": "haft:BowLimb" },
+			{ "name": "haft:ModularPartRenderingFromAttributes", "properties": { "skipCreativeInventoryAdditions": true } }
+		],
+		"enabled": true
+	},
+	{
+		"file": "game:itemtypes/toolhead/bowstave.json",
+		"op": "addmerge",
+		"path": "/behaviorsByType/*-recurve-dry",
+		"value": [
+			{ "name": "haft:BowLimb" },
+			{ "name": "haft:ModularPartRenderingFromAttributes", "properties": { "skipCreativeInventoryAdditions": true } }
+		],
+		"enabled": true
+	},
+	{
+		"file": "game:itemtypes/tool/bow.json",
+		"op": "addmerge",
+		"path": "/behaviors/-",
+		"value": { "name": "haft:BowLimb" },
+		"enabled": true
+	}
+]

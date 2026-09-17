@@ -7,7 +7,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.37
+		"speedBonus": -0.37,
+		"flexibility": 0.1,
+		"drawSpeedBonus": 0.29
 	},
 	{
 		"id": "silver",
@@ -17,7 +19,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.2
+		"speedBonus": -0.2,
+		"flexibility": 0.12,
+		"drawSpeedBonus": 0.31
 	},
 	{
 		"id": "zinc",
@@ -27,7 +31,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.14
+		"speedBonus": -0.14,
+		"flexibility": 0.18,
+		"drawSpeedBonus": 0.46
 	},
 	{
 		"id": "lead",
@@ -37,7 +43,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.22
+		"speedBonus": -0.22,
+		"flexibility": 0.05,
+		"drawSpeedBonus": 0.45
 	},
 	{
 		"id": "electrum",
@@ -47,7 +55,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.29
+		"speedBonus": -0.29,
+		"flexibility": 0.12,
+		"drawSpeedBonus": 0.61
 	},
 	{
 		"id": "copper",
@@ -57,7 +67,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.17
+		"speedBonus": -0.17,
+		"flexibility": 0.3,
+		"drawSpeedBonus": 0.92
 	},
 	{
 		"id": "tin",
@@ -67,7 +79,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.14
+		"speedBonus": -0.14,
+		"flexibility": 0.08,
+		"drawSpeedBonus": 0.72
 	},
 	{
 		"id": "molybdochalkos",
@@ -77,7 +91,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.18
+		"speedBonus": -0.18,
+		"flexibility": 0.15,
+		"drawSpeedBonus": 0.92
 	},
 	{
 		"id": "brass",
@@ -87,7 +103,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.16
+		"speedBonus": -0.16,
+		"flexibility": 0.35,
+		"drawSpeedBonus": 1.28
 	},
 	{
 		"id": "bismuthbronze",
@@ -97,7 +115,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.15
+		"speedBonus": -0.15,
+		"flexibility": 0.4,
+		"drawSpeedBonus": 1.53
 	},
 	{
 		"id": "bismuth",
@@ -107,7 +127,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.19
+		"speedBonus": -0.19,
+		"flexibility": 0.14,
+		"drawSpeedBonus": 1.14
 	},
 	{
 		"id": "tinbronze",
@@ -117,7 +139,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.14
+		"speedBonus": -0.14,
+		"flexibility": 0.45,
+		"drawSpeedBonus": 1.69
 	},
 	{
 		"id": "cupronickel",
@@ -127,7 +151,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.17
+		"speedBonus": -0.17,
+		"flexibility": 0.5,
+		"drawSpeedBonus": 1.86
 	},
 	{
 		"id": "blackbronze",
@@ -137,7 +163,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.17
+		"speedBonus": -0.17,
+		"flexibility": 0.48,
+		"drawSpeedBonus": 1.94
 	},
 	{
 		"id": "nickel",
@@ -147,7 +175,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.17
+		"speedBonus": -0.17,
+		"flexibility": 0.55,
+		"drawSpeedBonus": 2.14
 	},
 	{
 		"id": "iron",
@@ -157,7 +187,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.15
+		"speedBonus": -0.15,
+		"flexibility": 0.7,
+		"drawSpeedBonus": 2.66
 	},
 	{
 		"id": "meteoriciron",
@@ -167,7 +199,9 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": 0.05
+		"speedBonus": 0.05,
+		"flexibility": 0.75,
+		"drawSpeedBonus": 3.08
 	},
 	{
 		"id": "steel",
@@ -177,6 +211,8 @@
 			"metal",
 			"smooth"
 		],
-		"speedBonus": -0.15
+		"speedBonus": -0.15,
+		"flexibility": 0.85,
+		"drawSpeedBonus": 4.22
 	}
 ]

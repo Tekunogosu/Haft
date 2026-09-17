@@ -1,0 +1,82 @@
+[
+	{
+		"ingredientPattern": "B\tT",
+		"ingredients": {
+			"B": {
+				"type": "item",
+				"code": "game:bowstave-long-dry"
+			},
+			"T": {
+				"type": "item",
+				"code": "game:rope"
+			}
+		},
+		"width": 1,
+		"height": 2,
+		"output": {
+			"type": "item",
+			"code": "haft:bowparted-long",
+			"quantity": 1
+		}
+	},
+	{
+		"ingredientPattern": "B\tT",
+		"ingredients": {
+			"B": {
+				"type": "item",
+				"code": "game:bowstave-long-dry"
+			},
+			"T": {
+				"type": "item",
+				"code": "game:flaxtwine"
+			}
+		},
+		"width": 1,
+		"height": 2,
+		"output": {
+			"type": "item",
+			"code": "haft:bowparted-long",
+			"quantity": 1
+		}
+	},
+	{
+		"ingredientPattern": "B\tT",
+		"ingredients": {
+			"B": {
+				"type": "item",
+				"code": "game:bowstave-recurve-dry"
+			},
+			"T": {
+				"type": "item",
+				"code": "game:rope"
+			}
+		},
+		"width": 1,
+		"height": 2,
+		"output": {
+			"type": "item",
+			"code": "haft:bowparted-recurve",
+			"quantity": 1
+		}
+	},
+	{
+		"ingredientPattern": "B\tT",
+		"ingredients": {
+			"B": {
+				"type": "item",
+				"code": "game:bowstave-recurve-dry"
+			},
+			"T": {
+				"type": "item",
+				"code": "game:flaxtwine"
+			}
+		},
+		"width": 1,
+		"height": 2,
+		"output": {
+			"type": "item",
+			"code": "haft:bowparted-recurve",
+			"quantity": 1
+		}
+	}
+]

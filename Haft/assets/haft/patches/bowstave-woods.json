@@ -1,0 +1,22 @@
+[
+	{
+		"file": "game:recipes/grid/tool/bowstave.json",
+		"op": "replace",
+		"path": "/0/ingredients/L/allowedVariants",
+		"value": [
+			"acacia",
+			"baldcypress",
+			"birch",
+			"ebony",
+			"kapok",
+			"larch",
+			"maple",
+			"oak",
+			"pine",
+			"purpleheart",
+			"redwood",
+			"walnut"
+		],
+		"enabled": true
+	}
+]

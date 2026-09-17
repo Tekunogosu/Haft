@@ -3,24 +3,28 @@
 		"id": "none",
 		"langTag": "",
 		"handleHPbonus": 0.0,
-		"chanceToDamageReduction": 0.0
+		"chanceToDamageReduction": 0.0,
+		"limbRefundBonus": 0.0
 	},
 	{
 		"id": "fat",
 		"langTag": "treatment-fat",
 		"handleHPbonus": 0.2,
-		"chanceToDamageReduction": 0.05
+		"chanceToDamageReduction": 0.05,
+		"limbRefundBonus": 0.03
 	},
 	{
 		"id": "wax",
 		"langTag": "treatment-wax",
 		"handleHPbonus": 0.5,
-		"chanceToDamageReduction": 0.09
+		"chanceToDamageReduction": 0.09,
+		"limbRefundBonus": 0.06
 	},
 	{
 		"id": "oil",
 		"langTag": "treatment-oil",
 		"handleHPbonus": 0.65,
-		"chanceToDamageReduction": 0.125
+		"chanceToDamageReduction": 0.125,
+		"limbRefundBonus": 0.08
 	}
 ]

@@ -43,6 +43,7 @@ namespace Haft {
         public const string ToolTinkeringGuiElementPatchCategory = "toolTinkeringGuiElement";
         public const string ToolTinkeringItemAxePatchCategory = "itemAxeOnBrokenWith";
         public const string ToolTinkeringProjectilePatchCategory = "toolTinkeringProjectile";
+        public const string ToolTinkeringBowPatchCategory = "toolTinkeringBow";
 
         public const string ToolRenderingPatchCategory = "toolPartRendering";
 
@@ -107,6 +108,7 @@ namespace Haft {
             api.RegisterCollectibleBehaviorClass($"{ModId}:ToolHead", typeof(CollectibleBehaviorToolHead));
             api.RegisterCollectibleBehaviorClass($"{ModId}:ToolHandle", typeof(CollectibleBehaviorToolHandle));
             api.RegisterCollectibleBehaviorClass($"{ModId}:ToolBinding", typeof(CollectibleBehaviorToolBinding));
+            api.RegisterCollectibleBehaviorClass($"{ModId}:BowLimb", typeof(CollectibleBehaviorBowLimb));
 
             //Utility Behaviors
             api.RegisterCollectibleBehaviorClass($"{ModId}:OffhandDominantInteraction", typeof(CollectibleBehaviorOffhandDominantInteraction));
@@ -668,6 +670,7 @@ namespace Haft {
             HarmonyInstance.PatchCategory(ToolTinkeringGuiElementPatchCategory);
             HarmonyInstance.PatchCategory(ToolTinkeringItemAxePatchCategory);
             HarmonyInstance.PatchCategory(ToolTinkeringProjectilePatchCategory);
+            HarmonyInstance.PatchCategory(ToolTinkeringBowPatchCategory);
             Logger.VerboseDebug("Patched functions for Tool Tinkering purposes.");
             HarmonyInstance.PatchCategory(OffhandDominantInteractionUsePatchCategory);
             Logger.VerboseDebug("Patched functions for Offhand Dominant Interaction purposes.");

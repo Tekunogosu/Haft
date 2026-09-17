@@ -1,0 +1,14 @@
+[
+	{
+		"file": "game:recipes/grid/tool/bow.json",
+		"op": "remove",
+		"path": "/4/requiresTrait",
+		"enabled": true
+	},
+	{
+		"file": "game:recipes/grid/tool/bow.json",
+		"op": "remove",
+		"path": "/0/requiresTrait",
+		"enabled": true
+	}
+]

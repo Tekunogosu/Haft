@@ -159,7 +159,95 @@ shown for contrast.
 dry, checked and unreliable. Either exclude it from staves or give it poor
 values; do not let it inherit oak's defaults silently.
 
-### Proposed new fields
+### BUILT 2026-09-15 — one field, three derivations
+
+Superseded the three-field proposal below. Bows read the SAME `MaterialStats`
+table handles do; the only addition is `flexibility` (stiffness/springback,
+oak = 1.00, derived from real MOE the way `densityFactor` is from Janka).
+
+    draw weight     = densityFactor * flexibility   (multiply: a limb needs both)
+    draw speed      = speedBonus                    (unchanged; lighter = easier to draw)
+    limb durability = flexibility                   (density is NOT a term here)
+
+Helpers are `CalculateBowDrawWeight` / `BowDrawSpeed` / `BowLimbDurability`
+plus `CanMaterialFormLimb` in `HaftPartStatsHelpers`. `flexibility` unset
+(-1.0) means "cannot form a limb" and is deliberately never defaulted, so a
+compat mod's materials do not silently rate as well as oak.
+
+Computed values, all 31 materials, ordered by draw weight:
+
+| Material | density | flex | draw | speed | limb dur |
+|---|---|---|---|---|---|
+| steel | 4.55 | 0.85 | 3.87 | -0.15 | 0.85 |
+| ebony | 2.20 | 1.33 | 2.93 | -0.04 | 1.33 |
+| purpleheart | 1.75 | 1.65 | 2.89 | -0.015 | 1.65 |
+| meteoriciron | 3.42 | 0.75 | 2.56 | +0.05 | 0.75 |
+| iron | 3.00 | 0.70 | 2.10 | -0.15 | 0.70 |
+| acacia | 1.36 | 1.15 | 1.56 | -0.005 | 1.15 |
+| nickel | 2.58 | 0.55 | 1.42 | -0.17 | 0.55 |
+| blackbronze | 2.43 | 0.48 | 1.17 | -0.17 | 0.48 |
+| cupronickel | 2.29 | 0.50 | 1.15 | -0.17 | 0.50 |
+| maple | 1.12 | 1.02 | 1.14 | +0.005 | 1.02 |
+| birch | 0.97 | 1.13 | 1.10 | +0.015 | 1.13 |
+| oak | 1.00 | 1.00 | 1.00 | 0.00 | 1.00 |
+| tinbronze | 2.15 | 0.45 | 0.97 | -0.14 | 0.45 |
+| larch | 0.72 | 1.12 | 0.81 | +0.02 | 1.12 |
+| walnut | 0.85 | 0.94 | 0.80 | +0.02 | 0.94 |
+| bismuthbronze | 2.00 | 0.40 | 0.80 | -0.15 | 0.40 |
+| brass | 1.73 | 0.35 | 0.61 | -0.16 | 0.35 |
+| pine | 0.62 | 0.73 | 0.45 | +0.025 | 0.73 |
+| aged | 0.70 | 0.65 | 0.45 | +0.02 | 0.65 |
+| baldcypress | 0.55 | 0.80 | 0.44 | +0.03 | 0.80 |
+| copper | 1.30 | 0.30 | 0.39 | -0.17 | 0.30 |
+| redwood | 0.50 | 0.75 | 0.38 | +0.045 | 0.75 |
+| bismuth | 2.01 | 0.14 | 0.28 | -0.19 | 0.14 |
+| molybdochalkos | 1.58 | 0.15 | 0.24 | -0.18 | 0.15 |
+| kapok | 0.45 | 0.30 | 0.14 | +0.07 | 0.30 |
+| zinc | 0.74 | 0.18 | 0.13 | -0.14 | 0.18 |
+| electrum | 1.11 | 0.12 | 0.13 | -0.29 | 0.12 |
+| tin | 1.47 | 0.08 | 0.12 | -0.14 | 0.08 |
+| silver | 0.55 | 0.12 | 0.07 | -0.20 | 0.12 |
+| gold | 0.55 | 0.10 | 0.06 | -0.37 | 0.10 |
+| lead | 1.04 | 0.05 | 0.05 | -0.22 | 0.05 |
+
+`aged` at 0.65 is judgement, not derivation — salvaged timber has no species
+and no MOE figure. Marked as such in the config.
+
+Metal flexibility is scaled by usability as an UNTREATED spring, not raw
+Young's modulus: a metal that yields rather than springing back takes a set on
+the first draw. Steel is deliberately held at 0.85, below what a spring-
+tempered limb should reach, leaving headroom for a temper treatment.
+`TreatmentStatDefines` already gates on material tags (`"wood|blued"`), so
+that treatment has a home — but it carries only `handleHPbonus` and
+`chanceToDamageReduction` today, so a flexibility-modifying field is still
+needed before spring steel works.
+
+**Settled 2026-09-15: the numbers stand as computed. No curve, no cap.**
+
+High draw weight already pays for itself in low draw speed, and that is the
+intended shape rather than a balance problem to correct. A steel bow at 3.87
+draw / -0.15 speed is a siege bow: it may drop a moose in one or two shots,
+and the moose may reach you before the second arrow is nocked. The tradeoff is
+power against time-to-second-shot under threat, which is a real decision in
+the moment, not two numbers to compare on a table.
+
+This is why draw weight is deliberately NOT capped or curved. A cap would
+flatten exactly the extreme that makes the choice interesting, and the drawn
+-out reload is the cost that was already priced in.
+
+Ebony (2.93) edging purpleheart (2.89) is likewise left alone. Ebony's trap is
+not that it hits softly - it is that it is the worst-draining bow in the table
+to actually shoot (-0.04 speed) and takes a set fastest of the heavy woods
+(1.33 limb durability against purpleheart's 1.65). A player who grabs it for
+the big damage number gets a bow that is unpleasant to use and wears out,
+which is the lesson intended.
+
+Metals are kept even where a wood dominates them, for parity: a material that
+has a handle value should have a bow value, so nothing looks arbitrarily
+missing. Dropping the unusable ones stays available if they prove to be pure
+noise in play.
+
+### Superseded proposal — three bow-only fields (NOT built)
 
     drawWeight     -> arrow damage / cast     (from MOE)
     drawSpeed      -> time to reach full draw (inverse of stiffness)
@@ -201,10 +289,50 @@ pointless. Recommend widening, but it is a decision, not a default.
 
 ---
 
-## 4. Texture — test this before committing to anything else
+## 4. Texture — TESTED, works
 
-This is the cheapest way to find out whether wood-typed bows feel right, and it
-is worth doing FIRST as a throwaway test, before any stat work.
+Result, 2026-09-15: all four bow tiers render Haft's tool-wood textures
+correctly. Handle-authored textures tile acceptably across a long limb, which
+was the open visual risk. The wood axis is viable; section 3's stat design is
+not blocked on appearance.
+
+Still unmeasured: whether the species are distinguishable *at a glance* as
+opposed to correct when compared side by side. That governs how much the
+tradeoff can lean on visual identification alone.
+
+The test patch is `assets/haft/patches/bow-woodtexture-test.json` (crude→pine,
+simple→walnut, long→purpleheart, recurve→larch). It is a throwaway probe, not
+a feature — it hardcodes one species per tier. Delete it when the real
+mechanism lands; see the note at the end of this section.
+
+Two corrections to the original table below, both established by reading the
+shape files rather than inferring from names:
+
+- Wood-bearing keys per shape are `maple` (crude), `maple`+`handle` (simple),
+  `aged`+`bone` (long), `aged` (recurve). The one-key-per-shape table below
+  was incomplete.
+- `bone` means different materials on different tiers. On `bow-long` it points
+  at `block/wood/debarked/oak` — a wood slot with a misleading name. On
+  `bow-recurve` it points at `block/creature/bone` and is a real, visible bone
+  element on the outside of the limb, which makes it a candidate slot for
+  metal-tipped recurve variants. Any future patch touching `bone` must be
+  `texturesByType`-scoped or it will paint long-bow limb wood as metal.
+
+Do NOT set `"side"` on these patches. It defaults to `Universal`; setting it
+to `client` makes the patch silently fail, because item type JSON is loaded
+and patched server-side and then synced. See kb Note #67.
+
+**The patch is the wrong long-term mechanism.** Haft already does per-species
+wood through the `haft:ModularPartRenderingFromAttributes` behavior
+(`carpentedhandle.json`, `metalhandle.json`), which generates one itemstack
+per species and stores the choice as a per-stack attribute — which is what the
+stat work in section 3 has to key off anyway. Attaching it to bows is blocked
+on one thing: its `GenMesh` resolves a single `item.Shape.Base`
+(`ModularPartRenderingFromAttributes.cs:156`) and has no concept of the four
+charge alternates `ItemBow` swaps between while drawing. Teaching it about
+alternates is the real step. See kb Note #68.
+
+### Original notes (kept for the shape/texture-path reference)
 
 Toolsmith already ships all thirteen wood textures at
 `assets/toolsmith/textures/block/tools/tool{wood}.png` — acacia, aged,
@@ -331,8 +459,15 @@ payoff rather than the starting point.
 
 Resolution distance ascending, which is not the same as the section order above.
 
-1. **Texture test (section 4).** Throwaway, answers a visual question cheaply,
-   blocks nothing and informs everything.
+1. ~~**Texture test (section 4).**~~ DONE 2026-09-15 — wood reads correctly on
+   all four tiers. The throwaway patch is still in the tree; the real
+   mechanism is the behavior described at the top of section 4.
+1b. ~~**Wood species capture and stats.**~~ DONE 2026-09-15, verified in play.
+   `flexibility` on MaterialStats, three derivations, capture at stave craft,
+   carried across drying, tooltips on staves and bows. `/finishTransition`
+   (`/ft`) completes a held item's transition instantly for testing.
+   Remaining: nothing reads the stats for actual bow BEHAVIOUR yet - draw
+   power, speed and limb life are displayed but do not affect shooting.
 2. **Coating (section 5).** Ingredient slot exists, stats exist, no new field.
 3. **Bamboo removal (section 2).** One patch, but confirm bamboo has no other
    stave-like use first.

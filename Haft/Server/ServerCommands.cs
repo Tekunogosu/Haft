@@ -44,6 +44,12 @@ namespace Haft.Server {
                 .WithDescription("Print the attributes of the currently held item to the log. [Haft]")
                 .RequiresPrivilege("controlserver")
                 .HandleWith(args => OnPrintAttributes(sapi, args));
+            sapi.ChatCommands
+                .Create("finishTransition")
+                .WithAlias("ft")
+                .WithDescription("Immediately complete the held item's transition - drying a bowstave, a treatment curing - as though its full time had passed. [Haft]")
+                .RequiresPrivilege("controlserver")
+                .HandleWith(args => OnFinishTransition(sapi, args));
         }
 
         private static TextCommandResult OnSetMultiPartRenderingRotation(ICoreServerAPI sapi, TextCommandCallingArgs args) {
@@ -240,6 +246,55 @@ namespace Haft.Server {
             HaftModSystem.Logger.Debug("-- Printing attributes for " + heldItem.Collectible.Code + " --\n" + treeString);
 
             return TextCommandResult.Success("Attributes printed to Debug Log.");
+        }
+
+        //Completes the held stack's transition now instead of waiting out its real duration - 168 hours for a bowstave
+        //to dry, which is otherwise the slowest possible way to test what a dried stave comes out carrying.
+        //
+        //Deliberately drives the REAL transition rather than building the transitioned stack itself: it asks the
+        //collectible for its transitionable properties and calls OnTransitionNow, which is the same call the drying
+        //tick makes. Constructing the result here instead would test this command rather than the code that runs in a
+        //normal game, and the bugs worth catching - a behavior dropping an attribute, a stack size being lost - live
+        //exactly in the path this way exercises.
+        private static TextCommandResult OnFinishTransition(ICoreServerAPI sapi, TextCommandCallingArgs args) {
+            var slot = args.Caller.Player.InventoryManager.ActiveHotbarSlot;
+            if (slot?.Itemstack == null) {
+                return TextCommandResult.Error("Could not find an active hotbar, or a held item for the player running the command!");
+            }
+
+            var heldItem = slot.Itemstack;
+            var allProps = heldItem.Collectible.GetTransitionableProperties(sapi.World, heldItem, args.Caller.Entity);
+            if (allProps == null || allProps.Length == 0) {
+                return TextCommandResult.Error("Held item '" + heldItem.Collectible.Code + "' has no transitionable properties, so there is nothing for it to become. Try a raw bowstave, or a part carrying a wet treatment.");
+            }
+
+            //Only ever the first: a stack with several transitions has them in priority order, and the first is the
+            //one the drying tick would reach as well.
+            var props = allProps[0];
+            var beforeCode = heldItem.Collectible.Code.ToString();
+            var beforeSize = heldItem.StackSize;
+
+            var transitioned = heldItem.Collectible.OnTransitionNow(slot, props);
+            if (transitioned == null) {
+                return TextCommandResult.Error("Held item '" + beforeCode + "' returned no stack from its " + props.Type + " transition.");
+            }
+
+            //The stack comes back from a clone of an already-resolved one, so this is normally a no-op. Guarded the
+            //way vanilla guards its own calls, for the path where a behavior returns a stack it built from scratch.
+            if (transitioned.Collectible == null) {
+                transitioned.ResolveBlockOrItem(sapi.World);
+            }
+
+            slot.Itemstack = transitioned;
+            slot.MarkDirty();
+
+            //Plain prose with single quotes, matching every other command's result in this file. Chat renders VTML,
+            //so a message is markup: an arrow written as -> has its > read as a closing tag delimiter and logs
+            //"Found closing tag char > but no tag was opened" on every redraw of the scrollback.
+            return TextCommandResult.Success(
+                "Completed the " + props.Type + " transition on '" + beforeCode + "' x" + beforeSize +
+                ", becoming '" + transitioned.Collectible.Code + "' x" + transitioned.StackSize +
+                (transitioned.HasLimbMaterialTag() ? " with a limb of " + transitioned.GetLimbMaterialTag() : " with no limb material"));
         }
 
         private static string RecursivelyPrintAttributes(ITreeAttribute tree, int depth, string treeString) {

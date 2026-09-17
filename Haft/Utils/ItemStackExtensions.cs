@@ -853,6 +853,31 @@ namespace Haft.Utils {
             itemStack.Attributes.RemoveAttribute(HaftAttributes.LegacyHandleWoodTag);
         }
 
+        public static void SetLimbMaterialTag(this ItemStack itemStack, string tag) {
+            itemStack.Attributes.SetString(HaftAttributes.LimbMaterialTag, tag);
+        }
+
+        public static string GetLimbMaterialTag(this ItemStack itemStack) {
+            return itemStack.Attributes.GetString(HaftAttributes.LimbMaterialTag);
+        }
+
+        public static bool HasLimbMaterialTag(this ItemStack itemStack) {
+            return itemStack.Attributes.HasAttribute(HaftAttributes.LimbMaterialTag);
+        }
+
+        //The limb counterpart to GetHandleMaterialStats, and deliberately NOT sharing its oak fallback. A handle with
+        //no material is a stick or a bone, which still works as a handle; a limb with no material is a bow that was
+        //never crafted from a stave, and rating it as oak would quietly hand a creative-spawned bow a real draw
+        //weight. Returning null lets the caller say "unknown" instead, the way the handle tooltip already does.
+        public static MaterialStatDefines GetLimbMaterialStats(this ItemStack limb) {
+            if (!limb.HasLimbMaterialTag()) {
+                return null;
+            }
+
+            var tag = limb.GetLimbMaterialTag();
+            return tag != null ? HaftModSystem.Stats.MaterialStats.Get(tag) : null;
+        }
+
         public static void SetHandleGripTag(this ItemStack itemStack, string tag) {
             itemStack.Attributes.SetString(HaftAttributes.HandleGripTag, tag);
         }

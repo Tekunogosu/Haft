@@ -3,12 +3,14 @@
 		"id": "blued",
 		"langTag": "treatment-blued",
 		"handleHPbonus": 0.0,
-		"chanceToDamageReduction": 0.2
+		"chanceToDamageReduction": 0.2,
+		"limbRefundBonus": 0.0
 	},
 	{
 		"id": "blued-oil",
 		"langTag": "treatment-blued-oiled",
 		"handleHPbonus": 0.0,
-		"chanceToDamageReduction": 0.3
+		"chanceToDamageReduction": 0.3,
+		"limbRefundBonus": 0.04
 	}
 ]

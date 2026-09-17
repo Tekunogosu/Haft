@@ -1,0 +1,46 @@
+[
+	{
+		"file": "game:itemtypes/tool/bow.json",
+		"op": "replace",
+		"path": "/shape",
+		"value": {
+			"base": "item/tool/bow/{type}",
+			"alternates": [
+				{
+					"base": "haft:item/tool/bow/{type}-draw0"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw1"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw2"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw3"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw4"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw5"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw6"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw7"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw8"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw9"
+				},
+				{
+					"base": "haft:item/tool/bow/{type}-draw10"
+				}
+			]
+		},
+		"enabled": true
+	}
+]
