@@ -157,8 +157,11 @@ namespace Haft.ToolTinkering {
                 return; //Not a Haft bow's arrow. Thrown spears reach this too and must stay vanilla.
             }
 
-            var damageFactor = HaftPartStatsHelpers.CalculateBowDamageFactor(materialStats);
-            var velocityFactor = HaftPartStatsHelpers.CalculateBowVelocityFactor(materialStats);
+            //The bow's build quality multiplies into both, from the same stack the limb was read off. A bow the mod
+            //does not build answers null here and leaves the material's own numbers untouched.
+            var bowStats = __instance.WeaponStack.GetBowTierStats();
+            var damageFactor = HaftPartStatsHelpers.CalculateBowDamageFactor(materialStats, bowStats);
+            var velocityFactor = HaftPartStatsHelpers.CalculateBowVelocityFactor(materialStats, bowStats);
 
             //Damage is scaled on the combined bow-plus-arrow total vanilla already summed, deliberately: the limb
             //drives whatever arrow is nocked, so a better bow improves a good arrow rather than being averaged
@@ -235,6 +238,59 @@ namespace Haft.ToolTinkering {
             retimed.EaseOutSpeed = animdata.EaseOutSpeed / speed;
 
             animdata = retimed;
+        }
+    }
+
+    //The grip's contribution to holding a bow steady, applied as a named modifier on the archer's own
+    //rangedWeaponsAcc for exactly as long as the bow is aimed.
+    //
+    //It goes on the entity stat rather than being folded into the reticle patch below because that is where the
+    //engine already reads it, and it reads it TWICE: BaseAimingAccuracy.Update caps the reticle at
+    //1 - 0.075/acc and divides its aim sway by max(1, acc). Adding to the blended stat therefore reaches both -
+    //notably the sway, which is the larger effect and the one a grip should own. Recomputing either number in a
+    //postfix would duplicate engine math that a game update can change underneath it.
+    //
+    //Set on BeginAim and removed on EndAim rather than written every frame: EntityStats.Set serializes to
+    //WatchedAttributes on each call, and the value cannot change mid-draw anyway - the bow in hand is the bow
+    //being aimed.
+    //
+    //The modifier carries its own code, so it adds to whatever else contributes to accuracy - armour, traits, the
+    //bow item's own statModifier - and is removed without disturbing any of them.
+    //Patched on the BEHAVIOR rather than on AccuracyModifier.BeginAim, although that is where the aim visibly
+    //starts. EntityBehaviorAimingAccuracy registers four modifiers and none of them override BeginAim or EndAim, so
+    //a patch there runs four times per aim and writes the same value to WatchedAttributes four times. The behavior's
+    //own listener is the single event those four calls are made from.
+    [HarmonyPatch(typeof(EntityBehaviorAimingAccuracy))]
+    [HarmonyPatchCategory(HaftModSystem.ToolTinkeringBowPatchCategory)]
+    public class BowGripAccuracyPatches {
+
+        public const string GripAccuracyStatCode = "haftbowgrip";
+        private const string RangedAccuracyStat = "rangedWeaponsAcc";
+
+        //The listener is private, so it is named as a string. It fires on every change of the "aiming" attribute and
+        //has already updated IsAiming by the time a postfix sees it, which is what makes IsAiming the right thing to
+        //read rather than the attribute.
+        [HarmonyPostfix]
+        [HarmonyPatch("OnAimingChanged")]
+        private static void OnAimingChangedPostfix(EntityBehaviorAimingAccuracy __instance) {
+            if (__instance?.entity is not EntityAgent agent) {
+                return;
+            }
+
+            //Removed on aim end, and removed again rather than skipped when the bow now in hand has no grip: the
+            //previous bow aimed may have had one, and a stale modifier would follow the archer onto a bare riser.
+            if (!__instance.IsAiming) {
+                agent.Stats.Remove(RangedAccuracyStat, GripAccuracyStatCode);
+                return;
+            }
+
+            var bonus = agent.RightHandItemSlot?.Itemstack?.GetBowGripStats()?.accuracyBonus ?? 0.0f;
+            if (bonus <= 0.0f) {
+                agent.Stats.Remove(RangedAccuracyStat, GripAccuracyStatCode);
+                return;
+            }
+
+            agent.Stats.Set(RangedAccuracyStat, GripAccuracyStatCode, bonus);
         }
     }
 

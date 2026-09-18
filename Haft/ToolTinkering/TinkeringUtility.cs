@@ -193,15 +193,23 @@ namespace Haft.ToolTinkering {
         public static void ReplaceVanillaToolSpeedLines(ItemSlot inSlot, StringBuilder tooltip) {
             var collectible = inSlot.Itemstack.Collectible;
             var miningSpeeds = collectible.GetMiningSpeeds(inSlot);
+            var toolTier = collectible.GetToolTier(inSlot);
 
             StringHelpers.RemoveTooltipLineStartingWith(tooltip, Lang.Get("item-tooltip-miningspeed"));
-            StringHelpers.RemoveTooltipLineStartingWith(tooltip, Lang.Get("Tool Tier: {0}", collectible.GetToolTier(inSlot)));
+            StringHelpers.RemoveTooltipLineStartingWith(tooltip, Lang.Get("Tool Tier: {0}", toolTier));
 
             if (miningSpeeds == null || miningSpeeds.Count == 0) {
                 return;
             }
 
-            tooltip.AppendLine(Lang.Get("hafttooltier", collectible.GetToolTier(inSlot)));
+            //Only the tools whose tier actually gates something carry one - a pickaxe cannot break ore above its
+            //tier, an axe cannot fell the hardest wood. A shovel, knife, hoe or scythe digs soil or cuts plants that
+            //have no tier gate at all, so vanilla leaves tooltier unset on them and GetToolTier returns 0. Printing
+            //that reads as a tool with the worst possible tier rather than as a tool the stat does not apply to,
+            //which is why vanilla writes no line there either.
+            if (toolTier > 0) {
+                tooltip.AppendLine(Lang.Get("hafttooltier", toolTier));
+            }
 
             var speedModifier = collectible.GetMiningSpeedModifier(inSlot.Itemstack);
             bool wroteHeader = false;
@@ -820,6 +828,97 @@ namespace Haft.ToolTinkering {
             ToolHead
         }
 
+        //One honeable item's durability and sharpness, read out of whichever attributes its kind keeps them in.
+        //
+        //The mapping from kind to accessor pair lives in Read and Write below and nowhere else. It used to be
+        //written out at each step of the honing path - reading, ticking, writing, and again when a tooltip asked
+        //whether an item needed honing - so a kind stored somewhere new had four places to teach rather than one,
+        //and each site re-derived the same answer with its own copy of the branch.
+        public readonly struct PartDurability {
+
+            public int CurrentDurability { get; init; }
+            public int MaxDurability { get; init; }
+            public int CurrentSharpness { get; init; }
+            public int MaxSharpness { get; init; }
+
+            //What fraction of its durability the item has left. Zero when nothing usable was recorded, matching
+            //GetPartRemainingHPPercent, so a caller cannot divide by an absent maximum.
+            public float DurabilityPercent =>
+                CurrentDurability > 0 && MaxDurability > 0 ? (float)CurrentDurability / MaxDurability : 0.0f;
+
+            public bool NeedsSharpening => CurrentSharpness < MaxSharpness && CurrentDurability > 0;
+
+            public static PartDurability Read(ItemStack item, EnumSharpenTarget target) {
+                switch (target) {
+                    case EnumSharpenTarget.TinkeredTool:
+                        //A tool with no proper head recorded keeps its durability and reads as having no sharpness to
+                        //work on. Something has already gone wrong and been logged; leaving sharpness at zero stops
+                        //honing without the write-back then treating a zeroed durability as a tool honed to breaking.
+                        if (item.HasPlaceholderHead()) {
+                            return new PartDurability {
+                                CurrentDurability = item.GetToolheadCurrentDurability(),
+                                MaxDurability = item.GetToolheadMaxDurability()
+                            };
+                        }
+
+                        //Read so their getters initialize a tool that has never had its parts written; the values
+                        //themselves are not wanted here.
+                        item.GetToolhandleCurrentDurability();
+                        item.GetToolbindingCurrentDurability();
+                        return new PartDurability {
+                            CurrentDurability = item.GetToolheadCurrentDurability(),
+                            MaxDurability = item.GetToolheadMaxDurability(),
+                            CurrentSharpness = item.GetToolCurrentSharpness(),
+                            MaxSharpness = item.GetToolMaxSharpness()
+                        };
+
+                    case EnumSharpenTarget.SmithedTool:
+                        return new PartDurability {
+                            CurrentDurability = item.GetSmithedDurability(),
+                            MaxDurability = item.GetSmithedMaxDurability(),
+                            CurrentSharpness = item.GetToolCurrentSharpness(),
+                            MaxSharpness = item.GetToolMaxSharpness()
+                        };
+
+                    case EnumSharpenTarget.ToolHead:
+                        return new PartDurability {
+                            CurrentDurability = item.GetPartCurrentDurability(),
+                            MaxDurability = item.GetPartMaxDurability(),
+                            CurrentSharpness = item.GetPartCurrentSharpness(),
+                            MaxSharpness = item.GetPartMaxSharpness()
+                        };
+
+                    default:
+                        return default;
+                }
+            }
+
+            //Writes back only what honing changes. An item honed to nothing keeps one point rather than breaking on
+            //the stone, which is where that floor has always been applied.
+            public static void Write(ItemStack item, EnumSharpenTarget target, int currentDurability, int currentSharpness) {
+                if (currentDurability <= 0) {
+                    currentDurability = 1;
+                }
+
+                switch (target) {
+                    case EnumSharpenTarget.TinkeredTool:
+                        item.SetToolheadCurrentDurability(currentDurability);
+                        item.SetToolCurrentSharpness(currentSharpness);
+                        break;
+
+                    case EnumSharpenTarget.SmithedTool:
+                        item.SetSmithedDurability(currentDurability);
+                        item.SetToolCurrentSharpness(currentSharpness);
+                        break;
+
+                    default:
+                        item.SetPartCurrentDurability(currentDurability);
+                        item.SetPartCurrentSharpness(currentSharpness);
+                        break;
+                }
+            }
+        }
+
         //This checks if it is a valid repair tool as well as if it is a fully tinkered tool or if it is just a tool's head, since the durabilities are stored under different attributes
         public static EnumSharpenTarget IsValidSharpenTool(CollectibleObject item, IWorldAccessor world) {
             if (world.Side.IsServer() && HaftModSystem.IgnoreCodes.Count > 0 && HaftModSystem.IgnoreCodes.Contains(item.Code.ToString())) { //First check if the ignore list has any entries, and ensure this one isn't on it. Likely means something got improperly given the Behavior on init.
@@ -869,38 +968,22 @@ namespace Haft.ToolTinkering {
         }
 
         public static bool ToolOrHeadNeedsSharpening(ItemStack item, IWorldAccessor world, EntityAgent byEntity = null) {
-            int curSharp;
-            int maxSharp;
-            int curDur;
-            float durPercent;
             var toolType = IsValidSharpenTool(item.Collectible, world);
-
-            if (toolType == EnumSharpenTarget.TinkeredTool) {
-                curSharp = item.GetToolCurrentSharpness();
-                maxSharp = item.GetToolMaxSharpness();
-                curDur = item.GetToolheadCurrentDurability();
-                durPercent = item.GetToolheadDurabilityPercent();
-            } else if (toolType == EnumSharpenTarget.SmithedTool) {
-                curSharp = item.GetToolCurrentSharpness();
-                maxSharp = item.GetToolMaxSharpness();
-                curDur = item.GetSmithedDurability();
-                durPercent = item.GetSmithedRemainingHPPercent();
-            } else if (toolType == EnumSharpenTarget.ToolHead) {
-                curSharp = item.GetPartCurrentSharpness();
-                maxSharp = item.GetPartMaxSharpness();
-                curDur = item.GetPartCurrentDurability();
-                durPercent = item.GetPartRemainingHPPercent();
-            } else {
+            if (toolType == EnumSharpenTarget.None) {
                 return false;
             }
 
-            if (byEntity != null && durPercent <= 0.01f) {
+            var readout = PartDurability.Read(item, toolType);
+
+            //Honing a tool to the point of breaking it is worth telling the player about rather than letting the
+            //stone quietly stop.
+            if (byEntity != null && readout.DurabilityPercent <= HaftConstants.DoNotSharpenBelowPercent) {
                 if (byEntity.Api.Side.IsClient()) {
                     (byEntity.Api as ICoreClientAPI).TriggerIngameError(item, "HoningStopBeforeBreak", Lang.Get("honing-cutoff-message"));
                 }
             }
 
-            return (curSharp < maxSharp && curDur > 0 && durPercent > 0.01f);
+            return readout.NeedsSharpening && readout.DurabilityPercent > HaftConstants.DoNotSharpenBelowPercent;
         }
 
         public static bool TryWhetstoneSharpening(ref float lastInterval, float secondsUsed, ItemSlot slot, EntityAgent byEntity) {
@@ -931,29 +1014,11 @@ namespace Haft.ToolTinkering {
         //Honing runs in three steps - read the values, apply one tick, write them back - so the grindstone and the
         //whetstone share the arithmetic and differ only in what drives the ticks.
         public static void RecieveDurabilitiesAndSharpness(ref int curDur, ref int maxDur, ref int curSharp, ref int maxSharp, ref float totalHoned, ItemStack item, EnumSharpenTarget isTool) {
-            if (isTool == EnumSharpenTarget.TinkeredTool) { //The item is a Tinkered Tool! Use the extensions for the tool's head durability.
-                curDur = item.GetToolheadCurrentDurability();
-                maxDur = item.GetToolheadMaxDurability();
-                if (item.HasPlaceholderHead()) { //If the tool still has no proper head item saved to it, something went wrong and an error should have been printed.
-                    return;
-                }
-                //Read so their getters initialize a tool that has never had its parts written; the values themselves
-                //are not wanted here.
-                item.GetToolhandleCurrentDurability();
-                item.GetToolbindingCurrentDurability();
-                curSharp = item.GetToolCurrentSharpness();
-                maxSharp = item.GetToolMaxSharpness();
-            } else if (isTool == EnumSharpenTarget.SmithedTool) { //The item is a Smithed Tool!
-                curDur = item.GetSmithedDurability();
-                maxDur = item.GetSmithedMaxDurability();
-                curSharp = item.GetToolCurrentSharpness();
-                maxSharp = item.GetToolMaxSharpness();
-            } else { //The item is just a Tool Head, not on a tool put together. Use the extensions for Part Durability.
-                curDur = item.GetPartCurrentDurability();
-                maxDur = item.GetPartMaxDurability();
-                curSharp = item.GetPartCurrentSharpness();
-                maxSharp = item.GetPartMaxSharpness();
-            }
+            var readout = PartDurability.Read(item, isTool);
+            curDur = readout.CurrentDurability;
+            maxDur = readout.MaxDurability;
+            curSharp = readout.CurrentSharpness;
+            maxSharp = readout.MaxSharpness;
 
             if (item.HasTotalHoneValue()) {
                 totalHoned = item.GetTotalHoneValue();
@@ -1024,21 +1089,8 @@ namespace Haft.ToolTinkering {
         //
         //A hone value is recorded only once the free first honing has been spent, so an unset value is what marks a
         //tool as still holding that free hone.
-        public static void SetResultsOfSharpening(int curDur, int curSharp, float totalSharpnessHoned, bool firstHoning, ItemStack item, EntityAgent byEntity, ItemSlot mainHandSlot, EnumSharpenTarget isTool) {
-            if (curDur <= 0) {
-                curDur = 1;
-            }
-
-            if (isTool == EnumSharpenTarget.TinkeredTool) {
-                item.SetToolheadCurrentDurability(curDur);
-                item.SetToolCurrentSharpness(curSharp);
-            } else if (isTool == EnumSharpenTarget.SmithedTool) {
-                item.SetSmithedDurability(curDur);
-                item.SetToolCurrentSharpness(curSharp);
-            } else {
-                item.SetPartCurrentDurability(curDur);
-                item.SetPartCurrentSharpness(curSharp);
-            }
+        public static void SetResultsOfSharpening(int curDur, int curSharp, float totalSharpnessHoned, bool firstHoning, ItemStack item, EnumSharpenTarget isTool) {
+            PartDurability.Write(item, isTool, curDur, curSharp);
 
             if (!firstHoning) {
                 item.SetTotalHoneValue(totalSharpnessHoned);

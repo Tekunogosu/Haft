@@ -1,41 +1,44 @@
 {
-	"ingredient": {
-		"type": "item",
-		"code": "game:ingot-*",
-		"name": "metal",
-		"allowedVariants": [
-			"gold",
-			"silver",
-			"zinc",
-			"lead",
-			"electrum",
-			"copper",
-			"tin",
-			"molybdochalkos",
-			"brass",
-			"bismuthbronze",
-			"bismuth",
-			"tinbronze",
-			"cupronickel",
-			"blackbronze",
-			"nickel",
-			"iron",
-			"meteoriciron",
-			"steel"
-		]
-	},
-	"name": "metalhandle",
-	"pattern": [
-		[
-			"_________##_____",
-			"###########_____",
-			"_#########______"
-		]
-	],
-	"code": "metalhandle-{metal}",
-	"output": {
-		"type": "item",
-		"code": "haft:metalhandle",
-		"stacksize": 1
-	}
+    "ingredient": {
+        "type": "item",
+        "code": "game:ingot-*",
+        "name": "metal",
+        "allowedVariants": [
+            "gold",
+            "silver",
+            "zinc",
+            "lead",
+            "electrum",
+            "copper",
+            "tin",
+            "molybdochalkos",
+            "brass",
+            "bismuthbronze",
+            "bismuth",
+            "tinbronze",
+            "cupronickel",
+            "blackbronze",
+            "nickel",
+            "iron",
+            "meteoriciron",
+            "steel",
+            "chromium",
+            "stainlesssteel",
+            "titanium"
+        ]
+    },
+    "name": "metalhandle",
+    "pattern": [
+        [
+            "_________##_____",
+            "###########_____",
+            "_#########______"
+        ]
+    ],
+    "code": "metalhandle-{metal}",
+    "output": {
+        "type": "item",
+        "code": "haft:metalhandle",
+        "stacksize": 1
+    }
 }

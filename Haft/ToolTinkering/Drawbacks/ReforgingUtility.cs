@@ -29,29 +29,29 @@ namespace Haft.ToolTinkering.Drawbacks {
             return smithingRecipe;
         }
 
+        //A stack that is neither a head nor a smithed tool has nothing to reforge, so it reads as above every
+        //threshold rather than as full. Full is not enough on its own: the reforge threshold is configurable and
+        //defaults to 1.0, which a full stack would satisfy.
         public static bool IsBelowPercentDurability(ItemStack stack, float percent) {
-            float percentDamage = 1.1f;
-            if (TinkeringUtility.IsValidHead(stack)) {
-                percentDamage = stack.GetPartRemainingHPPercent();
-            } else if (stack.Collectible.HasBehavior<CollectibleBehaviorSmithedTools>()) {
-                percentDamage = stack.GetSmithedRemainingHPPercent();
-            }
-
-            if (percentDamage == 0.0f) { //If either of the percent calls return 0, it's most likely that something went wrong with the tool head and somehow it's health is negative or 0 without breaking, or it's simply unset. So assume it's full durability.
-                percentDamage = 1.0f;
-            }
-
-            return (percentDamage <= percent);
+            return GetReforgablePercentDamage(stack, notReforgeable: 1.1f) <= percent;
         }
 
-        public static float GetReforgablePercentDamage(ItemStack stack) {
-            float percentDamage = 1.0f;
+        //What fraction of its durability a reforgeable stack has left. A head and a smithed tool record that in
+        //different places, so this is where the two are read as one number.
+        //
+        //notReforgeable is what a stack neither of those kinds reads as. It defaults to full, which is what a caller
+        //wanting a number to show or scale by needs; a caller deciding whether to offer a reforge at all passes a
+        //value above full instead, so that no threshold can accept it.
+        public static float GetReforgablePercentDamage(ItemStack stack, float notReforgeable = 1.0f) {
+            float percentDamage = notReforgeable;
             if (TinkeringUtility.IsValidHead(stack)) {
                 percentDamage = stack.GetPartRemainingHPPercent();
             } else if (stack.Collectible.HasBehavior<CollectibleBehaviorSmithedTools>()) {
                 percentDamage = stack.GetSmithedRemainingHPPercent();
             }
 
+            //A zero here means the durability is unset or went negative without the stack breaking, rather than a
+            //stack genuinely worn to nothing, so it reads as full.
             if (percentDamage == 0.0f) {
                 percentDamage = 1.0f;
             }

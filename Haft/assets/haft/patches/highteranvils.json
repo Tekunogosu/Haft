@@ -1,0 +1,98 @@
+[
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/anvilbase.json",
+	 "value": [
+	  "stainlesssteel",
+	  "titanium"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/anviltop.json",
+	 "value": [
+	  "stainlesssteel",
+	  "titanium"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/1/states/-",
+	 "file": "game:blocktypes/metal/anvilpart.json",
+	 "value": [
+	  "stainlesssteel",
+	  "titanium"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:blocktypes/metal/anvil.json",
+	 "value": [
+	  "stainlesssteel",
+	  "titanium"
+	 ]
+	},
+	{
+	 "comment": "Written once, here, for every metal including the uranium mod's - a pattern for a metal that does not exist simply never matches, so this needs no mod guard and no second writer. compatability/uraniumexpanded-endgame-anvils.json deliberately does NOT touch these maps: two files writing one map made the result depend on which applied first, which is what broke on the testbed. The '*' fallback stays LAST or the patterns above it never match.",
+	 "op": "replace",
+	 "path": "/shapeByType",
+	 "file": "game:blocktypes/metal/anvil.json",
+	 "value": {
+	  "@anvil-(iron|meteoriciron|steel|stainlesssteel|titanium|ferrousuranium|uraniumsteel)": {
+	   "base": "block/metal/anvil/iron"
+	  },
+	  "*": {
+	   "base": "block/metal/anvil/normal"
+	  }
+	 }
+	},
+	{
+	 "comment": "Written once, here, for every metal including the uranium mod's - a pattern for a metal that does not exist simply never matches, so this needs no mod guard and no second writer. compatability/uraniumexpanded-endgame-anvils.json deliberately does NOT touch these maps: two files writing one map made the result depend on which applied first, which is what broke on the testbed. The '*' fallback stays LAST or the patterns above it never match.",
+	 "op": "add",
+	 "path": "/textures/allByType",
+	 "file": "game:blocktypes/metal/anvil.json",
+	 "value": {
+	  "*-stainlesssteel": {
+	   "base": "block/metal/ingot/stainlesssteel"
+	  },
+	  "*-titanium": {
+	   "base": "block/metal/ingot/titanium"
+	  },
+	  "*-ferrousuranium": {
+	   "base": "block/metal/ingot/ferrousuranium"
+	  },
+	  "*-uraniumsteel": {
+	   "base": "block/metal/ingot/uraniumsteel"
+	  },
+	  "*": {
+	   "base": "block/metal/anvil/{metal}"
+	  }
+	 }
+	},
+	{
+	 "comment": "Written once, here, for every metal including the uranium mod's - a pattern for a metal that does not exist simply never matches, so this needs no mod guard and no second writer. compatability/uraniumexpanded-endgame-anvils.json deliberately does NOT touch these maps: two files writing one map made the result depend on which applied first, which is what broke on the testbed. The '*' fallback stays LAST or the patterns above it never match.",
+	 "op": "add",
+	 "path": "/textures/metalByType",
+	 "file": "game:blocktypes/metal/anvilpart.json",
+	 "value": {
+	  "*-stainlesssteel": {
+	   "base": "block/metal/ingot/stainlesssteel"
+	  },
+	  "*-titanium": {
+	   "base": "block/metal/ingot/titanium"
+	  },
+	  "*-ferrousuranium": {
+	   "base": "block/metal/ingot/ferrousuranium"
+	  },
+	  "*-uraniumsteel": {
+	   "base": "block/metal/ingot/uraniumsteel"
+	  },
+	  "*": {
+	   "base": "block/metal/anvil/{metal}"
+	  }
+	 }
+	}
+]

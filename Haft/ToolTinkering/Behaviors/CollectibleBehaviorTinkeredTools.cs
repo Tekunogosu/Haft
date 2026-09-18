@@ -241,14 +241,20 @@ namespace Haft.ToolTinkering.Behaviors {
             var bindingDur = HaftPartStatsHelpers.CalculateBindingDurability(stats);
 
             //Apply the end results of that to the tool/parts. Could the parts themselves actually hold the stats...? Eh. Might be faster to just directly apply them to the tool and then update the current HP when it breaks.
-            //A zero percent means nothing has been recorded on the part yet, which is treated as full rather than as
-            //a part with no durability left.
-            var currentHeadPer = headStack.GetPartRemainingHPPercent();
-            headStack.SetPartMaxDurability(headMaxDur);
-            if (currentHeadPer <= 0) {
-                currentHeadPer = 1.0f;
+            //A head's durability comes from the metal it is made of, so a head that resolves a material is rated from
+            //Haft's own table and vanilla's per-tool number is not consulted at all. A head with no entry there - bone,
+            //flint, obsidian - keeps the vanilla-derived durability it has always had.
+            var headMaterialStats = headStack.GetHeadMaterialStats();
+            if (headMaterialStats != null) {
+                headMaxDur = TinkeringUtility.ScaleToHeadDurability((int)HaftPartStatsHelpers.CalculateHeadDurability(headMaterialStats));
             }
-            headStack.SetPartCurrentDurability((int)(headMaxDur * currentHeadPer));
+
+            //The head's remaining durability transfers as the absolute number it is, rather than as a fraction rebuilt
+            //against a new maximum - see TransferHeadDurability for why, and for what rebuilding it used to cost.
+            var currentHeadDur = HaftPartStatsHelpers.TransferHeadDurability(
+                headMaxDur, headStack.GetPartCurrentDurability(), headStack.HasPartCurrentDurability());
+            headStack.SetPartMaxDurability(headMaxDur);
+            headStack.SetPartCurrentDurability(currentHeadDur);
             var currentHeadSharpPer = headStack.GetPartRemainingSharpnessPercent();
             headStack.SetPartMaxSharpness(maxSharpness);
             if (currentHeadSharpPer < 0) {
@@ -260,7 +266,7 @@ namespace Haft.ToolTinkering.Behaviors {
             }
             headStack.SetPartCurrentSharpness((int)(currentHeadSharpPer * maxSharpness));
 
-            outputSlot.Itemstack.SetToolheadCurrentDurability((int)(headMaxDur * currentHeadPer));
+            outputSlot.Itemstack.SetToolheadCurrentDurability(currentHeadDur);
             outputSlot.Itemstack.SetToolMaxSharpness(maxSharpness);
             outputSlot.Itemstack.SetToolCurrentSharpness((int)(maxSharpness * currentHeadSharpPer));
             if (headStack.HasTotalHoneValue()) {
@@ -287,7 +293,7 @@ namespace Haft.ToolTinkering.Behaviors {
             if (HaftModSystem.Config.DebugMessages) {
                 HaftModSystem.Logger.Debug("Tool's durability is: " + baseDur);
                 HaftModSystem.Logger.Debug("Thus, the Tool Head's durability is: " + headMaxDur);
-                HaftModSystem.Logger.Debug("And the current Head Durability is: " + (int)(headMaxDur * currentHeadPer));
+                HaftModSystem.Logger.Debug("And the current Head Durability is: " + currentHeadDur);
                 HaftModSystem.Logger.Debug("The tool's maximum sharpness is: " + maxSharpness);
                 HaftModSystem.Logger.Debug("This tool's current sharpness is: " + (int)(maxSharpness * currentHeadSharpPer));
                 HaftModSystem.Logger.Debug("Handle Max Durability: " + handleDur);

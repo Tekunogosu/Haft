@@ -119,36 +119,6 @@ public class VerifyAndStoreDefinesTests {
         Assert.Equal(-1.0f, target["half"].baseHPfactor);
     }
 
-    //Older configs and the compat mods written against them spell densityFactor as hardnessFactor. It is folded
-    //in before the completeness check, so such an entry loads as complete rather than being defaulted to 1.0.
-    [Fact]
-    public void FoldsTheLegacyHardnessFactorIntoDensityFactor() {
-        using var scope = new ModStaticsScope();
-        var target = new Dictionary<string, MaterialStatDefines>();
-
-        HaftPartStatsHelpers.VerifyAndStoreDefinesInDict(
-            new List<MaterialStatDefines> {
-                new() { id = "legacyoak", hardnessFactor = 2.5f, densityFactor = -1.0f, nailBindingBonus = 0.0f }
-            }, true, ref target);
-
-        Assert.Equal(2.5f, target["legacyoak"].densityFactor);
-        Assert.False(scope.Log.ErrorMentions("DensityFactor"));
-    }
-
-    //A define spelling both takes the modern one, so a config being migrated does not silently revert.
-    [Fact]
-    public void PrefersDensityFactorWhenBothAreSpelled() {
-        using var scope = new ModStaticsScope();
-        var target = new Dictionary<string, MaterialStatDefines>();
-
-        HaftPartStatsHelpers.VerifyAndStoreDefinesInDict(
-            new List<MaterialStatDefines> {
-                new() { id = "oak", densityFactor = 1.0f, hardnessFactor = 9.0f, nailBindingBonus = 0.0f }
-            }, true, ref target);
-
-        Assert.Equal(1.0f, target["oak"].densityFactor);
-    }
-
     //A metal binding with no metalType cannot say what bits to return when it breaks, so it is dropped rather
     //than stored with a hole in it.
     [Fact]

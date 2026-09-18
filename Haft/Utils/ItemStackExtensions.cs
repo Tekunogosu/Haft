@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Haft.Client;
 using Haft.Compat;
 using Haft.Config;
+using Haft.ToolTinkering;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.Util;
@@ -585,8 +586,12 @@ namespace Haft.Utils {
             itemStack.Attributes.SetInt(HaftAttributes.ToolPartMaxDur, durability);
         }
 
+        //Zero, not a stand-in number, when a part has recorded no maximum. A literal default here read as a real
+        //maximum to every caller that divides by it, which is how a head whose true maximum was higher produced a
+        //remaining-HP fraction above 1.0 and, multiplied back out, a part stronger than a new one. Callers that can
+        //act on missing data ask HasPartMaxDurability first; ResetHeadStats is what repairs a part that has none.
         public static int GetPartMaxDurability(this ItemStack itemStack) {
-            return itemStack.Attributes.GetInt(HaftAttributes.ToolPartMaxDur, 1000);
+            return itemStack.Attributes.GetInt(HaftAttributes.ToolPartMaxDur, 0);
         }
 
         public static bool HasPartMaxDurability(this ItemStack itemStack) {
@@ -744,7 +749,17 @@ namespace Haft.Utils {
                 }
             }
 
-            maxDur = itemStack.GetPartMaxDurability();
+            //No recipe to read a tool's durability from, so the head is rated from the metal it is made of - the same
+            //number it would get if it were crafted now. A head with no entry in the material table keeps whatever it
+            //already recorded, and the flat base only stands in for one that has recorded nothing at all.
+            var resetMaterialStats = itemStack.GetHeadMaterialStats();
+            if (resetMaterialStats != null) {
+                maxDur = TinkeringUtility.ScaleToHeadDurability((int)HaftPartStatsHelpers.CalculateHeadDurability(resetMaterialStats));
+            } else {
+                maxDur = itemStack.HasPartMaxDurability()
+                    ? itemStack.GetPartMaxDurability()
+                    : TinkeringUtility.ScaleToHeadDurability(HaftConstants.PartDurabilityBase);
+            }
             itemStack.SetPartMaxDurability(maxDur);
             itemStack.SetPartCurrentDurability(maxDur);
 
@@ -820,6 +835,23 @@ namespace Haft.Utils {
             return HaftModSystem.Stats.MaterialStats.Get(HaftConstants.DefaultMaterialStatKey);
         }
 
+        //The head counterpart to GetHandleMaterialStats. A head carries no material tag of its own: the metal it was
+        //smithed from is already in its variant, so that is what gets looked up rather than a second attribute that
+        //could disagree with it.
+        //
+        //Returns null rather than falling back to oak, which is the opposite of the handle's rule above and
+        //deliberate. A stick genuinely has no material and oak stands in for its numbers; a bone or flint head is not
+        //a soft metal, and rating it as one would hand it a durability derived from a table it does not belong to.
+        //Null lets the caller keep the vanilla-derived durability such a head already has.
+        public static MaterialStatDefines GetHeadMaterialStats(this ItemStack head) {
+            var metal = head?.Collectible?.GetMetalMaterial();
+            if (metal != null && HaftModSystem.Stats.MaterialStats.ContainsKey(metal)) {
+                return HaftModSystem.Stats.MaterialStats.Get(metal);
+            }
+
+            return null;
+        }
+
         public static void SetHandleMaterialTag(this ItemStack itemStack, string tag) {
             itemStack.Attributes.SetString(HaftAttributes.HandleMaterialTag, tag);
         }
@@ -865,17 +897,50 @@ namespace Haft.Utils {
             return itemStack.Attributes.HasAttribute(HaftAttributes.LimbMaterialTag);
         }
 
-        //The limb counterpart to GetHandleMaterialStats, and deliberately NOT sharing its oak fallback. A handle with
-        //no material is a stick or a bone, which still works as a handle; a limb with no material is a bow that was
-        //never crafted from a stave, and rating it as oak would quietly hand a creative-spawned bow a real draw
-        //weight. Returning null lets the caller say "unknown" instead, the way the handle tooltip already does.
+        //How well the bow was built, read off the item code. Null for anything that is not a parted bow, which is
+        //every vanilla bow and every unrelated projectile the shooting patches also see.
+        public static BowStatDefines GetBowTierStats(this ItemStack bow) {
+            var variant = bow?.Collectible?.Variant?["type"];
+            if (variant == null || !HaftConstants.BowStatKeyByVariant.TryGetValue(variant, out var tierKey)) {
+                return null;
+            }
+
+            return HaftModSystem.Stats.BowStats.Get(tierKey);
+        }
+
+        //Whether this bow records the wood it was built from. A crude bow is lashed together from sticks and cordage,
+        //so there is no species to name and none is asked for - the same reason a crude handle has no wood variant.
+        //A bow whose tier is unknown is treated as having a wood axis, because the tiers that do not are the named
+        //exception rather than the default.
+        public static bool BowHasWoodAxis(this ItemStack bow) {
+            return bow.GetBowTierStats()?.hasWoodAxis != false;
+        }
+
+        //The limb counterpart to GetHandleMaterialStats. It shares the oak fallback only where the crude handle
+        //already does - a tier with no wood axis has no species to record, so oak stands in for its numbers exactly
+        //as it does for a stick, a bone or a crude handle.
+        //
+        //Everywhere else the fallback is deliberately NOT taken: a limb with no material on a tier that should have
+        //one is a bow that was never crafted from a stave, and rating it as oak would quietly hand a creative-spawned
+        //bow a real draw weight. Returning null lets the caller say "unknown" instead, the way the handle tooltip
+        //already does.
         public static MaterialStatDefines GetLimbMaterialStats(this ItemStack limb) {
             if (!limb.HasLimbMaterialTag()) {
-                return null;
+                return limb.BowHasWoodAxis() ? null : HaftModSystem.Stats.MaterialStats.Get(HaftConstants.DefaultMaterialStatKey);
             }
 
             var tag = limb.GetLimbMaterialTag();
             return tag != null ? HaftModSystem.Stats.MaterialStats.Get(tag) : null;
+        }
+
+        //The grip stats for a bow, or null when it has none. A bow with no grip recorded is a bare riser rather than
+        //a missing value, so the caller reads null as "contributes nothing" rather than falling back to a default.
+        public static GripStatDefines GetBowGripStats(this ItemStack bow) {
+            if (bow == null || !bow.HasHandleGripTag()) {
+                return null;
+            }
+
+            return HaftModSystem.Stats.GripStats.Get(bow.GetHandleGripTag());
         }
 
         public static void SetHandleGripTag(this ItemStack itemStack, string tag) {

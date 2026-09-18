@@ -14,7 +14,7 @@ namespace Haft.ToolTinkering.Behaviors {
     //what it does, on the tooltip.
     //
     //The limb reads the SAME MaterialStats table a handle does. There are no bow-only stat numbers: draw power, draw
-    //speed and limb life are all derived in HaftPartStatsHelpers from densityFactor, flexibility and speedBonus, so a
+    //speed and limb life are all derived in HaftPartStatsHelpers from density, flexibility and speedBonus, so a
     //material that has a handle value has a bow value without anything further being written for it. Adding a wood or
     //a metal is one config entry, not one per system that consumes materials.
     public class CollectibleBehaviorBowLimb : CollectibleBehavior {
@@ -42,6 +42,23 @@ namespace Haft.ToolTinkering.Behaviors {
                 return;
             }
 
+            //Wrapping the riser of a bow that already exists, rather than building a new one. It is tested FIRST
+            //because the bow handed in carries a limb material of its own, which would otherwise be read by the
+            //carry-forward branch below as though a stave had been sawn down - copying the wood across correctly
+            //and dropping the grip on the floor.
+            if (TryApplyGripCraft(allInputslots, outputSlot)) {
+                return;
+            }
+
+            //A tier with no wood axis records nothing, however good its inputs were. A crude bow is lashed from
+            //sticks, and a stick that happens to name a species does not make the bow a bow of that species - the
+            //same reason a crude handle keeps no record of the firewood it came from. Its rendering still runs, so
+            //it takes the default wood's texture rather than none at all.
+            if (!outputSlot.Itemstack.BowHasWoodAxis()) {
+                ApplyRenderingForLimb(outputSlot.Itemstack);
+                return;
+            }
+
             foreach (var slot in allInputslots) {
                 if (slot.Empty || slot.Itemstack.Collectible.Tool != null) {
                     continue; //The saw is an input too, and carries a material of its own that is not the limb's.
@@ -62,6 +79,101 @@ namespace Haft.ToolTinkering.Behaviors {
                     return;
                 }
             }
+        }
+
+        //Refuses a grip craft whose bow is already gripped, at the point the game decides whether the recipe matches
+        //at all. Returning false here means the craft never appears: no output is previewed and nothing is consumed.
+        //
+        //The check has to live here rather than in OnCreatedByCrafting because by the time that runs the recipe has
+        //already matched and the grid has already been read. Refusing there produces a craft that looked valid,
+        //swallowed the grip and returned an unchanged bow - which is exactly what wrapping a second grip did.
+        //
+        //Every other recipe is passed through untouched; this only ever answers for a two-slot bow-plus-grip craft.
+        public static bool OnMatchesGridRecipe(IPlayer player, GridRecipe recipe, ItemSlot[] ingredients, int gridWidth) {
+            //Every grid craft in the game reaches this, so it leads with the cheapest question that rules almost all
+            //of them out: a grip craft is generated with the bow as its OUTPUT, so anything producing something else
+            //is not one and is answered without reading the grid at all.
+            if (ingredients == null || !IsComposedFromParts(recipe?.Output?.ResolvedItemStack?.Collectible)) {
+                return true;
+            }
+
+            var gripped = false;
+            var sawGrip = false;
+
+            foreach (var slot in ingredients) {
+                if (slot?.Itemstack?.Collectible?.Code == null) {
+                    continue;
+                }
+
+                if (IsComposedFromParts(slot.Itemstack)) {
+                    gripped = slot.Itemstack.HasHandleGripTag();
+                } else if (HaftModSystem.Stats.GripParts.ContainsKey(slot.Itemstack.Collectible.Code.Path)) {
+                    sawGrip = true;
+                }
+            }
+
+            return !(gripped && sawGrip);
+        }
+
+        //Adds a grip to a bow that already exists, returning whether this craft was one. The bow keeps everything it
+        //already had - its limb material above all - because a grip craft is an upgrade of a finished bow rather
+        //than the making of a new one, so the output starts as a clone of the input's attributes the way the tool
+        //handle's own grip path does.
+        //
+        //The grip's stat table, texture key and stack attribute are the tool's, reused whole. A wrap around a riser
+        //and a wrap around a haft are the same object, so a grip defined for tools is craftable onto a bow without
+        //anything bow-specific being added for it.
+        private static bool TryApplyGripCraft(ItemSlot[] allInputslots, ItemSlot outputSlot) {
+            //The output must be a composed bow before its tier is consulted at all. GetBowTierStats reads
+            //Variant["type"], and a bowstave has one too - bowstave-long-raw reports "long" and resolves to the
+            //stave tier, which accepts a grip. Asking the tier first therefore let a stave through.
+            if (!IsComposedFromParts(outputSlot.Itemstack)
+                    || outputSlot.Itemstack.GetBowTierStats()?.canHaveGrip != true) {
+                return false;
+            }
+
+            ItemSlot bowSlot = null;
+            ItemSlot gripSlot = null;
+
+            foreach (var slot in allInputslots) {
+                if (slot.Empty) {
+                    continue;
+                }
+
+                if (IsComposedFromParts(slot.Itemstack)) {
+                    bowSlot = slot;
+                } else if (slot.Itemstack.Collectible?.Code != null
+                        && HaftModSystem.Stats.GripParts.ContainsKey(slot.Itemstack.Collectible.Code.Path)) {
+                    gripSlot = slot;
+                }
+            }
+
+            if (bowSlot == null || gripSlot == null) {
+                return false;
+            }
+
+            //A bow already wearing a grip never reaches here - OnMatchesGridRecipe refuses the craft while the game
+            //is still deciding whether the recipe matches, so the grid never produces this call. Left as a guard
+            //rather than an assumption, since a caller that is not the grid could still arrive with one.
+            if (bowSlot.Itemstack.HasHandleGripTag()) {
+                return false;
+            }
+
+            var gripPart = HaftModSystem.Stats.GripParts.Get(gripSlot.Itemstack.Collectible.Code.Path);
+            var gripStats = gripPart == null ? null : HaftModSystem.Stats.GripStats.Get(gripPart.gripStatTag);
+            if (gripStats == null) {
+                return false;
+            }
+
+            outputSlot.Itemstack.Attributes = bowSlot.Itemstack.Attributes.Clone();
+            outputSlot.Itemstack.SetHandleGripTag(gripStats.id);
+
+            //The pose the bow was last rendered at is cleared so the render tree is rebuilt rather than skipped -
+            //ApplyBowPartRenderTree returns early when the stack already shows the pose it is asked for, and the
+            //cloned attributes carry that record across.
+            outputSlot.Itemstack.Attributes.RemoveAttribute(HaftAttributes.BowRenderedPose);
+            ApplyRenderingForLimb(outputSlot.Itemstack);
+            return true;
         }
 
         //Builds the three-part render tree a composed bow renders from: limb, grip and string, each its own shape
@@ -102,8 +214,20 @@ namespace Haft.ToolTinkering.Behaviors {
         //A bow composes only if it was built to: the parted item declares the rendering behavior AND ships the part
         //shapes. A stave carries the same behavior for its own recolouring, so the behavior alone is not the test.
         public static bool IsComposedFromParts(ItemStack stack) {
-            return stack?.Collectible?.HasBehavior<ModularPartRenderingFromAttributes>() == true
-                && stack.Collectible.Code?.Path?.StartsWith("bowparted") == true;
+            return IsComposedFromParts(stack?.Collectible);
+        }
+
+        //The same question asked of the item type rather than of a stack, for the places that have no stack to ask
+        //about - registering which items take a grip, above all.
+        //
+        //This distinction is the whole reason the test is not "declares the BowLimb behavior". A bowstave declares
+        //it too, for its own wood axis and colouring, and a stave is emphatically NOT a bow: it is a toolhead that
+        //dries into a different item and is then consumed. Treating one as a bow generated grip recipes for staves,
+        //which let a grip be wrapped around a stave, vanish when the stave dried into a new item, and survive into
+        //the finished bow when it did not.
+        public static bool IsComposedFromParts(CollectibleObject collectible) {
+            return collectible?.HasBehavior<ModularPartRenderingFromAttributes>() == true
+                && collectible.Code?.Path?.StartsWith("bowparted") == true;
         }
 
         public static void ApplyBowPartRenderTree(ItemStack bow, int pose) {
@@ -144,6 +268,19 @@ namespace Haft.ToolTinkering.Behaviors {
 
             var stringTree = multiPartTree.GetPartAndTransformRenderTree(HaftAttributes.ModularPartStringName).GetPartRenderTree();
             stringTree.SetPartShapePath(BowPartShapePath("string", tier, pose));
+
+            //The nocked arrow, as a part of its own rather than as part of the bow. Splitting it out is what frees
+            //the limb to take the stave's wood at all: on crude, long and recurve the vanilla shape gives the arrow's
+            //shaft the same texture key as the limbs, so the two cannot be coloured apart while they share a shape.
+            //
+            //It is drawn at every pose, including the undrawn one, because that is what vanilla does - its base
+            //shape carries Stick the same as the charge shapes do, so a bow in hand shows an arrow already nocked.
+            //
+            //Its three keys are left on the shape's own defaults for now. There is no arrow material axis yet, so
+            //there is nothing to set them from; they are declared separately at the shape level so that an arrow
+            //system can set shaft wood and head metal independently without the shapes having to be split again.
+            var arrowTree = multiPartTree.GetPartAndTransformRenderTree(HaftAttributes.ModularPartArrowName).GetPartRenderTree();
+            arrowTree.SetPartShapePath(BowPartShapePath("arrow", tier, pose));
 
             bow.Attributes.SetInt(HaftAttributes.BowRenderedPose, pose);
 
@@ -245,7 +382,7 @@ namespace Haft.ToolTinkering.Behaviors {
             }
 
             bhHandling = EnumHandling.PreventDefault;
-            return (int)Math.Round(durability * HaftPartStatsHelpers.CalculateBowLimbDurability(materialStats));
+            return (int)Math.Round(durability * HaftPartStatsHelpers.CalculateBowLimbDurability(materialStats, itemstack.GetBowTierStats()));
         }
 
         public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo) {
@@ -260,18 +397,33 @@ namespace Haft.ToolTinkering.Behaviors {
                 return;
             }
 
+            var bowStats = inSlot.Itemstack.GetBowTierStats();
+
+            //How the bow was built comes first, and is printed before anything can return early: it is the one line
+            //that is known for certain from the item alone, so even a bow with no material recorded still says what
+            //kind of bow it is rather than reporting Unknown and nothing else.
+            if (bowStats != null) {
+                dsc.AppendLine(Lang.Get("haftbowbuild", Lang.Get("bowbuild-" + bowStats.id)));
+            }
+
             //A material is recorded when the stave is sawn, so only a limb that was actually crafted has one. A
             //creative-spawned bow never passed through that step and genuinely has no limb material, so it says so
             //rather than printing the numbers for a wood nobody chose.
-            if (!inSlot.Itemstack.HasLimbMaterialTag()) {
+            //
+            //A tier with no wood axis has no species to report and is not missing one. A crude bow is sticks and
+            //cordage, so it prints its numbers with no Limb line at all rather than naming the wood standing in for
+            //them - the same silence a crude handle keeps about the firewood it was whittled from.
+            var hasWoodAxis = inSlot.Itemstack.BowHasWoodAxis();
+            if (hasWoodAxis && !inSlot.Itemstack.HasLimbMaterialTag()) {
                 dsc.AppendLine(Lang.Get("haftbowlimbunknown"));
                 return;
             }
 
-            var materialTag = inSlot.Itemstack.GetLimbMaterialTag();
             var materialStats = inSlot.Itemstack.GetLimbMaterialStats();
 
-            dsc.AppendLine(Lang.Get("haftbowlimb", Lang.Get("material-" + materialTag)));
+            if (hasWoodAxis) {
+                dsc.AppendLine(Lang.Get("haftbowlimb", Lang.Get("material-" + inSlot.Itemstack.GetLimbMaterialTag())));
+            }
 
             //A material with no flexibility value cannot be a limb at all. That is the state every material a compat
             //mod adds starts in, so it is a normal thing to display rather than an error worth hiding.
@@ -279,9 +431,21 @@ namespace Haft.ToolTinkering.Behaviors {
                 return;
             }
 
-            var drawWeight = HaftPartStatsHelpers.CalculateBowDrawWeight(materialStats);
+            //The grip, and what it is worth. A bare riser has an empty langTag and prints nothing rather than a line
+            //saying it has no grip, matching how a tool omits a binding it does not have.
+            var gripStats = inSlot.Itemstack.GetBowGripStats();
+            if (gripStats != null && gripStats.langTag != "") {
+                dsc.AppendLine(Lang.Get("haftbowgrip", Lang.Get(gripStats.langTag)));
+                if (gripStats.accuracyBonus > 0.0f) {
+                    dsc.AppendLine(Lang.Get("haftbowaccuracy",
+                        StringHelpers.ColorForMultiplier(1.0f + gripStats.accuracyBonus),
+                        float.Truncate(gripStats.accuracyBonus * 100) / 100));
+                }
+            }
+
+            var drawWeight = HaftPartStatsHelpers.CalculateBowDrawWeight(materialStats, bowStats);
             var drawSpeed = HaftPartStatsHelpers.CalculateBowDrawSpeed(materialStats);
-            var limbDurability = HaftPartStatsHelpers.CalculateBowLimbDurability(materialStats);
+            var limbDurability = HaftPartStatsHelpers.CalculateBowLimbDurability(materialStats, bowStats);
 
             dsc.AppendLine(Lang.Get("haftbowdrawweight", StringHelpers.ColorForMultiplier(drawWeight), float.Truncate(drawWeight * 100) / 100));
 

@@ -26,6 +26,7 @@ namespace Haft {
         public static List<CollectibleObject> HandleList; //Now populated to generate Grid Recipes with the tool heads, handles, and bindings. Is cleared afterwards to free space, so do not expect it to remain populated.
         public static List<CollectibleObject> BindingList; //^^^
         public static List<CollectibleObject> GripList; //^^^
+        public static List<CollectibleObject> BowList; //The parted bows, which take a grip the way a handle does.
         public static List<CollectibleObject> TreatmentList; //^^^
         public static List<CollectibleObject> LiquidContainers; //^^^
 
@@ -121,6 +122,7 @@ namespace Haft {
 
             var handleRecipes = GenerateHandleRecipes(api);
             var adhesiveGripRecipes = GenerateAdhesiveGripRecipes(api);
+            var bowGripRecipes = GenerateBowGripRecipes(api);
 
             if (toolRecipes != null && toolRecipes.Count > 0) {
                 api.World.GridRecipes.AddRange(toolRecipes);
@@ -131,12 +133,16 @@ namespace Haft {
             if (adhesiveGripRecipes != null && adhesiveGripRecipes.Count > 0) {
                 api.World.GridRecipes.AddRange(adhesiveGripRecipes);
             }
+            if (bowGripRecipes != null && bowGripRecipes.Count > 0) {
+                api.World.GridRecipes.AddRange(bowGripRecipes);
+            }
 
             //Make sure to clean up the five lists that were used in all this here! Would be nice not to leave that overhead information when it likely won't be needed after this point.
             TinkerableToolsList = null;
             HandleList = null;
             BindingList = null;
             GripList = null;
+            BowList = null;
             TreatmentList = null;
             LiquidContainers = null;
 
@@ -231,6 +237,54 @@ namespace Haft {
                         recipe.Resolve(api.World, "Generating Haft Adhesive-Grip Recipe for " + gripMat.Code + " backed with " + binding.Code);
                         list.Add(recipe);
                     }
+                }
+            }
+
+            return list.Count > 0 ? list : null;
+        }
+
+        //Wrapping a bow's riser, generated exactly as a handle's grip recipes are - same shapeless two-slot shape,
+        //same recipe group, same in-place upgrade producing the bow it was given. A grip is a grip, so this reuses
+        //GripList whole rather than introducing a bow-only set: a grip added for tools is craftable onto a bow the
+        //moment it is defined.
+        //
+        //The tier decides whether a bow accepts one at all. A crude bow is sticks bound with cordage and has no
+        //riser to wrap, which is the same answer canHaveGrip gives for the handles that cannot take one.
+        private List<GridRecipe> GenerateBowGripRecipes(ICoreAPI api) {
+            var list = new List<GridRecipe>();
+
+            if (BowList == null || GripList == null) {
+                return null;
+            }
+
+            foreach (var bow in BowList) {
+                var tierKey = bow.Variant?["type"];
+                if (tierKey == null || !HaftConstants.BowStatKeyByVariant.TryGetValue(tierKey, out var statKey)) {
+                    continue;
+                }
+
+                var bowStats = HaftModSystem.Stats.BowStats.TryGetValue(statKey);
+                if (bowStats == null || !bowStats.canHaveGrip) {
+                    continue;
+                }
+
+                foreach (var gripMat in GripList) {
+                    var recipe = new GridRecipe {
+                        IngredientPattern = "bg",
+                        Width = 2,
+                        Height = 1,
+                        Ingredients = new Dictionary<string, CraftingRecipeIngredient> {
+                            ["b"] = new CraftingRecipeIngredient { Type = bow.ItemClass, Code = bow.Code },
+                            ["g"] = new CraftingRecipeIngredient { Type = gripMat.ItemClass, Code = gripMat.Code }
+                        },
+                        RecipeGroup = 2,
+                        ShowInCreatedBy = true,
+                        Shapeless = true,
+                        Name = "Add " + gripMat.Code + " as a bow grip.",
+                        Output = new CraftingRecipeIngredient { Type = bow.ItemClass, Code = bow.Code }
+                    };
+                    recipe.Resolve(api.World, "Generating Haft Bow-grip Recipe for " + bow.Code + " with a grip made of " + gripMat.Code);
+                    list.Add(recipe);
                 }
             }
 

@@ -27,7 +27,7 @@ namespace Haft.ToolTinkering.Items {
 
             whetstone.Collectible.DamageItem(byEntity.World, byEntity, offhandSlot);
 
-            TinkeringUtility.SetResultsOfSharpening(curDur, curSharp, totalSharpnessHoned, firstHoning, item, byEntity, mainHandSlot, isTool);
+            TinkeringUtility.SetResultsOfSharpening(curDur, curSharp, totalSharpnessHoned, firstHoning, item, isTool);
 
             if (!TinkeringUtility.ToolOrHeadNeedsSharpening(item, byEntity.World)) {
                 whetstone.SetWhetstoneDoneSharpen();

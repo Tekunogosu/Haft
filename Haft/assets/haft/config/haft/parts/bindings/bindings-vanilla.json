@@ -1,118 +1,178 @@
 [
-	{
-		"id": "drygrass",
-		"bindingStatTag": "reeds",
-		"bindingShapePath": "string",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "cattailtops",
-		"bindingStatTag": "reeds",
-		"bindingShapePath": "string",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "papyrustops",
-		"bindingStatTag": "reeds",
-		"bindingShapePath": "string",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "flaxtwine",
-		"bindingStatTag": "twine",
-		"bindingShapePath": "string",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "fabricstrips-rawhide",
-		"bindingStatTag": "hide",
-		"bindingShapePath": "string",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "rope",
-		"bindingStatTag": "rope",
-		"bindingShapePath": "string",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "fabricstrips-cloth",
-		"bindingStatTag": "cloth",
-		"bindingShapePath": "string",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "fabricstrips-leather",
-		"bindingStatTag": "leather",
-		"bindingShapePath": "string",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "fabricstrips-sturdy",
-		"bindingStatTag": "sturdy",
-		"bindingShapePath": "string",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "glueportion-pitch-hot",
-		"bindingStatTag": "glue",
-		"isLiquid": true,
-		"litersUsed": 0.5,
-		"bindingShapePath": "",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "metalnailsandstrips-copper",
-		"bindingStatTag": "coppernails",
-		"bindingShapePath": "metal",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "metalnailsandstrips-tinbronze",
-		"bindingStatTag": "tinbronzenails",
-		"bindingShapePath": "metal",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "metalnailsandstrips-bismuthbronze",
-		"bindingStatTag": "bismuthbronzenails",
-		"bindingShapePath": "metal",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "metalnailsandstrips-blackbronze",
-		"bindingStatTag": "blackbronzenails",
-		"bindingShapePath": "metal",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "metalnailsandstrips-iron",
-		"bindingStatTag": "ironnails",
-		"bindingShapePath": "metal",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "metalnailsandstrips-cupronickel",
-		"bindingStatTag": "cupronickelnails",
-		"bindingShapePath": "metal",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "metalnailsandstrips-meteoriciron",
-		"bindingStatTag": "meteoricironnails",
-		"bindingShapePath": "metal",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "metalnailsandstrips-steel",
-		"bindingStatTag": "steelnails",
-		"bindingShapePath": "metal",
-		"bindingTextureOverride": ""
-	},
-	{
-		"id": "metal-parts",
-		"bindingStatTag": "cupronickelnails",
-		"bindingShapePath": "metal",
-		"bindingTextureOverride": ""
-	}
+    {
+        "id": "drygrass",
+        "bindingStatTag": "reeds",
+        "bindingShapePath": "string",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "cattailtops",
+        "bindingStatTag": "reeds",
+        "bindingShapePath": "string",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "papyrustops",
+        "bindingStatTag": "reeds",
+        "bindingShapePath": "string",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "flaxtwine",
+        "bindingStatTag": "twine",
+        "bindingShapePath": "string",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "fabricstrips-rawhide",
+        "bindingStatTag": "hide",
+        "bindingShapePath": "string",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "rope",
+        "bindingStatTag": "rope",
+        "bindingShapePath": "string",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "fabricstrips-cloth",
+        "bindingStatTag": "cloth",
+        "bindingShapePath": "string",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "fabricstrips-leather",
+        "bindingStatTag": "leather",
+        "bindingShapePath": "string",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "fabricstrips-sturdy",
+        "bindingStatTag": "sturdy",
+        "bindingShapePath": "string",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "glueportion-pitch-hot",
+        "bindingStatTag": "glue",
+        "isLiquid": true,
+        "litersUsed": 0.5,
+        "bindingShapePath": "",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-copper",
+        "bindingStatTag": "coppernails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-tinbronze",
+        "bindingStatTag": "tinbronzenails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-bismuthbronze",
+        "bindingStatTag": "bismuthbronzenails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-blackbronze",
+        "bindingStatTag": "blackbronzenails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-iron",
+        "bindingStatTag": "ironnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-cupronickel",
+        "bindingStatTag": "cupronickelnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-meteoriciron",
+        "bindingStatTag": "meteoricironnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-steel",
+        "bindingStatTag": "steelnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metal-parts",
+        "bindingStatTag": "cupronickelnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-bismuth",
+        "bindingStatTag": "bismuthnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-gold",
+        "bindingStatTag": "goldnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-silver",
+        "bindingStatTag": "silvernails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-molybdochalkos",
+        "bindingStatTag": "molybdochalkosnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-electrum",
+        "bindingStatTag": "electrumnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-brass",
+        "bindingStatTag": "brassnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-uranium",
+        "bindingStatTag": "uraniumnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-chromium",
+        "bindingStatTag": "chromiumnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-stainlesssteel",
+        "bindingStatTag": "stainlesssteelnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    },
+    {
+        "id": "metalnailsandstrips-titanium",
+        "bindingStatTag": "titaniumnails",
+        "bindingShapePath": "metal",
+        "bindingTextureOverride": ""
+    }
 ]

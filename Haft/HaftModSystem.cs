@@ -129,6 +129,12 @@ namespace Haft {
             string[] itemTags = ["haft-part", "haft-maintenance", "haft-binding", "haft-handle", "haft-head"];
             api.CollectibleTagRegistry.TryRegister(itemTags);
 
+            //A bow that already wears a grip must not offer a grip craft at all. Answering during MATCHING rather
+            //than in OnCreatedByCrafting is what makes the recipe simply not exist for that bow: the alternative is
+            //a craft that shows a valid output, takes the grip, and hands back a bow that did not change. Runs on
+            //both sides because the client matches for the preview and the server matches for the real craft.
+            api.Event.MatchesGridRecipe += CollectibleBehaviorBowLimb.OnMatchesGridRecipe;
+
             HarmonyPatch();
         }
 
@@ -231,6 +237,7 @@ namespace Haft {
             RecipeRegisterModSystem.HandleList = new List<CollectibleObject>();
             RecipeRegisterModSystem.BindingList = new List<CollectibleObject>();
             RecipeRegisterModSystem.GripList = new List<CollectibleObject>();
+            RecipeRegisterModSystem.BowList = new List<CollectibleObject>();
             RecipeRegisterModSystem.TreatmentList = new List<CollectibleObject>();
             RecipeRegisterModSystem.TinkerableToolsList = new List<CollectibleObject>();
             RecipeRegisterModSystem.LiquidContainers = new List<CollectibleObject>();
@@ -326,6 +333,13 @@ namespace Haft {
 
                 if (ConfigUtility.IsValidGripMaterial(t.Code.Path, gripDict)) {
                     RecipeRegisterModSystem.GripList.Add(t);
+                }
+                //Asked through IsComposedFromParts rather than by the BowLimb behavior alone, because a bowstave
+                //declares that behavior too and a stave is not a bow - it is a toolhead that dries into a different
+                //item and is then consumed. The behavior-only test put staves in this list, which generated grip
+                //recipes for them.
+                if (CollectibleBehaviorBowLimb.IsComposedFromParts(t) && t.Variant?["type"] != null) {
+                    RecipeRegisterModSystem.BowList.Add(t);
                 }
                 if (ConfigUtility.IsValidTreatmentMaterial(t.Code.Path, treatmentDict)) {
                     RecipeRegisterModSystem.TreatmentList.Add(t);
@@ -443,6 +457,11 @@ namespace Haft {
             Dictionary<AssetLocation, List<MaterialStatDefines>> legacyWoodStats = api.Assets.GetMany<List<MaterialStatDefines>>(api.Logger, "config/haft/stats/woods");
             foreach (var woodStat in legacyWoodStats) {
                 HaftPartStatsHelpers.VerifyAndStoreDefinesInDict(woodStat.Value, Config.RunFullJsonVerifying, ref Stats.MaterialStats);
+            }
+
+            Dictionary<AssetLocation, List<BowStatDefines>> bowStats = api.Assets.GetMany<List<BowStatDefines>>(api.Logger, "config/haft/stats/bows");
+            foreach (var bowStat in bowStats) {
+                HaftPartStatsHelpers.VerifyAndStoreDefinesInDict(bowStat.Value, Config.RunFullJsonVerifying, ref Stats.BowStats);
             }
 
             VerifyMaterialsAreLoaded();

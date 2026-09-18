@@ -1,0 +1,23 @@
+[
+	{
+		"id": "crude",
+		"drawWeightFactor": 0.65,
+		"limbDurabilityFactor": 0.6,
+		"hasWoodAxis": false,
+		"canHaveGrip": false
+	},
+	{
+		"id": "simple",
+		"drawWeightFactor": 0.8,
+		"limbDurabilityFactor": 0.8,
+		"hasWoodAxis": true,
+		"canHaveGrip": true
+	},
+	{
+		"id": "stave",
+		"drawWeightFactor": 1.0,
+		"limbDurabilityFactor": 1.0,
+		"hasWoodAxis": true,
+		"canHaveGrip": true
+	}
+]

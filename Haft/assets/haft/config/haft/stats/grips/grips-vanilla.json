@@ -4,34 +4,39 @@
 		"texturePath": "plain",
 		"langTag": "",
 		"speedBonus": 0.0,
-		"chanceToDamage": 1.0
+		"chanceToDamage": 1.0,
+		"accuracyBonus": 0.0
 	},
 	{
 		"id": "twine",
 		"texturePath": "game:block/cloth/reedrope",
 		"langTag": "grip-twine",
 		"speedBonus": 0.0,
-		"chanceToDamage": 0.95
+		"chanceToDamage": 0.95,
+		"accuracyBonus": 0.1
 	},
 	{
 		"id": "cloth",
 		"texturePath": "game:block/cloth/linen/normal1",
 		"langTag": "grip-cloth",
 		"speedBonus": 0.1,
-		"chanceToDamage": 0.9
+		"chanceToDamage": 0.9,
+		"accuracyBonus": 0.2
 	},
 	{
 		"id": "leather",
 		"texturePath": "game:block/leather/plain",
 		"langTag": "grip-leather",
 		"speedBonus": 0.2,
-		"chanceToDamage": 0.8
+		"chanceToDamage": 0.8,
+		"accuracyBonus": 0.3
 	},
 	{
 		"id": "sturdy",
 		"texturePath": "game:block/leather/chromium",
 		"langTag": "grip-sturdy",
 		"speedBonus": 0.3,
-		"chanceToDamage": 0.65
+		"chanceToDamage": 0.65,
+		"accuracyBonus": 0.4
 	}
 ]

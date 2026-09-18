@@ -113,7 +113,7 @@ namespace Haft.ToolTinkering.Blocks {
                                 HaftModSystem.Logger.Warning("Seconds the Grindstone has been going: " + secondsUsed);
                             }
 
-                            TinkeringUtility.SetResultsOfSharpening(curDur, curSharp, totalSharpnessHoned, firstHoning, item, byPlayer.Entity, byPlayer.InventoryManager.ActiveHotbarSlot, isTool);
+                            TinkeringUtility.SetResultsOfSharpening(curDur, curSharp, totalSharpnessHoned, firstHoning, item, isTool);
 
                             byPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
 

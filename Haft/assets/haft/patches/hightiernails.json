@@ -1,0 +1,49 @@
+[
+	{
+		"comment": "Chromium, stainless steel and titanium can be handles and anvils but had no nails, so they could never be a binding. Vanilla leaves them out of metalnailsandstrips and out of the recipe that smiths it; these ops add them to both.",
+		"op": "addeach",
+		"path": "/allowedVariants/-",
+		"file": "game:itemtypes/resource/metalnailsandstrips.json",
+		"value": ["*-chromium", "*-stainlesssteel", "*-titanium"]
+	},
+
+	{
+		"comment": "These three are all near-neutral greys, and the sheet texture the item normally uses is noisy enough that its base colour is lost: measured across the sheet art they sit within 16-21 of each other per channel, which reads as one texture on a 32px nails icon. The plate art for the same metals is flatter - chromium spans 174-196 rather than 132-181 - so the colour that distinguishes them survives at icon size, and the pairwise separation rises to 21-23. Only these three are redirected; every other metal keeps the sheet texture, whose extra detail is worth having where the colour already tells them apart.",
+		"op": "add",
+		"path": "/texturesByType",
+		"file": "game:itemtypes/resource/metalnailsandstrips.json",
+		"value": {
+			"*-chromium": { "metal": { "base": "block/metal/plate/chromium" } },
+			"*-stainlesssteel": { "metal": { "base": "block/metal/plate/stainlesssteel" } },
+			"*-titanium": { "metal": { "base": "block/metal/plate/titanium" } },
+			"*": { "metal": { "base": "block/metal/sheet/{metal}1" } }
+		}
+	},
+	{
+		"comment": "Reinforcement strength scales with hardness, the same axis Haft's binding stats use. Steel is vanilla's top at 1200 (HB 150); chromium HB 110 lands below it, stainless HB 180 and titanium HB 200 above.",
+		"op": "add",
+		"path": "/attributes/reinforcementStrengthByType/*-chromium",
+		"file": "game:itemtypes/resource/metalnailsandstrips.json",
+		"value": 900
+	},
+	{
+		"op": "add",
+		"path": "/attributes/reinforcementStrengthByType/*-stainlesssteel",
+		"file": "game:itemtypes/resource/metalnailsandstrips.json",
+		"value": 1400
+	},
+	{
+		"op": "add",
+		"path": "/attributes/reinforcementStrengthByType/*-titanium",
+		"file": "game:itemtypes/resource/metalnailsandstrips.json",
+		"value": 1600
+	},
+
+	{
+		"comment": "Without this the nails exist as an item but nothing can smith them.",
+		"op": "addeach",
+		"path": "/0/ingredient/allowedVariants/-",
+		"file": "game:recipes/smithing/nails.json",
+		"value": ["chromium", "stainlesssteel", "titanium"]
+	}
+]

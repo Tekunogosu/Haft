@@ -1,5 +1,6 @@
 ﻿using Haft.Compat;
 using System.Text;
+using Haft.Config;
 using Haft.Utils;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -90,10 +91,13 @@ namespace Haft.ToolTinkering.Behaviors {
         public override void OnCreatedByCrafting(ItemSlot[] allInputslots, ItemSlot outputSlot, IRecipeBase byRecipe, ref EnumHandling bhHandling) { //TODO - This isn't called when a tool head is smithed. Buh! Have to move it elsewhere, or otherwise get this called.
             //This is still possibly important if somehow someone crafts a Tool Head.
 
-            //The tool this head becomes is what carries the real base durability, and it does not exist yet, so the
-            //head is given a standard one and recalculated when the tool is crafted.
+            //A head's durability comes from the metal it is made of, which it already knows, so it is rated here and
+            //not recalculated when a tool is built around it. A head with no entry in the material table - bone,
+            //flint, obsidian - falls back to the flat base, which is what every head used to get.
             int baseDur = HaftConstants.PartDurabilityBase;
-            int partDur = TinkeringUtility.ScaleToHeadDurability(baseDur);
+            var materialStats = outputSlot.Itemstack.GetHeadMaterialStats();
+            int partDur = TinkeringUtility.ScaleToHeadDurability(
+                materialStats != null ? (int)HaftPartStatsHelpers.CalculateHeadDurability(materialStats) : baseDur);
             int sharpness = ScientificSmithyCompat.CalculateMaxSharpness(outputSlot.Itemstack, baseDur);
             int startingSharpness = (int)(sharpness * outputSlot.Itemstack.Collectible.StartingSharpnessMult());
 

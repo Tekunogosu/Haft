@@ -1,218 +1,275 @@
 [
-	{
-		"id": "gold",
-		"densityFactor": 0.55,
-		"nailBindingBonus": 0.04,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.37,
-		"flexibility": 0.1,
-		"drawSpeedBonus": 0.29
-	},
-	{
-		"id": "silver",
-		"densityFactor": 0.55,
-		"nailBindingBonus": 0.04,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.2,
-		"flexibility": 0.12,
-		"drawSpeedBonus": 0.31
-	},
-	{
-		"id": "zinc",
-		"densityFactor": 0.74,
-		"nailBindingBonus": 0.05,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.14,
-		"flexibility": 0.18,
-		"drawSpeedBonus": 0.46
-	},
-	{
-		"id": "lead",
-		"densityFactor": 1.04,
-		"nailBindingBonus": 0.06,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.22,
-		"flexibility": 0.05,
-		"drawSpeedBonus": 0.45
-	},
-	{
-		"id": "electrum",
-		"densityFactor": 1.11,
-		"nailBindingBonus": 0.06,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.29,
-		"flexibility": 0.12,
-		"drawSpeedBonus": 0.61
-	},
-	{
-		"id": "copper",
-		"densityFactor": 1.3,
-		"nailBindingBonus": 0.06,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.17,
-		"flexibility": 0.3,
-		"drawSpeedBonus": 0.92
-	},
-	{
-		"id": "tin",
-		"densityFactor": 1.47,
-		"nailBindingBonus": 0.07,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.14,
-		"flexibility": 0.08,
-		"drawSpeedBonus": 0.72
-	},
-	{
-		"id": "molybdochalkos",
-		"densityFactor": 1.58,
-		"nailBindingBonus": 0.07,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.18,
-		"flexibility": 0.15,
-		"drawSpeedBonus": 0.92
-	},
-	{
-		"id": "brass",
-		"densityFactor": 1.73,
-		"nailBindingBonus": 0.08,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.16,
-		"flexibility": 0.35,
-		"drawSpeedBonus": 1.28
-	},
-	{
-		"id": "bismuthbronze",
-		"densityFactor": 2.0,
-		"nailBindingBonus": 0.09,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.15,
-		"flexibility": 0.4,
-		"drawSpeedBonus": 1.53
-	},
-	{
-		"id": "bismuth",
-		"densityFactor": 2.01,
-		"nailBindingBonus": 0.09,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.19,
-		"flexibility": 0.14,
-		"drawSpeedBonus": 1.14
-	},
-	{
-		"id": "tinbronze",
-		"densityFactor": 2.15,
-		"nailBindingBonus": 0.09,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.14,
-		"flexibility": 0.45,
-		"drawSpeedBonus": 1.69
-	},
-	{
-		"id": "cupronickel",
-		"densityFactor": 2.29,
-		"nailBindingBonus": 0.1,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.17,
-		"flexibility": 0.5,
-		"drawSpeedBonus": 1.86
-	},
-	{
-		"id": "blackbronze",
-		"densityFactor": 2.43,
-		"nailBindingBonus": 0.1,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.17,
-		"flexibility": 0.48,
-		"drawSpeedBonus": 1.94
-	},
-	{
-		"id": "nickel",
-		"densityFactor": 2.58,
-		"nailBindingBonus": 0.11,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.17,
-		"flexibility": 0.55,
-		"drawSpeedBonus": 2.14
-	},
-	{
-		"id": "iron",
-		"densityFactor": 3.0,
-		"nailBindingBonus": 0.12,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.15,
-		"flexibility": 0.7,
-		"drawSpeedBonus": 2.66
-	},
-	{
-		"id": "meteoriciron",
-		"densityFactor": 3.42,
-		"nailBindingBonus": 0.13,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": 0.05,
-		"flexibility": 0.75,
-		"drawSpeedBonus": 3.08
-	},
-	{
-		"id": "steel",
-		"densityFactor": 4.55,
-		"nailBindingBonus": 0.17,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.15,
-		"flexibility": 0.85,
-		"drawSpeedBonus": 4.22
-	}
+    {
+        "id": "gold",
+        "hardness": 0.55,
+        "density": 3.12,
+        "nailBindingBonus": 0.04,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.37,
+        "flexibility": 0.1,
+        "drawSpeedBonus": 0.29
+    },
+    {
+        "id": "silver",
+        "hardness": 0.55,
+        "density": 2.52,
+        "nailBindingBonus": 0.04,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.2,
+        "flexibility": 0.12,
+        "drawSpeedBonus": 0.31
+    },
+    {
+        "id": "zinc",
+        "hardness": 0.74,
+        "density": 2.2,
+        "nailBindingBonus": 0.05,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.14,
+        "flexibility": 0.18,
+        "drawSpeedBonus": 0.46
+    },
+    {
+        "id": "lead",
+        "hardness": 1.04,
+        "density": 2.59,
+        "nailBindingBonus": 0.06,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.22,
+        "flexibility": 0.05,
+        "drawSpeedBonus": 0.45
+    },
+    {
+        "id": "electrum",
+        "hardness": 1.11,
+        "density": 2.82,
+        "nailBindingBonus": 0.06,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.29,
+        "flexibility": 0.12,
+        "drawSpeedBonus": 0.61
+    },
+    {
+        "id": "copper",
+        "hardness": 1.3,
+        "density": 2.38,
+        "nailBindingBonus": 0.06,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.17,
+        "flexibility": 0.3,
+        "drawSpeedBonus": 0.92
+    },
+    {
+        "id": "tin",
+        "hardness": 1.47,
+        "density": 2.22,
+        "nailBindingBonus": 0.07,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.14,
+        "flexibility": 0.08,
+        "drawSpeedBonus": 0.72
+    },
+    {
+        "id": "molybdochalkos",
+        "hardness": 1.58,
+        "density": 2.4,
+        "nailBindingBonus": 0.07,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.18,
+        "flexibility": 0.15,
+        "drawSpeedBonus": 0.92
+    },
+    {
+        "id": "brass",
+        "hardness": 1.73,
+        "density": 2.34,
+        "nailBindingBonus": 0.08,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.16,
+        "flexibility": 0.35,
+        "drawSpeedBonus": 1.28
+    },
+    {
+        "id": "bismuthbronze",
+        "hardness": 2.0,
+        "density": 2.35,
+        "nailBindingBonus": 0.09,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.15,
+        "flexibility": 0.4,
+        "drawSpeedBonus": 1.53
+    },
+    {
+        "id": "bismuth",
+        "hardness": 2.01,
+        "density": 2.46,
+        "nailBindingBonus": 0.09,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.19,
+        "flexibility": 0.14,
+        "drawSpeedBonus": 1.14
+    },
+    {
+        "id": "tinbronze",
+        "hardness": 2.15,
+        "density": 2.37,
+        "nailBindingBonus": 0.09,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.14,
+        "flexibility": 0.45,
+        "drawSpeedBonus": 1.69
+    },
+    {
+        "id": "cupronickel",
+        "hardness": 2.29,
+        "density": 2.38,
+        "nailBindingBonus": 0.1,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.17,
+        "flexibility": 0.5,
+        "drawSpeedBonus": 1.86
+    },
+    {
+        "id": "blackbronze",
+        "hardness": 2.43,
+        "density": 2.38,
+        "nailBindingBonus": 0.1,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.17,
+        "flexibility": 0.48,
+        "drawSpeedBonus": 1.94
+    },
+    {
+        "id": "nickel",
+        "hardness": 2.58,
+        "density": 2.38,
+        "nailBindingBonus": 0.11,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.17,
+        "flexibility": 0.55,
+        "drawSpeedBonus": 2.14
+    },
+    {
+        "id": "iron",
+        "hardness": 3.0,
+        "density": 2.28,
+        "nailBindingBonus": 0.12,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.15,
+        "flexibility": 0.7,
+        "drawSpeedBonus": 2.66
+    },
+    {
+        "id": "meteoriciron",
+        "hardness": 3.42,
+        "density": 2.28,
+        "nailBindingBonus": 0.13,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": 0.05,
+        "flexibility": 0.75,
+        "drawSpeedBonus": 3.08
+    },
+    {
+        "id": "steel",
+        "hardness": 4.55,
+        "density": 2.27,
+        "nailBindingBonus": 0.17,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.15,
+        "flexibility": 0.85,
+        "drawSpeedBonus": 4.22
+    },
+    {
+        "id": "chromium",
+        "hardness": 3.42,
+        "density": 2.21,
+        "nailBindingBonus": 0.13,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.13,
+        "flexibility": 0.35,
+        "drawSpeedBonus": 2.05
+    },
+    {
+        "id": "stainlesssteel",
+        "hardness": 5.4,
+        "density": 2.29,
+        "nailBindingBonus": 0.2,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.16,
+        "flexibility": 0.88,
+        "drawSpeedBonus": 4.3
+    },
+    {
+        "id": "titanium",
+        "hardness": 5.96,
+        "density": 1.87,
+        "nailBindingBonus": 0.22,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.05,
+        "flexibility": 1.05,
+        "drawSpeedBonus": 3.05
+    }
 ]

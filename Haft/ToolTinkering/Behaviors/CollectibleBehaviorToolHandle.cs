@@ -56,7 +56,7 @@ namespace Haft.ToolTinkering.Behaviors {
                         var materialStats = HaftModSystem.Stats.MaterialStats.Get(materialTag);
                         dsc.AppendLine(Lang.Get("toolhandlewood", Lang.Get("material-" + materialTag)));
                         if (materialStats != null) {
-                            dsc.AppendLine(Lang.Get("toolhandlewooddensity", StringHelpers.ColorForMultiplier(materialStats.densityFactor), materialStats.densityFactor));
+                            dsc.AppendLine(Lang.Get("toolhandlewoodhardness", StringHelpers.ColorForMultiplier(materialStats.hardness), materialStats.hardness));
                         }
                     } else if (HaftModSystem.Stats.BaseHandleParts.Get(inSlot.Itemstack.Collectible.Code.Path)?.canBeTreated == true) {
                         dsc.AppendLine(Lang.Get("toolhandlewoodunknown")); //Only worth saying on a handle that could have had a material in the first place.

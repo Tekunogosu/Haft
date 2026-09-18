@@ -26,13 +26,13 @@ public class HandleDurabilityTests {
     }
 
     //The exact figures from TESTING.md section 2. A copper metal handle read ~12000 before the decouple
-    //because it was scaled by a steel head; 2990 is that same handle scaled by copper's own density instead.
+    //because it was scaled by a steel head; 2990 is that same handle scaled by copper's own hardness instead.
     [Theory]
     [InlineData(1.3f, 2990f)]   //copper
     [InlineData(3.0f, 6900f)]   //iron
     [InlineData(4.55f, 10465f)] //steel
-    public void MetalHandleDurabilityMatchesItsMetalDensity(float densityFactor, float expected) {
-        var material = StatFixtures.Material(densityFactor, 0.0f, 0.0f);
+    public void MetalHandleDurabilityMatchesItsMetalHardness(float hardness, float expected) {
+        var material = StatFixtures.Material(hardness, 0.0f, 0.0f);
 
         var durability = HaftPartStatsHelpers.CalculateHandleDurability(
             StatFixtures.Metal(), StatFixtures.NoTreatment(), StatFixtures.NoBinding(), material);

@@ -56,6 +56,20 @@ PART_ELEMENTS = {
     },
 }
 
+#The arrow hangs off this element on every tier. Where it hangs differs - it is a
+#root-level sibling of origin on crude, long and recurve, and nested under BowGrip
+#on simple - but the carrier machinery in strip_to_part already handles either, so
+#the position never has to be special-cased.
+#
+#The arrow is selected as a SUBTREE rather than by listing element names, because
+#its names are not stable across the four tiers the way the bow's are: the head's
+#cubes are Cube17/18 on crude and simple, Cube23/24 on long and Cube25/26 on
+#recurve, and crude has no fletching at all. Listing them would silently drop
+#geometry the next time a tier numbered its cubes differently. This name is the
+#one that IS stable, and everything under it is the arrow.
+ARROW_PART = "arrow"
+ARROW_ROOT = "Stick"
+
 #The texture key each part's shape declares, and the fallback texture behind it.
 #The keys match what the rest of the mod already uses: handles declare "wood",
 #grips declare "grip", metal parts declare "material". Reusing them means a bow
@@ -66,18 +80,65 @@ PART_TEXTURES = {
     "string": ("material", "game:item/resource/string"),
 }
 
+#The arrow is the one part that declares more than one texture key, because it is
+#the one part made of more than one thing: a wooden shaft, a fletching, and a head
+#of some metal or stone. Those are three axes an arrow system will want to set
+#separately, so they are kept apart at the shape level now rather than being
+#flattened into one key and having to be split again later.
+#
+#The keys are the mod's existing ones for the same materials - "wood" for a shaft
+#the way a handle declares its wood, "material" for a head the way a metal part
+#does - so an arrow part is textured by the code path that already exists.
+ARROW_TEXTURES = {
+    "wood": "game:block/wood/debarked/oak",
+    "feather": "game:item/tool/feather",
+    "material": "game:block/metal/ingot/blackbronze",
+}
 
-def strip_to_part(element, wanted, ancestors_kept=False):
+#Which of the arrow's three keys each element takes. Matched on the element's own
+#name rather than on the texture the vanilla shape gave it, because the vanilla
+#texture is exactly what differs per tier - flint against blackbronze against iron
+#for the head, feather against feather2 for the fletching - while the names of the
+#parts of an arrow do not.
+#
+#The head is everything under ArrowHead, including its numbered cubes, so it is
+#matched as a subtree rather than by listing names that change per tier.
+ARROW_HEAD_ROOT = "ArrowHead"
+ARROW_FLETCHING_NAMES = {"FeatherVertical", "FeatherHorizontal", "featherV", "featherH"}
+
+
+def arrow_texture_key(name, under_head):
+    """The texture key an element of the arrow declares."""
+    if under_head:
+        return "material"
+    if name in ARROW_FLETCHING_NAMES:
+        return "feather"
+    return "wood"
+
+
+def strip_to_part(element, wanted, inside=False):
     """Returns this element for a part's shape, or None if nothing under it is wanted.
 
     An element that is not itself wanted but has a wanted descendant is kept as a
     carrier: its transform still applies, but it draws nothing.
+
+    `wanted` is either a set of element names, or the name of a subtree root - see
+    ARROW_ROOT for why the arrow is selected the second way. `inside` tracks
+    descent through such a subtree, so every element under the root is drawn
+    without each having to be named.
+
+    Descent only carries for a subtree selection. With a name set, an element's
+    children are each tested on their own name - the bow's parts are interleaved
+    down one chain of elements, so BowStringUp1 hangs under BowTipUp and belongs
+    to the string rather than to the limb it is attached to.
     """
+    subtree = isinstance(wanted, str)
+    mine = inside or (element["name"] == wanted if subtree else element["name"] in wanted)
+
     kids = [
-        k for k in (strip_to_part(c, wanted) for c in element.get("children", []))
+        k for k in (strip_to_part(c, wanted, mine and subtree) for c in element.get("children", []))
         if k is not None
     ]
-    mine = element["name"] in wanted
 
     if not mine and not kids:
         return None
@@ -99,18 +160,20 @@ def strip_to_part(element, wanted, ancestors_kept=False):
 
 
 def build_part(shape, part):
-    wanted = PART_ELEMENTS[part]
-    key, fallback = PART_TEXTURES[part]
+    arrow = part == ARROW_PART
+    wanted = ARROW_ROOT if arrow else PART_ELEMENTS[part]
 
     roots = [
         r for r in (strip_to_part(e, wanted) for e in shape["elements"])
         if r is not None
     ]
 
+    textures = dict(ARROW_TEXTURES) if arrow else {PART_TEXTURES[part][0]: PART_TEXTURES[part][1]}
+
     out = {
         "textureWidth": shape.get("textureWidth", 16),
         "textureHeight": shape.get("textureHeight", 16),
-        "textures": {key: fallback},
+        "textures": textures,
         "elements": roots,
     }
 
@@ -119,9 +182,13 @@ def build_part(shape, part):
     #keys - and a part shape declares exactly one key. Copying the block wholesale
     #leaves it describing keys the shape no longer has, which is what makes a shape
     #fail to load and render as the missing-asset placeholder.
-    size = shape.get("textureSizes", {}).get(key)
-    if size is not None:
-        out["textureSizes"] = {key: size}
+    sizes = {
+        k: shape.get("textureSizes", {}).get(k)
+        for k in textures
+        if shape.get("textureSizes", {}).get(k) is not None
+    }
+    if sizes:
+        out["textureSizes"] = sizes
 
     return out
 
@@ -132,6 +199,22 @@ def retexture(element, key):
         face["texture"] = "#" + key
     for child in element.get("children", []):
         retexture(child, key)
+
+
+def retexture_arrow(element, under_head=False):
+    """Points each of the arrow's elements at the key for what it actually is.
+
+    Unlike the single-key parts, the arrow keeps its three materials apart - see
+    ARROW_TEXTURES. The head is matched as a subtree so its numbered cubes, which
+    differ per tier, follow their parent rather than needing to be named.
+    """
+    under_head = under_head or element["name"] == ARROW_HEAD_ROOT
+    key = arrow_texture_key(element["name"], under_head)
+
+    for face in element.get("faces", {}).values():
+        face["texture"] = "#" + key
+    for child in element.get("children", []):
+        retexture_arrow(child, under_head)
 
 
 def main():
@@ -145,9 +228,14 @@ def main():
     if not poses:
         sys.exit(f"no -draw poses found in {POSES}")
 
+    #The arrow is generated alongside the three bow parts rather than in a pass of
+    #its own: the renderer asks for one shape per part per pose, and a part that
+    #skipped a pose would send it looking for a file that is not there.
+    parts = list(PART_ELEMENTS) + [ARROW_PART]
+
     written = 0
     for tier in TIERS:
-        for part in PART_ELEMENTS:
+        for part in parts:
             os.makedirs(f"{OUT}/{part}", exist_ok=True)
 
         for pose in poses:
@@ -156,11 +244,14 @@ def main():
                 sys.exit(f"missing {src}")
             shape = json.load(open(src))
 
-            for part in PART_ELEMENTS:
+            for part in parts:
                 built = build_part(shape, part)
-                key = PART_TEXTURES[part][0]
-                for e in built["elements"]:
-                    retexture(e, key)
+                if part == ARROW_PART:
+                    for e in built["elements"]:
+                        retexture_arrow(e)
+                else:
+                    for e in built["elements"]:
+                        retexture(e, PART_TEXTURES[part][0])
 
                 path = f"{OUT}/{part}/{tier}-draw{pose}.json"
                 with open(path, "w") as fh:
@@ -168,7 +259,7 @@ def main():
                     fh.write("\n")
                 written += 1
 
-        print(f"{tier}: {len(poses)} poses x {len(PART_ELEMENTS)} parts")
+        print(f"{tier}: {len(poses)} poses x {len(parts)} parts")
 
     print(f"\nwrote {written} files to {OUT}")
     check_pose_count_agrees(len(poses))

@@ -20,6 +20,7 @@ namespace Haft.Config {
         public Dictionary<string, TreatmentStatDefines> TreatmentStats = new() { };
         public Dictionary<string, BindingStatDefines> BindingStats = new() { };
         public Dictionary<string, MaterialStatDefines> MaterialStats = new() { };
+        public Dictionary<string, BowStatDefines> BowStats = new() { };
     }
 
     //The four stat blocks a finished tool's numbers are calculated from. Grouped because they are always wanted
@@ -54,11 +55,42 @@ namespace Haft.Config {
         //weak on a copper tool and strong on a steel one, which is backwards - the whole appeal of a good handle is
         //that it outlives the heads it carries. Each part now derives its durability from what it is actually made of.
         public static float CalculateHandleDurability(HandleStatDefines handleStats, TreatmentStatDefines treatmentStats, BindingStatDefines bindingStats, MaterialStatDefines woodStats) {
-            var handleDur = HaftConstants.PartDurabilityBase * handleStats.baseHPfactor * woodStats.densityFactor;
+            var handleDur = HaftConstants.PartDurabilityBase * handleStats.baseHPfactor * woodStats.hardness;
             handleDur += handleDur * handleStats.selfHPBonus;
             handleDur += handleDur * treatmentStats.handleHPbonus;
             handleDur += handleDur * bindingStats.handleHPBonus;
             return handleDur;
+        }
+
+        //The head's counterpart to the handle above, and deliberately the simpler of the two. A head is a single
+        //piece of one material with nothing fixed to it, so it has no tier factor, no treatment and no binding to
+        //take a bonus from - what it is made of is the whole story.
+        //
+        //The base is NOT the tool's vanilla durability, for the reason the handle gives above and one of its own:
+        //vanilla's base is already scaled by the metal's tier, so multiplying it by hardness would count the material
+        //twice and widen the copper-to-steel gap far past what either table intends. Reading hardness alone leaves
+        //one source for the material axis.
+        //
+        //Hardness, not density: the two order the metals almost oppositely, and gold is among the densest and the
+        //softest. A head derived from density would make a gold head one of the toughest in the game.
+        public static float CalculateHeadDurability(MaterialStatDefines materialStats) {
+            return HaftConstants.PartDurabilityBase * materialStats.hardness;
+        }
+
+        //How much durability a head carries into the tool being built around it. The head keeps the absolute damage
+        //it has taken rather than a fraction of it: a head is the same lump of metal before and after, so what it
+        //carries is a count of hits taken, not a proportion of whatever it is fitted to next.
+        //
+        //recordedDurability is what the head has left, and hasRecord says whether it has ever been fitted to anything
+        //- a head straight from the anvil has no record and starts full, which is not the same as one worn down to
+        //nothing. The clamp is what a rebuilt fraction used to violate: a head handed back from a broken tool can
+        //never return with more than a new one has.
+        public static int TransferHeadDurability(int maxDurability, int recordedDurability, bool hasRecord) {
+            if (!hasRecord) {
+                return maxDurability;
+            }
+
+            return Math.Clamp(recordedDurability, 0, maxDurability);
         }
 
         //The binding has fewer terms than the handle: its own factor and bonus, plus whatever support the handle
@@ -107,7 +139,7 @@ namespace Haft.Config {
 
         // -- Bow limbs --
         //
-        //A bow reads the SAME material table a handle does, deriving its three behaviours from densityFactor,
+        //A bow reads the SAME material table a handle does, deriving its three behaviours from density,
         //flexibility and speedBonus rather than carrying a parallel set of bow-only fields. That is the whole reason
         //flexibility was added as a second axis instead of bow numbers being hand-written per species: a material
         //that gets a handle value automatically gets a bow value, including every material a compat mod adds.
@@ -116,21 +148,28 @@ namespace Haft.Config {
         //ebony is the hardest wood in the table and snaps. Springback alone would ignore that a limb has to be heavy
         //enough to store energy. Bow behaviour is the RATIO between them, which is why each helper below reads both.
         //
-        //Where the numbers land, oak = 1.00 on both axes:
+        //Where the numbers land, oak = 1.00 on both axes. Draw speed is a multiplier on the time a shot needs, so
+        //below 1.00 is quicker:
         //
-        //  wood         density  flex   draw weight  draw speed  limb dur   reads as
-        //  larch          0.72   1.12      0.81        +0.02       1.12     light and springy, the best all-round
-        //  birch          0.97   1.13      1.10        +0.015      1.13     fast, forgiving
-        //  oak            1.00   1.00      1.00         0.00       1.00     the reference
-        //  maple          1.12   1.02      1.14        +0.005      1.02     baseline recurve wood
-        //  acacia         1.36   1.15      1.56        -0.005      1.15     high power, demanding draw
-        //  purpleheart    1.75   1.65      2.89        -0.015      1.65     siege bow: max power, slow
-        //  ebony          2.20   1.33      2.93        -0.04       1.33     the trap - hits hardest, worst to draw
-        //  walnut         0.85   0.94      0.80        +0.02       0.94     low power, easy draw
-        //  pine           0.62   0.73      0.45        +0.025      0.73     starter
-        //  kapok          0.45   0.30      0.14        +0.07       0.30     barely a bow
-        //  steel          4.55   0.85      3.87        -0.15       0.85     hits hardest of anything, brutal to draw
-        //  iron           3.00   0.70      2.10        -0.15       0.70     heavy and stiff, poor springback
+        //  material      density  flex   draw weight  draw speed  limb dur   reads as
+        //  larch         0.92   1.12      1.03        0.75       1.12     light and springy, the best all-round
+        //  birch         0.96   1.13      1.08        1.00       1.13     fast, forgiving
+        //  oak           1.00   1.00      1.00        1.00       1.00     the reference
+        //  maple         0.98   1.02      1.00        1.12       1.02     baseline recurve wood
+        //  acacia        1.02   1.15      1.17        1.41       1.15     high power, demanding draw
+        //  purpleheart   1.07   1.65      1.77        1.99       1.65     siege bow: max power, slow
+        //  ebony         1.15   1.33      1.53        2.35       1.33     hits hard, heavy to draw
+        //  walnut        0.96   0.94      0.90        0.84       0.94     low power, easy draw
+        //  pine          0.87   0.73      0.64        0.57       0.73     starter
+        //  kapok         0.68   0.30      0.20        0.33       0.30     barely a bow
+        //  steel         2.27   0.85      1.93        4.22       0.85     hits hardest of anything, brutal to draw
+        //  iron          2.28   0.70      1.60        2.66       0.70     heavy and stiff, poor springback
+        //  gold          3.12   0.10      0.31        0.29       0.10     dense and dead - the softest heavy metal
+        //
+        //Gold is why density and hardness are separate fields. It is the densest material in the table and among the
+        //softest: heavy enough to throw an arrow and far too dead to return the energy, so it reads as a poor bow
+        //from the physics rather than from a hand-written exception. A single field named for mass but holding
+        //hardness rated it as the worst limb for the right reason by accident, and rated lead above it.
         //
         //Ebony and purpleheart are the two rarest woods and read as strong, slow, expensive bows rather than as a
         //trap. An earlier design made ebony a trap on the theory that the hardest wood is brittle and shoots badly;
@@ -153,12 +192,16 @@ namespace Haft.Config {
         //The two axes MULTIPLY rather than add. A limb needs both mass to store energy and stiffness to return it;
         //a material short on either is a poor bow however good the other is, and adding them would let a very dense
         //but dead material (lead) pass as usable on density alone.
-        public static float CalculateBowDrawWeight(MaterialStatDefines materialStats) {
+        //
+        //The bow's own tier multiplies in on top, the way a handle's tier multiplies against its wood. A tier of null
+        //means the caller had no bow to ask about - an unrelated projectile, or a vanilla bow the mod does not build -
+        //and leaves the material's own number untouched rather than zeroing it.
+        public static float CalculateBowDrawWeight(MaterialStatDefines materialStats, BowStatDefines bowStats = null) {
             if (!CanMaterialFormLimb(materialStats)) {
                 return 0.0f;
             }
 
-            return materialStats.densityFactor * materialStats.flexibility;
+            return materialStats.density * materialStats.flexibility * (bowStats?.drawWeightFactor ?? 1.0f);
         }
 
         //How long the limb takes to come to full draw, as a multiplier on the time a shot needs. Oak is 1.00.
@@ -181,12 +224,12 @@ namespace Haft.Config {
         //term. Density is what makes a limb store energy, and that same stored energy is what tries to deform it, so
         //including density here would credit a material for the very thing it has to survive. A limb fails by
         //staying bent, and springback alone decides that.
-        public static float CalculateBowLimbDurability(MaterialStatDefines materialStats) {
+        public static float CalculateBowLimbDurability(MaterialStatDefines materialStats, BowStatDefines bowStats = null) {
             if (!CanMaterialFormLimb(materialStats)) {
                 return 0.0f;
             }
 
-            return materialStats.flexibility;
+            return materialStats.flexibility * (bowStats?.limbDurabilityFactor ?? 1.0f);
         }
 
         //Draw weight is one number, but it has to move two different things - how hard the arrow hits and how flat
@@ -202,24 +245,24 @@ namespace Haft.Config {
         //How much the limb multiplies the shot's damage. This scales the COMBINED bow-plus-arrow damage vanilla
         //assembles, not the bow's share alone: a stiffer limb drives whatever arrow is nocked harder, and keeping it
         //on the total is what lets a future arrow axis multiply into the same number instead of competing with it.
-        public static float CalculateBowDamageFactor(MaterialStatDefines materialStats) {
+        public static float CalculateBowDamageFactor(MaterialStatDefines materialStats, BowStatDefines bowStats = null) {
             if (!CanMaterialFormLimb(materialStats)) {
                 return 1.0f;
             }
 
-            return 1.0f + (CalculateBowDrawWeight(materialStats) - 1.0f) * BowDamageScale;
+            return 1.0f + (CalculateBowDrawWeight(materialStats, bowStats) - 1.0f) * BowDamageScale;
         }
 
         //How much the limb multiplies the arrow's launch velocity. Deliberately damped against the damage factor:
         //draw weight runs to 3.87 at the steel end, and putting that on velocity unscaled fires an arrow flat enough
         //to read as hitscan, which loses the arc that makes bow range a skill. Half the deviation keeps a strong bow
         //visibly faster and still leaves a drop to lead.
-        public static float CalculateBowVelocityFactor(MaterialStatDefines materialStats) {
+        public static float CalculateBowVelocityFactor(MaterialStatDefines materialStats, BowStatDefines bowStats = null) {
             if (!CanMaterialFormLimb(materialStats)) {
                 return 1.0f;
             }
 
-            return 1.0f + (CalculateBowDrawWeight(materialStats) - 1.0f) * BowVelocityScale;
+            return 1.0f + (CalculateBowDrawWeight(materialStats, bowStats) - 1.0f) * BowVelocityScale;
         }
 
         //The ceiling on the refund roll. A limb that shrugged off every shot would never wear out at all, which is a
@@ -252,6 +295,11 @@ namespace Haft.Config {
             //every material at or below the baseline collapsed to zero, which flattened kapok at 0.30 and
             //baldcypress at 0.80 into the same limb, and left eight of thirteen woods with no wear-save identity.
             //Proportional mapping gives every material a distinct value and keeps the ordering springback implies.
+            //Read from the material alone, with no bow tier term. The span below is a span of FLEXIBILITY, and a
+            //bow's build quality is not a change to how springy its wood is: folding the tier in would slide a crude
+            //bow down the springback scale for a reason that has nothing to do with springback, and would double-count
+            //build quality, which already scales total limb life in GetMaxDurability. The tier decides how big the
+            //tank is; the material decides how fast it drains.
             var span = BowLimbRefundMaxFlexibility - BowLimbRefundMinFlexibility;
             var position = (CalculateBowLimbDurability(materialStats) - BowLimbRefundMinFlexibility) / span;
             var fromLimb = Math.Clamp(position, 0.0f, 1.0f) * BowLimbRefundCap;
@@ -264,11 +312,15 @@ namespace Haft.Config {
             return Math.Clamp(fromLimb * (1.0f + fromTreatment), 0.0f, BowLimbRefundCap);
         }
 
-        //Whether a material can be a limb at all. flexibility is left unset (-1.0) rather than defaulted precisely so
-        //this question has an answer: a material nobody has given a bow value to reads as "no elastic behaviour"
+        //Whether a material can be a limb at all. flexibility and density are left unset (-1.0) rather than defaulted
+        //precisely so this question has an answer: a material nobody has given a bow value to reads as "no bow data"
         //instead of silently rating as well as oak. Callers check this before offering a bow recipe.
+        //
+        //Both axes are required because draw weight is their product: a limb missing either one would compute a draw
+        //weight of zero or a negative, so the single gate here is what keeps every bow helper below from needing its
+        //own pair of checks.
         public static bool CanMaterialFormLimb(MaterialStatDefines materialStats) {
-            return materialStats != null && materialStats.flexibility > 0.0f;
+            return materialStats != null && materialStats.flexibility > 0.0f && materialStats.density > 0.0f;
         }
 
         //Resolves every stat block a handle and its binding contribute. handleStats is passed in rather than looked
@@ -374,22 +426,24 @@ namespace Haft.Config {
             });
         }
 
-        public static void VerifyAndStoreDefinesInDict(List<MaterialStatDefines> list, bool runFullCheck, ref Dictionary<string, MaterialStatDefines> targetDict) {
-            foreach (var entry in list) {
-                //An older config, and every compat mod written against one, spells this hardnessFactor. Fold it in
-                //before the check below, so such an entry reads as complete rather than being reported unset.
-                if (entry.densityFactor == -1.0f && entry.hardnessFactor != -1.0f) {
-                    entry.densityFactor = entry.hardnessFactor;
-                }
-            }
+        public static void VerifyAndStoreDefinesInDict(List<BowStatDefines> list, bool runFullCheck, ref Dictionary<string, BowStatDefines> targetDict) {
+            VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "BowStatDefine", fullCheck: e => {
+                //Both default to 1.0, the stave tier's own values, so a bow tier a compat mod adds without them is a
+                //stave-grade bow rather than a bow that stores nothing and breaks immediately. Unlike flexibility on
+                //a material, there is no honest "no data" reading for these: every bow has a build quality, and the
+                //question is only whether this config bothered to say what it was.
+                DefaultIfUnset(ref e.drawWeightFactor, 1.0f, "DrawWeightFactor", "BowStatDefine", e.id);
+                DefaultIfUnset(ref e.limbDurabilityFactor, 1.0f, "LimbDurabilityFactor", "BowStatDefine", e.id);
+            });
+        }
 
+        public static void VerifyAndStoreDefinesInDict(List<MaterialStatDefines> list, bool runFullCheck, ref Dictionary<string, MaterialStatDefines> targetDict) {
             VerifyAndStoreDefines(list, runFullCheck, ref targetDict, "MaterialStatDefine", fullCheck: e => {
-                DefaultIfUnset(ref e.densityFactor, 1.0f, "DensityFactor", "MaterialStatDefine", e.id);
+                DefaultIfUnset(ref e.hardness, 1.0f, "Hardness", "MaterialStatDefine", e.id);
                 DefaultIfUnset(ref e.nailBindingBonus, 0.0f, "NailBindingBonus", "MaterialStatDefine", e.id);
-                //flexibility and drawSpeedBonus are deliberately NOT defaulted. Left at -1.0 they mean "no bow data",
-                //which is the correct reading for a material nobody has given a bow value to - including every
-                //material a compat mod adds against an older config. Defaulting them would instead silently make
-                //every such material as good a bow limb as oak, and as quick to draw.
+                //density, flexibility and drawSpeedBonus are deliberately NOT defaulted. Left at -1.0 they mean "no
+                //bow data", which is the correct reading for a material nobody has given a bow value to. Defaulting
+                //them would instead silently make every such material as good a bow limb as oak, and as quick to draw.
             });
         }
 

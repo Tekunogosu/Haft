@@ -1,0 +1,59 @@
+{
+	"comment": [
+		"Raises the two Uranium Expanded metals to end-game tiers: ferrous uranium to 5 (anvil tier 4, alongside",
+		"stainless steel) and uranium steel to 7 (anvil tier 6, the top of the ladder). That mod ships them at 3 and 4,",
+		"level with iron and steel.",
+		"",
+		"Why a whole asset file rather than a JSON patch. An anvil does not carry a tier of its own - BlockAnvil.OnLoaded",
+		"looks its metal up in SurvivalCoreSystem.metalsByCode and copies that metal's tier, leaving 0 when the lookup",
+		"misses. That table is built once, in AssetsLoaded, as",
+		"    GetMany<MetalProperty>(logger, 'worldproperties/block/metal.json', null)",
+		"with a null domain, so EVERY domain's copy of this path is read, and each variant is assigned by code:",
+		"    metalsByCode[variant.Code.Path] = variant",
+		"An assignment, not an add - so a second file naming the same metal replaces the first, which is exactly what",
+		"this file does. No patch, no array index, no dependence on which mod's patches ran first.",
+		"",
+		"Patching game:worldproperties/block/metal.json instead does NOT work, and several shapes of it were tried:",
+		"Uranium Expanded appends its metals with '/variants/-', so they sit at an index that only exists after that",
+		"mod's patches run, and Haft sorts earlier. Targeting /variants/23/tier errored outright from patches/, and",
+		"silently changed nothing from compatibility/. Forcing load order with a modinfo dependency moved Haft last and",
+		"still left the table holding vanilla's 23 entries.",
+		"",
+		"This file is deliberately NOT under compatibility/uraniumexpanded/: assets there overwrite a file the mod",
+		"already ships at the same path, and Haft ships none, so a copy placed there is never read. Loading",
+		"unconditionally costs two unused entries in metalsByCode when Uranium Expanded is absent - nothing references",
+		"them, because the ingots, items and anvil variants all come from that mod or from its gated patch.",
+		"",
+		"Stainless steel and titanium need no entry here: they are vanilla metals that already carry tiers 5 and 6, and",
+		"their anvils pick those up through the same OnLoaded lookup with no help from Haft."
+	],
+	"code": "metal",
+	"variants": [
+		{
+			"code": "ferrousuranium",
+			"meltPoint": 1482,
+			"boilPoint": 2862,
+			"density": 7870,
+			"specificHeatCapacity": 0.450,
+			"elemental": false,
+			"tier": 5,
+			"quenchMinTemp": 815,
+			"quenchMaxTemp": 1050,
+			"temperMinTemp": 550,
+			"temperMaxTemp": 700
+		},
+		{
+			"code": "uraniumsteel",
+			"meltPoint": 1502,
+			"boilPoint": 2900,
+			"density": 8000,
+			"specificHeatCapacity": 0.490,
+			"elemental": false,
+			"tier": 7,
+			"quenchMinTemp": 815,
+			"quenchMaxTemp": 1050,
+			"temperMinTemp": 550,
+			"temperMaxTemp": 700
+		}
+	]
+}

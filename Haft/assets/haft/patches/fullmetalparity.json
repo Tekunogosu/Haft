@@ -1,0 +1,1504 @@
+[
+	{
+	 "comment": "Full metal parity for tool heads and the tools built from them. Vanilla stops at nine metals; every metal Haft carries material stats for is added here, so a metal that can be a handle or a binding can also be a head. Several are far too soft to be useful tools - a lead axe is a decoration, not an upgrade - and that is deliberate: the stats already price them honestly, and players who build for looks get the full set. Textures need no work, as every toolhead resolves its metal through block/metal/ingot/{material} and vanilla ships an ingot texture for all of them; shapes reuse the existing copper or iron models.",
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/arrowhead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/axehead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/1/states/-",
+	 "file": "game:itemtypes/toolhead/bladehead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/cleaverhead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/hammerhead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/hoehead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/knifeblade.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/pickaxehead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/prospectingpickhead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/sawblade.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/scythehead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/shovelhead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/toolhead/spearhead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "comment": "The finished tools take the same metals, or a head could be smithed and never hafted.",
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/arrow.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/1/states/-",
+	 "file": "game:itemtypes/tool/axe-metal.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/1/states/-",
+	 "file": "game:itemtypes/tool/blade.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/chisel.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/cleaver.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/crowbar.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/1/states/-",
+	 "file": "game:itemtypes/tool/fishhook.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/hammer.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/hoe.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/1/states/-",
+	 "file": "game:itemtypes/tool/knife.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/pickaxe.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/prospectingpick.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/2/states/-",
+	 "file": "game:itemtypes/tool/punchset.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/saw.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/scythe.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/shears.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/shovel.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/1/states/-",
+	 "file": "game:itemtypes/tool/spear.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/variantgroups/0/states/-",
+	 "file": "game:itemtypes/tool/wrench.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/6arrowhead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ],
+	 "comment": "Without these the heads exist but nothing can smith them. Same metal list as above."
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/9arrowhead.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ],
+	 "comment": "Only recipes whose OUTPUT item is extended above appear here. Tongs were dropped: tongsmetal needs block/metal/sheet-plain/{metal}1 art that vanilla ships for only a few metals, so the item cannot take the new ones and its recipe would smith a nonexistent tongsmetal-standard-<metal>."
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/axe.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/blade-falx.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/chisel.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/cleaver.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/crowbar.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/hammer.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/hoe.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/knife.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/pickaxe.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/prospectingpick.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/punchset.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/saw.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/scythe.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/shears.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/shovel.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "op": "addeach",
+	 "path": "/ingredient/allowedVariants/-",
+	 "file": "game:recipes/smithing/wrench.json",
+	 "value": [
+	  "bismuth",
+	  "brass",
+	  "chromium",
+	  "cupronickel",
+	  "electrum",
+	  "lead",
+	  "molybdochalkos",
+	  "nickel",
+	  "stainlesssteel",
+	  "tin",
+	  "titanium",
+	  "zinc"
+	 ]
+	},
+	{
+	 "comment": "Rewrites the whole map because the new rule has to sit BEFORE the '*' fallback - first match wins, and an add would append after it. Vanilla sends any metal outside its hardcoded nine to block/stone/rock/{material}1, a stone path that does not exist for a metal, which logged one 'Texture asset not found' per metal per variant.",
+	 "op": "replace",
+	 "path": "/texturesByType",
+	 "file": "game:itemtypes/tool/hoe.json",
+	 "value": {
+	  "*-flint": {
+	   "material": {
+	    "base": "block/stone/{material}"
+	   }
+	  },
+	  "@hoe-(copper|tinbronze|bismuthbronze|blackbronze|gold|silver|iron|meteoriciron|steel|bismuth|brass|chromium|cupronickel|electrum|lead|molybdochalkos|nickel|stainlesssteel|tin|titanium|zinc)": {
+	   "material": {
+	    "base": "block/metal/ingot/{material}"
+	   }
+	  },
+	  "*": {
+	   "material": {
+	    "base": "block/stone/rock/{material}1"
+	   }
+	  }
+	 }
+	},
+	{
+	 "comment": "Rewrites the whole map because the new rule has to sit BEFORE the '*' fallback - first match wins, and an add would append after it. Vanilla sends any metal outside its hardcoded nine to block/stone/rock/{material}1, a stone path that does not exist for a metal, which logged one 'Texture asset not found' per metal per variant.",
+	 "op": "replace",
+	 "path": "/texturesByType",
+	 "file": "game:itemtypes/toolhead/spearhead.json",
+	 "value": {
+	  "*-flint": {
+	   "stone": {
+	    "base": "block/stone/flint"
+	   },
+	   "string": {
+	    "base": "block/transparent"
+	   },
+	   "handle": {
+	    "base": "block/transparent"
+	   }
+	  },
+	  "@spearhead-(copper|tinbronze|bismuthbronze|blackbronze|iron|meteoriciron|steel|bismuth|brass|chromium|cupronickel|electrum|lead|molybdochalkos|nickel|stainlesssteel|tin|titanium|zinc)": {
+	   "ingot": {
+	    "base": "block/metal/ingot/{material}"
+	   },
+	   "string": {
+	    "base": "block/transparent"
+	   },
+	   "handle": {
+	    "base": "block/transparent"
+	   }
+	  },
+	  "*": {
+	   "stone": {
+	    "base": "block/stone/rock/{material}1"
+	   },
+	   "string": {
+	    "base": "block/transparent"
+	   },
+	   "handle": {
+	    "base": "block/transparent"
+	   }
+	  }
+	 }
+	},
+	{
+	 "comment": "Uses the same three-step the Uranium Expanded mod uses for its own heads: addmerge the per-metal keys into shapeByType, remove the '*' wildcard, then addmerge it back so it is re-appended LAST. Vanilla ships the wildcard as the final key and first match wins, so keys merely added after it never matched and every new metal fell through - to a stone model on most heads, and to the assembled tool on the pickaxe. Model only; the colour still comes from each metal's own ingot texture, exactly as it does for the uranium heads.",
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/axehead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-brass": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-chromium": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-cupronickel": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-electrum": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-lead": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-nickel": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-tin": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-titanium": {
+	   "base": "item/tool/axe/iron"
+	  },
+	  "*-zinc": {
+	   "base": "item/tool/axe/iron"
+	  }
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/axehead.json"
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/axehead.json",
+	 "value": {
+	  "base": "item/tool/axe/stone"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/shovelhead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-brass": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-chromium": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-cupronickel": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-electrum": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-lead": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-nickel": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-tin": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-titanium": {
+	   "base": "item/tool/shovelhead-copper"
+	  },
+	  "*-zinc": {
+	   "base": "item/tool/shovelhead-copper"
+	  }
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/shovelhead.json"
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/shovelhead.json",
+	 "value": {
+	  "base": "item/tool/shovel-stone"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/hoehead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-brass": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-chromium": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-cupronickel": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-electrum": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-lead": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-nickel": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-tin": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-titanium": {
+	   "base": "item/tool/hoe-copper"
+	  },
+	  "*-zinc": {
+	   "base": "item/tool/hoe-copper"
+	  }
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/hoehead.json"
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/hoehead.json",
+	 "value": {
+	  "base": "item/tool/hoe-stone"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/arrowhead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-brass": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-chromium": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-cupronickel": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-electrum": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-lead": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-nickel": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-tin": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-titanium": {
+	   "base": "item/tool/arrowhead-copper"
+	  },
+	  "*-zinc": {
+	   "base": "item/tool/arrowhead-copper"
+	  }
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/arrowhead.json"
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/arrowhead.json",
+	 "value": {
+	  "base": "item/tool/arrowhead-stone"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/pickaxehead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-brass": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-chromium": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-cupronickel": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-electrum": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-lead": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-nickel": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-tin": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-titanium": {
+	   "base": "item/tool/pickaxe-iron"
+	  },
+	  "*-zinc": {
+	   "base": "item/tool/pickaxe-iron"
+	  }
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/pickaxehead.json"
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/pickaxehead.json",
+	 "value": {
+	  "base": "item/tool/pickaxe"
+	 }
+	},
+	{
+	 "comment": "bladehead-falx-* already matched the new metals but resolved to item/tool/blade/falx/{metal}, a file vanilla ships only for its own nine. Explicit keys are merged in, then the pattern is removed and re-added so it lands after them.",
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/bladehead.json",
+	 "value": {
+	  "bladehead-falx-bismuth": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-brass": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-chromium": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-cupronickel": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-electrum": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-lead": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-molybdochalkos": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-nickel": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-stainlesssteel": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-tin": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-titanium": {
+	   "base": "item/tool/blade/falx/iron"
+	  },
+	  "bladehead-falx-zinc": {
+	   "base": "item/tool/blade/falx/iron"
+	  }
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/bladehead-falx-*",
+	 "file": "game:itemtypes/toolhead/bladehead.json"
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/bladehead-falx-*",
+	 "file": "game:itemtypes/toolhead/bladehead.json",
+	 "value": {
+	  "base": "item/tool/blade/falx/{metal}"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/spearhead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-brass": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-chromium": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-cupronickel": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-electrum": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-lead": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-nickel": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-tin": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-titanium": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "*-zinc": {
+	   "base": "item/tool/spear/metal-iron"
+	  }
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/spearhead.json"
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/spearhead.json",
+	 "value": {
+	  "base": "item/tool/spear/stone"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/tool/spear.json",
+	 "value": {
+	  "spear-generic-bismuth": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-brass": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-chromium": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-cupronickel": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-electrum": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-lead": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-molybdochalkos": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-nickel": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-stainlesssteel": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-tin": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-titanium": {
+	   "base": "item/tool/spear/metal-iron"
+	  },
+	  "spear-generic-zinc": {
+	   "base": "item/tool/spear/metal-iron"
+	  }
+	 }
+	},
+	{
+	 "comment": "wrench has no shapeByType at all, only a plain shape:, so the map is created here with the wildcard last.",
+	 "op": "add",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/tool/wrench.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-brass": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-chromium": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-cupronickel": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-electrum": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-lead": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-nickel": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-tin": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-titanium": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*-zinc": {
+	   "base": "item/tool/wrench/iron1"
+	  },
+	  "*": {
+	   "base": "item/tool/wrench/{metal}1"
+	  }
+	 }
+	}
+]

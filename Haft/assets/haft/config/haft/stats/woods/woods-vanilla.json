@@ -1,158 +1,171 @@
 [
-	{
-		"id": "kapok",
-		"nailBindingBonus": -0.1,
-		"densityFactor": 0.45,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.07,
-		"flexibility": 0.3,
-		"drawSpeedBonus": 0.33
-	},
-	{
-		"id": "pine",
-		"nailBindingBonus": -0.07,
-		"densityFactor": 0.62,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.025,
-		"flexibility": 0.73,
-		"drawSpeedBonus": 0.57
-	},
-	{
-		"id": "redwood",
-		"nailBindingBonus": -0.09,
-		"densityFactor": 0.5,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.045,
-		"flexibility": 0.75,
-		"drawSpeedBonus": 0.47
-	},
-	{
-		"id": "baldcypress",
-		"nailBindingBonus": -0.08,
-		"densityFactor": 0.55,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.03,
-		"flexibility": 0.8,
-		"drawSpeedBonus": 0.52
-	},
-	{
-		"id": "aged",
-		"nailBindingBonus": -0.05,
-		"densityFactor": 0.7,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.02,
-		"flexibility": 0.65,
-		"drawSpeedBonus": 0.62
-	},
-	{
-		"id": "larch",
-		"nailBindingBonus": -0.04,
-		"densityFactor": 0.72,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.02,
-		"flexibility": 1.12,
-		"drawSpeedBonus": 0.75
-	},
-	{
-		"id": "walnut",
-		"nailBindingBonus": -0.02,
-		"densityFactor": 0.85,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.02,
-		"flexibility": 0.94,
-		"drawSpeedBonus": 0.84
-	},
-	{
-		"id": "birch",
-		"nailBindingBonus": -0.01,
-		"densityFactor": 0.97,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.015,
-		"flexibility": 1.13,
-		"drawSpeedBonus": 1.0
-	},
-	{
-		"id": "oak",
-		"nailBindingBonus": 0.0,
-		"densityFactor": 1.0,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.0,
-		"flexibility": 1.0,
-		"drawSpeedBonus": 1.0
-	},
-	{
-		"id": "maple",
-		"nailBindingBonus": 0.02,
-		"densityFactor": 1.12,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": 0.005,
-		"flexibility": 1.02,
-		"drawSpeedBonus": 1.12
-	},
-	{
-		"id": "acacia",
-		"nailBindingBonus": 0.05,
-		"densityFactor": 1.36,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": -0.005,
-		"flexibility": 1.15,
-		"drawSpeedBonus": 1.41
-	},
-	{
-		"id": "purpleheart",
-		"nailBindingBonus": 0.08,
-		"densityFactor": 1.75,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": -0.015,
-		"flexibility": 1.65,
-		"drawSpeedBonus": 1.99
-	},
-	{
-		"id": "ebony",
-		"nailBindingBonus": 0.1,
-		"densityFactor": 2.2,
-		"providesTags": [
-			"wood",
-			"porous"
-		],
-		"speedBonus": -0.04,
-		"flexibility": 1.33,
-		"drawSpeedBonus": 2.35
-	}
+    {
+        "id": "kapok",
+        "nailBindingBonus": -0.1,
+        "hardness": 0.45,
+        "density": 0.68,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.07,
+        "flexibility": 0.3,
+        "drawSpeedBonus": 0.33
+    },
+    {
+        "id": "pine",
+        "nailBindingBonus": -0.07,
+        "hardness": 0.62,
+        "density": 0.87,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.025,
+        "flexibility": 0.73,
+        "drawSpeedBonus": 0.57
+    },
+    {
+        "id": "redwood",
+        "nailBindingBonus": -0.09,
+        "hardness": 0.5,
+        "density": 0.82,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.045,
+        "flexibility": 0.75,
+        "drawSpeedBonus": 0.47
+    },
+    {
+        "id": "baldcypress",
+        "nailBindingBonus": -0.08,
+        "hardness": 0.55,
+        "density": 0.87,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.03,
+        "flexibility": 0.8,
+        "drawSpeedBonus": 0.52
+    },
+    {
+        "id": "aged",
+        "nailBindingBonus": -0.05,
+        "hardness": 0.7,
+        "density": 0.92,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.02,
+        "flexibility": 0.65,
+        "drawSpeedBonus": 0.62
+    },
+    {
+        "id": "larch",
+        "nailBindingBonus": -0.04,
+        "hardness": 0.72,
+        "density": 0.92,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.02,
+        "flexibility": 1.12,
+        "drawSpeedBonus": 0.75
+    },
+    {
+        "id": "walnut",
+        "nailBindingBonus": -0.02,
+        "hardness": 0.85,
+        "density": 0.96,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.02,
+        "flexibility": 0.94,
+        "drawSpeedBonus": 0.84
+    },
+    {
+        "id": "birch",
+        "nailBindingBonus": -0.01,
+        "hardness": 0.97,
+        "density": 0.96,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.015,
+        "flexibility": 1.13,
+        "drawSpeedBonus": 1.0
+    },
+    {
+        "id": "oak",
+        "nailBindingBonus": 0.0,
+        "hardness": 1.0,
+        "density": 1.0,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.0,
+        "flexibility": 1.0,
+        "drawSpeedBonus": 1.0
+    },
+    {
+        "id": "maple",
+        "nailBindingBonus": 0.02,
+        "hardness": 1.12,
+        "density": 0.98,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": 0.005,
+        "flexibility": 1.02,
+        "drawSpeedBonus": 1.12
+    },
+    {
+        "id": "acacia",
+        "nailBindingBonus": 0.05,
+        "hardness": 1.36,
+        "density": 1.02,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": -0.005,
+        "flexibility": 1.15,
+        "drawSpeedBonus": 1.41
+    },
+    {
+        "id": "purpleheart",
+        "nailBindingBonus": 0.08,
+        "hardness": 1.75,
+        "density": 1.07,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": -0.015,
+        "flexibility": 1.65,
+        "drawSpeedBonus": 1.99
+    },
+    {
+        "id": "ebony",
+        "nailBindingBonus": 0.1,
+        "hardness": 2.2,
+        "density": 1.15,
+        "providesTags": [
+            "wood",
+            "porous"
+        ],
+        "speedBonus": -0.04,
+        "flexibility": 1.33,
+        "drawSpeedBonus": 2.35
+    }
 ]

@@ -17,21 +17,31 @@ public static class StatFixtures {
     public static HandleStatDefines Professional() => Handle(1.5f, 0.1f, 0.4f, 0.1f);
     public static HandleStatDefines Metal() => Handle(2.0f, 0.15f, 0.4f, 0.0f);
 
-    public static MaterialStatDefines Material(float densityFactor, float nailBindingBonus, float speedBonus) =>
-        new() { densityFactor = densityFactor, nailBindingBonus = nailBindingBonus, speedBonus = speedBonus };
+    //density and flexibility default to unset (-1.0), the same reading the config gives a material with no bow data:
+    //a fixture is a handle material unless a test asks for a limb, and CanMaterialFormLimb rejects it until both are
+    //given. Tests that need a limb pass them rather than each building a MaterialStatDefines by hand.
+    public static MaterialStatDefines Material(float hardness, float nailBindingBonus, float speedBonus,
+                                               float density = -1.0f, float flexibility = -1.0f) =>
+        new() {
+            hardness = hardness, nailBindingBonus = nailBindingBonus, speedBonus = speedBonus,
+            density = density, flexibility = flexibility
+        };
 
-    //woods-vanilla.json - oak is the 1.0 density baseline every other material is scaled against.
-    public static MaterialStatDefines Oak() => Material(1.0f, 0.0f, 0.0f);
+    //woods-vanilla.json - oak is the 1.0 baseline on every axis every other material is scaled against.
+    public static MaterialStatDefines Oak() => Material(1.0f, 0.0f, 0.0f, density: 1.0f, flexibility: 1.0f);
 
     //metals-vanilla.json
-    public static MaterialStatDefines Copper() => Material(1.3f, 0.06f, -0.17f);
-    public static MaterialStatDefines Iron() => Material(3.0f, 0.12f, -0.15f);
-    public static MaterialStatDefines Steel() => Material(4.55f, 0.17f, -0.15f);
-    public static MaterialStatDefines MeteoricIron() => Material(3.42f, 0.13f, 0.05f);
-    public static MaterialStatDefines Gold() => Material(0.55f, 0.04f, -0.37f);
+    public static MaterialStatDefines Copper() => Material(1.3f, 0.06f, -0.17f, density: 2.38f, flexibility: 0.3f);
+    public static MaterialStatDefines Iron() => Material(3.0f, 0.12f, -0.15f, density: 2.28f, flexibility: 0.7f);
+    public static MaterialStatDefines Steel() => Material(4.55f, 0.17f, -0.15f, density: 2.27f, flexibility: 0.85f);
+    public static MaterialStatDefines MeteoricIron() => Material(3.42f, 0.13f, 0.05f, density: 2.28f, flexibility: 0.75f);
+
+    //Dense and soft: the material that motivated splitting hardness from density. A gold limb is heavy enough to
+    //throw an arrow and too dead to return the energy, so it reads as a poor bow rather than a great one.
+    public static MaterialStatDefines Gold() => Material(0.55f, 0.04f, -0.37f, density: 3.12f, flexibility: 0.1f);
 
     //A material carrying no bonuses at all, for isolating one term of a calculation from the rest.
-    public static MaterialStatDefines NeutralMaterial() => Material(1.0f, 0.0f, 0.0f);
+    public static MaterialStatDefines NeutralMaterial() => Material(1.0f, 0.0f, 0.0f, density: 1.0f, flexibility: 1.0f);
 
     public static TreatmentStatDefines Treatment(float handleHPbonus, float chanceToDamageReduction = 0.0f) =>
         new() { handleHPbonus = handleHPbonus, chanceToDamageReduction = chanceToDamageReduction };

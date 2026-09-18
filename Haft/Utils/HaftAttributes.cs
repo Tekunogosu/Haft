@@ -37,7 +37,7 @@ namespace Haft.Utils {
         public const string HandleGripTag = "toolHandleGripTag";
         public const string HandleTreatmentTag = "toolHandleTreatmentTag"; //Tags stay on the base item that have them and don't need to be moved to the crafted tool. They will have their stats transferred instead upwards.
         public const string HandleMaterialTag = "handleMaterialTag"; //What the handle is made of - a wood like "oak" or a metal like "steel". Set at craft time: from the supportbeam blank for a wood handle, from the ingot for a metal one. Keys a MaterialStats entry.
-        public const string LimbMaterialTag = "limbMaterialTag"; //What a bow limb is made of. Keys the same MaterialStats entry HandleMaterialTag does, and is read through the same table - a bow derives its draw from densityFactor and flexibility rather than carrying bow-only numbers. Kept as its own attribute rather than reusing HandleMaterialTag because a bow can eventually have both: a limb of one material and a grip of another.
+        public const string LimbMaterialTag = "limbMaterialTag"; //What a bow limb is made of. Keys the same MaterialStats entry HandleMaterialTag does, and is read through the same table - a bow derives its draw from density and flexibility rather than carrying bow-only numbers. Kept as its own attribute rather than reusing HandleMaterialTag because a bow can eventually have both: a limb of one material and a grip of another.
         public const string LegacyHandleWoodTag = "toolHandleWoodTag"; //The name HandleMaterialTag used to carry, back when a handle could only be wood. Read only for migration; never written.
         public const string GripAdhesiveTag = "gripAdhesiveTag"; //Which adhesive a grip was backed with, if any. Stamped on the grip stack rather than being a part of its own, so every grip that exists or is ever added inherits the mechanic without a parallel set of part defines.
         public const string PartReadyToBlue = "partReadyToBlue"; //Set once a handle has cooled below working heat. Bluing needs a part that was cooled first and then deliberately brought back to ~300C, not one that simply never left the forge.
@@ -70,6 +70,7 @@ namespace Haft.Utils {
         //limb and the string need names of their own.
         public const string ModularPartLimbName = "limb";
         public const string ModularPartStringName = "string";
+        public const string ModularPartArrowName = "arrow"; //The nocked arrow on a drawn bow. Its own part because it is not part of the bow - see the arrow's comment in CollectibleBehaviorBowLimb.
 
         //Which draw pose a bow's render tree currently describes. Saved rather than temporary so a bow reloaded
         //mid-draw does not believe it is already showing a pose it is not.

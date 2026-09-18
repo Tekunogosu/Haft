@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Datastructures;
+﻿using System.Collections.Generic;
+using Vintagestory.API.Datastructures;
 
 namespace Haft.Utils {
     public static class HaftConstants {
@@ -80,6 +81,22 @@ namespace Haft.Utils {
         public const float BluingCooledTemperature = 100.0f; //A handle must fall below this before it counts as cooled and can be blued. Stops a piece straight off the anvil blueing on its way down, which would make the finish something the player received rather than something they did.
 
         public const string DefaultMaterialStatKey = "oak"; //Handles with no material of their own - stick, bone, crude - and handles saved before the material tag existed fall back to this. Matches the renderer's own default wood texture.
+
+        //The bow tiers, and which bow is which. A tier is decided by the item code because it is a fact about the
+        //item type rather than about the stack: bowparted-long is a stave bow in every world it exists in.
+        public const string CrudeBowStatKey = "crude";
+        public const string SimpleBowStatKey = "simple";
+        public const string StaveBowStatKey = "stave";
+
+        //Which tier each parted bow variant is built to. The two stave bows are the ones a bowyer tillers from a
+        //dried stave; crude and simple are made without one, the way a crude handle is whittled from firewood rather
+        //than carved from a chosen log.
+        public static readonly Dictionary<string, string> BowStatKeyByVariant = new() {
+            { "crude", CrudeBowStatKey },
+            { "simple", SimpleBowStatKey },
+            { "long", StaveBowStatKey },
+            { "recurve", StaveBowStatKey },
+        };
     }
 
     //The material keys this mod's own code names directly, as constants rather than as literals typed at each call

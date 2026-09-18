@@ -1,32 +1,35 @@
 [
-	{
-		"id": "uranium",
-		"densityFactor": 4.83,
-		"nailBindingBonus": 0.18,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.36
-	},
-	{
-		"id": "ferrousuranium",
-		"densityFactor": 4.86,
-		"nailBindingBonus": 0.18,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.22
-	},
-	{
-		"id": "uraniumsteel",
-		"densityFactor": 6.0,
-		"nailBindingBonus": 0.22,
-		"providesTags": [
-			"metal",
-			"smooth"
-		],
-		"speedBonus": -0.18
-	}
+    {
+        "id": "uranium",
+        "hardness": 4.83,
+        "density": 3.11,
+        "nailBindingBonus": 0.18,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.36
+    },
+    {
+        "id": "ferrousuranium",
+        "hardness": 4.86,
+        "density": 2.6,
+        "nailBindingBonus": 0.18,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.22
+    },
+    {
+        "id": "uraniumsteel",
+        "hardness": 6.0,
+        "density": 2.77,
+        "nailBindingBonus": 0.22,
+        "providesTags": [
+            "metal",
+            "smooth"
+        ],
+        "speedBonus": -0.18
+    }
 ]

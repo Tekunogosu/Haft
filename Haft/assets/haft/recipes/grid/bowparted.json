@@ -1,5 +1,89 @@
 [
 	{
+		"ingredientPattern": "_ST\tS_T\t_ST",
+		"ingredients": {
+			"S": {
+				"type": "item",
+				"code": "game:stick"
+			},
+			"T": {
+				"type": "item",
+				"code": "game:rope"
+			}
+		},
+		"width": 3,
+		"height": 3,
+		"output": {
+			"type": "item",
+			"code": "haft:bowparted-crude",
+			"quantity": 1
+		},
+		"recipeGroup": 1
+	},
+	{
+		"ingredientPattern": "_ST\tS_T\t_ST",
+		"ingredients": {
+			"S": {
+				"type": "item",
+				"code": "game:stick"
+			},
+			"T": {
+				"type": "item",
+				"code": "game:flaxtwine"
+			}
+		},
+		"width": 3,
+		"height": 3,
+		"output": {
+			"type": "item",
+			"code": "haft:bowparted-crude",
+			"quantity": 1
+		},
+		"recipeGroup": 1
+	},
+	{
+		"ingredientPattern": "_ST\tS_T\t_ST",
+		"ingredients": {
+			"S": {
+				"type": "block",
+				"code": "game:supportbeam-*"
+			},
+			"T": {
+				"type": "item",
+				"code": "game:rope"
+			}
+		},
+		"width": 3,
+		"height": 3,
+		"output": {
+			"type": "item",
+			"code": "haft:bowparted-simple",
+			"quantity": 1
+		},
+		"recipeGroup": 2
+	},
+	{
+		"ingredientPattern": "_ST\tS_T\t_ST",
+		"ingredients": {
+			"S": {
+				"type": "block",
+				"code": "game:supportbeam-*"
+			},
+			"T": {
+				"type": "item",
+				"code": "game:flaxtwine"
+			}
+		},
+		"width": 3,
+		"height": 3,
+		"output": {
+			"type": "item",
+			"code": "haft:bowparted-simple",
+			"quantity": 1
+		},
+		"recipeGroup": 2
+	},
+	{
 		"ingredientPattern": "B\tT",
 		"ingredients": {
 			"B": {
