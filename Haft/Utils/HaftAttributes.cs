@@ -65,20 +65,6 @@ namespace Haft.Utils {
         public const string ModularPartBindingName = "binding"; //This is just the key for adding these respective parts to a MultiPartDataTree
         public const string ModularPartGripName = "grip";
 
-        //A bow composes from three parts rather than the tool set above. The grip deliberately reuses the tool
-        //grip's name and stat table - a wrap around a riser is the same thing as a wrap around a haft - so only the
-        //limb and the string need names of their own.
-        public const string ModularPartLimbName = "limb";
-        public const string ModularPartStringName = "string";
-        public const string ModularPartArrowName = "arrow"; //The nocked arrow on a drawn bow. Its own part because it is not part of the bow - see the arrow's comment in CollectibleBehaviorBowLimb.
-
-        //Which draw pose a bow's render tree currently describes. Saved rather than temporary so a bow reloaded
-        //mid-draw does not believe it is already showing a pose it is not.
-        public const string BowRenderedPose = "haftBowRenderedPose";
-
-        //Temp Attributes! Ones not intended to be saved to the item forever, and instead are used in the TempAttributes tree on the itemstack. It seems like the Temp Attributes get cleaned every time a slot is marked dirty.
-        public const string HaftMeshID = "haftMeshrefID";
-
         // -- Vanilla Attribute Consts --
         //While these are not attributes created by the mod, I figure it might be beneficial to give them the same treatment. Just make sure they stay updated with the base game!
         public const string Durability = "durability";

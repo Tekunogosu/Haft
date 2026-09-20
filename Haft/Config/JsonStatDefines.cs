@@ -154,6 +154,13 @@ namespace Haft.Config {
         [JsonProperty]
         public float chanceToDamage = -1.0f; //And more efficiently too. Gives the handle a chance to ignore damage!
 
+        //chanceToDamage and speedBonus above are TOOL stats and are deliberately not read on a bow.
+        //
+        //A limb wears by being cycled to full draw until it stays bent, which is a property of the limb and of how
+        //it has been treated, not of what the riser is wrapped in - so limb wear is the treatment's axis, and a
+        //grip that reduced it would be claiming the wrap protects the wood. A grip on a bow is an accuracy part:
+        //accuracyBonus and steadyBonus below are the whole of what it contributes.
+
         //What the grip contributes to holding a bow steady, added to the archer's rangedWeaponsAcc while the bow is
         //drawn. 0.0 is a bare riser.
         //
@@ -169,6 +176,23 @@ namespace Haft.Config {
         //the hold rather than shrinking the target.
         [JsonProperty]
         public float accuracyBonus = 0.0f;
+
+        //How much of a disturbance to the aim the grip absorbs: the fraction of every accuracy PENALTY that is
+        //given back, where 0.0 is a bare riser and 1.0 would cancel the penalty outright.
+        //
+        //Separate from accuracyBonus because the two answer different questions. accuracyBonus is how steady the
+        //bow is when nothing is going wrong - it raises the archer's rangedWeaponsAcc and so tightens the reticle.
+        //This is how much of what goes wrong reaches the shot. A grip can be good at one and poor at the other: a
+        //smooth wrap can hold a still bow beautifully and still slip the moment the archer is running.
+        //
+        //It softens all three of vanilla's penalties - moving, sprinting, and being hurt - because a grip is the
+        //archer's grasp on the bow, and a grasp resists any disturbance rather than a chosen subset. Taking a hit
+        //still costs accuracy; a good grip means less of it is lost.
+        //
+        //Deliberately never 1.0 in the shipped table. A grip should make moving and being hit cheaper, not free,
+        //and a value of 1.0 would remove an entire axis of the ranged combat the base game balances around.
+        [JsonProperty]
+        public float steadyBonus = 0.0f;
     }
 
     public class TreatmentStatDefines : HaftStat {

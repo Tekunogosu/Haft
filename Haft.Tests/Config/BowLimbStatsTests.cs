@@ -76,4 +76,40 @@ public class BowLimbStatsTests {
     public void ANullMaterialCannotFormALimb() {
         Assert.False(HaftPartStatsHelpers.CanMaterialFormLimb(null));
     }
+
+    //A grip hands back its steadyBonus share of whatever the engine's penalty modifiers took. The refund is
+    //expressed in the same units they subtract in - penalty / max(1, rangedWeaponsAcc) - so that what is given
+    //back tracks what was actually taken rather than a constant this mod would have to keep in step.
+    [Theory]
+    [InlineData(0.0f, 0.0f)]   //a bare riser absorbs nothing
+    [InlineData(0.05f, 0.01f)] //twine
+    [InlineData(0.25f, 0.05f)] //leather
+    [InlineData(0.4f, 0.08f)]  //sturdy, the shipped maximum
+    public void AGripRefundsItsShareOfTheAimPenalty(float steadyBonus, float expected) {
+        var grip = StatFixtures.BowGrip(steadyBonus);
+
+        //0.2 is vanilla's movement penalty ceiling, at an unmodified rangedWeaponsAcc of 1.0.
+        Assert.Equal(expected, HaftPartStatsHelpers.CalculateGripAccuracyRefund(grip, 0.2f, 1.0f), Tolerance);
+    }
+
+    //rangedWeaponsAcc below 1.0 must not INFLATE the refund. The engine clamps its own divisor with max(1, acc),
+    //so an archer with poor accuracy suffers the full penalty; refunding more than was taken would turn a bad
+    //stat into an advantage.
+    [Theory]
+    [InlineData(0.5f, 0.05f)] //clamped to 1.0, so the same as an unmodified archer
+    [InlineData(1.0f, 0.05f)]
+    [InlineData(2.0f, 0.025f)]
+    public void TheRefundDividesByAccuracyTheSameWayTheEngineDoes(float rangedAccuracy, float expected) {
+        var grip = StatFixtures.BowGrip(0.25f);
+
+        Assert.Equal(expected, HaftPartStatsHelpers.CalculateGripAccuracyRefund(grip, 0.2f, rangedAccuracy), Tolerance);
+    }
+
+    //An ungripped bow and a zero penalty both refund nothing, so the patch can call this unconditionally rather
+    //than guarding at each of its call sites.
+    [Fact]
+    public void NothingToRefundWithoutAGripOrAPenalty() {
+        Assert.Equal(0.0f, HaftPartStatsHelpers.CalculateGripAccuracyRefund(null, 0.2f, 1.0f), Tolerance);
+        Assert.Equal(0.0f, HaftPartStatsHelpers.CalculateGripAccuracyRefund(StatFixtures.BowGrip(0.25f), 0.0f, 1.0f), Tolerance);
+    }
 }

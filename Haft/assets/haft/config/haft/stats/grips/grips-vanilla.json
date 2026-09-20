@@ -5,7 +5,8 @@
 		"langTag": "",
 		"speedBonus": 0.0,
 		"chanceToDamage": 1.0,
-		"accuracyBonus": 0.0
+		"accuracyBonus": 0.0,
+		"steadyBonus": 0.0
 	},
 	{
 		"id": "twine",
@@ -13,7 +14,8 @@
 		"langTag": "grip-twine",
 		"speedBonus": 0.0,
 		"chanceToDamage": 0.95,
-		"accuracyBonus": 0.1
+		"accuracyBonus": 0.1,
+		"steadyBonus": 0.05
 	},
 	{
 		"id": "cloth",
@@ -21,7 +23,8 @@
 		"langTag": "grip-cloth",
 		"speedBonus": 0.1,
 		"chanceToDamage": 0.9,
-		"accuracyBonus": 0.2
+		"accuracyBonus": 0.2,
+		"steadyBonus": 0.15
 	},
 	{
 		"id": "leather",
@@ -29,7 +32,8 @@
 		"langTag": "grip-leather",
 		"speedBonus": 0.2,
 		"chanceToDamage": 0.8,
-		"accuracyBonus": 0.3
+		"accuracyBonus": 0.3,
+		"steadyBonus": 0.25
 	},
 	{
 		"id": "sturdy",
@@ -37,6 +41,7 @@
 		"langTag": "grip-sturdy",
 		"speedBonus": 0.3,
 		"chanceToDamage": 0.65,
-		"accuracyBonus": 0.4
+		"accuracyBonus": 0.4,
+		"steadyBonus": 0.4
 	}
 ]

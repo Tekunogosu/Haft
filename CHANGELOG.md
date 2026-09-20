@@ -3,6 +3,89 @@
 Personal fork of Toolsmith, maintained for a private server. Versions here are the fork's own
 and diverge from upstream after 1.2.20.
 
+## 1.3.3
+
+### Tools of the newly added metals carry stats again
+
+Extending the tool itemtypes to every metal added the variants and the smithing recipes but not
+the durability. Vanilla lists durability per metal in `durabilitybytype` and ships no `*` fallback,
+so each new-metal tool was created with durability 0 - and with no durability there is nothing for
+the part stats to derive from, which is why a stainless steel chisel came out of the anvil blank.
+
+Durability is now set for all twelve metals across the seventeen tools that carry the metal
+progression. Values come from a least-squares power-law fit of durability against each metal's
+hardness, fitted per tool against that tool's own vanilla metals so each stays on its own scale.
+Gold and silver are excluded from the fit: both sit at hardness 0.55 yet vanilla gives
+`scythe-gold` 15 and `scythe-silver` 187, so they are priced by rarity rather than hardness, and
+including them flattened the curve enough to rank titanium below steel. No vanilla value changes.
+
+Vanilla's keys are not uniform - the tools with a type variant group key on
+`axe-felling-<metal>`, `knife-generic-<metal>`, `blade-falx-<metal>` and `spear-generic-<metal>`,
+while crowbar and punchset use a bare `*-<metal>`.
+
+### Heads of the newly added metals use the head model, not the whole tool
+
+The same patch assigned those metals vanilla shapes with no rendering condition, so with Haft's
+part rendering on they overrode the head models and re-appended a vanilla `*` fallback over Haft's.
+Several of those shapes are the assembled tool including its handle rather than a bare head. The
+vanilla-model blocks are now gated to rendering off and mirrored against Haft's own head shapes
+when it is on, covering all nine tinkered tools; hammer, knife, prospecting pick, saw and scythe
+had no shape blocks at all and were falling through to the nonmetal head.
+
+### Uranium shovel heads sit inside their icon
+
+Uranium Expanded sets its own gui transform for its shovel heads, tuned for the vanilla
+`shovelhead-copper` model it assigns. Haft replaces the shape with its own advanced head but loaded
+after that transform without overriding it, so the head rendered at vanilla's origin and scale and
+fell outside the icon. Shovel was the only tool where Uranium sets a transform and Haft did not
+take it back.
+
+### Uranium axe heads face the same way as the base game's
+
+Their gui rotation was copied from Haft's advanced heads, whose handedness is the mirror of vanilla's,
+so a uranium axe icon faced opposite a base-game one beside it.
+
+### Tools of the newly added metals can be built and tinkered
+
+Adding the metals to the tool itemtypes and to the smithing recipes made the heads smithable but
+left them unusable: Haft grants a head `CollectibleBehaviorToolHead` only when some grid recipe
+consumes that head and outputs a tinkerable tool, so a head no recipe accepts gets no behavior, no
+stats, and cannot be tinkered at all.
+
+Most vanilla tool recipes take their head as a bare `<head>-*` and accept a new metal on their own.
+Three pin theirs with `allowedVariants` and silently rejected everything added - axe, falx blade and
+spear. Those three lists now carry the twelve metals. The axe's stone and bone recipes and the
+blade's blackguard and plated variants are pinned to specific metals and are left alone.
+
+### Pickaxes of the newly added metals mine at their own speed
+
+Only `durabilitybytype` was extended. Vanilla prices a metal tool across four independent tables,
+and the other three were left at their vanilla metals, so a new-metal tool had no mining tier, no
+per-material mining speed and no attack power - a titanium pickaxe showed none of the rock, ore and
+metal speeds every base-game pickaxe lists.
+
+`tooltierbytype`, `miningspeedbytype` and `attackpowerbytype` are now set for all twelve metals, on
+each of the thirteen tools that carries the table in question. Values are derived from the durability
+ranking already established: each metal takes the stats of the vanilla structural metal it sits level
+with, scaled by where it falls between them. Gold and silver are never used as anchors - vanilla
+rates them faster but far more fragile than copper, and anchoring on them ranked lead above tin.
+Stainless steel and titanium are tier 6, one step past steel. Every derived value is clamped so no
+metal rates below one it out-lasts.
+
+### Uranium heads stop overwriting the shared transform tables
+
+The uranium compat patches re-asserted their own `*` fallback by removing the shared key and adding
+it back. Because that re-append lands after the stone and metal keys, it changed which entry wins
+the ordered match, and the shovel head was drawn with the wrong origin and scale and sat outside its
+icon. The per-metal entries alone are enough - the base partshape patch has already populated these
+tables - so the removals and re-adds are gone from all four uranium axe and shovel patches.
+
+### Previous builds are kept
+
+Packaging cleaned the whole `Releases` directory, deleting every previously packaged zip, so no
+build could be rolled back to. Only the staging folder is cleaned now and the versioned zips
+accumulate.
+
 ## 1.3.2
 
 ### Smithing a handle no longer tags whatever else is in the hotbar

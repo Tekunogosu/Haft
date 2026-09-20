@@ -1059,12 +1059,20 @@
 	  "*-zinc": {
 	   "base": "item/tool/axe/iron"
 	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
 	 }
 	},
 	{
 	 "op": "remove",
 	 "path": "/shapeByType/*",
-	 "file": "game:itemtypes/toolhead/axehead.json"
+	 "file": "game:itemtypes/toolhead/axehead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
+	 }
 	},
 	{
 	 "op": "addmerge",
@@ -1072,6 +1080,10 @@
 	 "file": "game:itemtypes/toolhead/axehead.json",
 	 "value": {
 	  "base": "item/tool/axe/stone"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
 	 }
 	},
 	{
@@ -1115,12 +1127,20 @@
 	  "*-zinc": {
 	   "base": "item/tool/shovelhead-copper"
 	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
 	 }
 	},
 	{
 	 "op": "remove",
 	 "path": "/shapeByType/*",
-	 "file": "game:itemtypes/toolhead/shovelhead.json"
+	 "file": "game:itemtypes/toolhead/shovelhead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
+	 }
 	},
 	{
 	 "op": "addmerge",
@@ -1128,6 +1148,10 @@
 	 "file": "game:itemtypes/toolhead/shovelhead.json",
 	 "value": {
 	  "base": "item/tool/shovel-stone"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
 	 }
 	},
 	{
@@ -1171,12 +1195,20 @@
 	  "*-zinc": {
 	   "base": "item/tool/hoe-copper"
 	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
 	 }
 	},
 	{
 	 "op": "remove",
 	 "path": "/shapeByType/*",
-	 "file": "game:itemtypes/toolhead/hoehead.json"
+	 "file": "game:itemtypes/toolhead/hoehead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
+	 }
 	},
 	{
 	 "op": "addmerge",
@@ -1184,6 +1216,10 @@
 	 "file": "game:itemtypes/toolhead/hoehead.json",
 	 "value": {
 	  "base": "item/tool/hoe-stone"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
 	 }
 	},
 	{
@@ -1283,12 +1319,20 @@
 	  "*-zinc": {
 	   "base": "item/tool/pickaxe-iron"
 	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
 	 }
 	},
 	{
 	 "op": "remove",
 	 "path": "/shapeByType/*",
-	 "file": "game:itemtypes/toolhead/pickaxehead.json"
+	 "file": "game:itemtypes/toolhead/pickaxehead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
+	 }
 	},
 	{
 	 "op": "addmerge",
@@ -1296,6 +1340,10 @@
 	 "file": "game:itemtypes/toolhead/pickaxehead.json",
 	 "value": {
 	  "base": "item/tool/pickaxe"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "false"
 	 }
 	},
 	{
@@ -1499,6 +1547,943 @@
 	  "*": {
 	   "base": "item/tool/wrench/{metal}1"
 	  }
+	 }
+	},
+	{
+	 "comment": "Multi-part rendering counterpart to the vanilla-model blocks above. Those assign each new metal a vanilla shape - which for several tools is the ASSEMBLED tool including its handle, not a bare head - and carry no condition, so with Haft's part rendering on they overrode the head models Haft's own patches/partshapes/ set up and re-appended a vanilla '*' fallback over Haft's. Each vanilla-model block is now gated to rendering:false and mirrored here at rendering:true against haft:item/parts/<tool>/heads/<tier>. Tiering follows the rule already in patches/partshapes/: the advanced-era metals take 'advanced', the rest take the tool's non-advanced tier - 'normal' on axe, hammer and pickaxe, which are the only tools that have one, and 'simple' elsewhere. Each tool's own '*' fallback is restored, which is 'nonmetal' on axe, hoe, knife and shovel and 'simple' on the tools that ship no nonmetal head.",
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/axehead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "haft:item/parts/axe/heads/simple"
+	  },
+	  "*-brass": {
+	   "base": "haft:item/parts/axe/heads/normal"
+	  },
+	  "*-chromium": {
+	   "base": "haft:item/parts/axe/heads/advanced"
+	  },
+	  "*-cupronickel": {
+	   "base": "haft:item/parts/axe/heads/normal"
+	  },
+	  "*-electrum": {
+	   "base": "haft:item/parts/axe/heads/advanced"
+	  },
+	  "*-lead": {
+	   "base": "haft:item/parts/axe/heads/simple"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "haft:item/parts/axe/heads/simple"
+	  },
+	  "*-nickel": {
+	   "base": "haft:item/parts/axe/heads/advanced"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "haft:item/parts/axe/heads/advanced"
+	  },
+	  "*-tin": {
+	   "base": "haft:item/parts/axe/heads/simple"
+	  },
+	  "*-titanium": {
+	   "base": "haft:item/parts/axe/heads/advanced"
+	  },
+	  "*-zinc": {
+	   "base": "haft:item/parts/axe/heads/simple"
+	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/axehead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/axehead.json",
+	 "value": {
+	  "base": "haft:item/parts/axe/heads/nonmetal"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/hammerhead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "haft:item/parts/hammer/heads/simple"
+	  },
+	  "*-brass": {
+	   "base": "haft:item/parts/hammer/heads/normal"
+	  },
+	  "*-chromium": {
+	   "base": "haft:item/parts/hammer/heads/advanced"
+	  },
+	  "*-cupronickel": {
+	   "base": "haft:item/parts/hammer/heads/normal"
+	  },
+	  "*-electrum": {
+	   "base": "haft:item/parts/hammer/heads/advanced"
+	  },
+	  "*-lead": {
+	   "base": "haft:item/parts/hammer/heads/simple"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "haft:item/parts/hammer/heads/simple"
+	  },
+	  "*-nickel": {
+	   "base": "haft:item/parts/hammer/heads/advanced"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "haft:item/parts/hammer/heads/advanced"
+	  },
+	  "*-tin": {
+	   "base": "haft:item/parts/hammer/heads/simple"
+	  },
+	  "*-titanium": {
+	   "base": "haft:item/parts/hammer/heads/advanced"
+	  },
+	  "*-zinc": {
+	   "base": "haft:item/parts/hammer/heads/simple"
+	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/hammerhead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/hammerhead.json",
+	 "value": {
+	  "base": "haft:item/parts/hammer/heads/simple"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/hoehead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "haft:item/parts/hoe/heads/simple"
+	  },
+	  "*-brass": {
+	   "base": "haft:item/parts/hoe/heads/simple"
+	  },
+	  "*-chromium": {
+	   "base": "haft:item/parts/hoe/heads/advanced"
+	  },
+	  "*-cupronickel": {
+	   "base": "haft:item/parts/hoe/heads/simple"
+	  },
+	  "*-electrum": {
+	   "base": "haft:item/parts/hoe/heads/advanced"
+	  },
+	  "*-lead": {
+	   "base": "haft:item/parts/hoe/heads/simple"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "haft:item/parts/hoe/heads/simple"
+	  },
+	  "*-nickel": {
+	   "base": "haft:item/parts/hoe/heads/advanced"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "haft:item/parts/hoe/heads/advanced"
+	  },
+	  "*-tin": {
+	   "base": "haft:item/parts/hoe/heads/simple"
+	  },
+	  "*-titanium": {
+	   "base": "haft:item/parts/hoe/heads/advanced"
+	  },
+	  "*-zinc": {
+	   "base": "haft:item/parts/hoe/heads/simple"
+	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/hoehead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/hoehead.json",
+	 "value": {
+	  "base": "haft:item/parts/hoe/heads/nonmetal"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/knifeblade.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "haft:item/parts/knife/heads/simple"
+	  },
+	  "*-brass": {
+	   "base": "haft:item/parts/knife/heads/simple"
+	  },
+	  "*-chromium": {
+	   "base": "haft:item/parts/knife/heads/advanced"
+	  },
+	  "*-cupronickel": {
+	   "base": "haft:item/parts/knife/heads/simple"
+	  },
+	  "*-electrum": {
+	   "base": "haft:item/parts/knife/heads/advanced"
+	  },
+	  "*-lead": {
+	   "base": "haft:item/parts/knife/heads/simple"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "haft:item/parts/knife/heads/simple"
+	  },
+	  "*-nickel": {
+	   "base": "haft:item/parts/knife/heads/advanced"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "haft:item/parts/knife/heads/advanced"
+	  },
+	  "*-tin": {
+	   "base": "haft:item/parts/knife/heads/simple"
+	  },
+	  "*-titanium": {
+	   "base": "haft:item/parts/knife/heads/advanced"
+	  },
+	  "*-zinc": {
+	   "base": "haft:item/parts/knife/heads/simple"
+	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/knifeblade.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/knifeblade.json",
+	 "value": {
+	  "base": "haft:item/parts/knife/heads/nonmetal"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/pickaxehead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "haft:item/parts/pickaxe/heads/simple"
+	  },
+	  "*-brass": {
+	   "base": "haft:item/parts/pickaxe/heads/normal"
+	  },
+	  "*-chromium": {
+	   "base": "haft:item/parts/pickaxe/heads/advanced"
+	  },
+	  "*-cupronickel": {
+	   "base": "haft:item/parts/pickaxe/heads/normal"
+	  },
+	  "*-electrum": {
+	   "base": "haft:item/parts/pickaxe/heads/advanced"
+	  },
+	  "*-lead": {
+	   "base": "haft:item/parts/pickaxe/heads/simple"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "haft:item/parts/pickaxe/heads/simple"
+	  },
+	  "*-nickel": {
+	   "base": "haft:item/parts/pickaxe/heads/advanced"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "haft:item/parts/pickaxe/heads/advanced"
+	  },
+	  "*-tin": {
+	   "base": "haft:item/parts/pickaxe/heads/simple"
+	  },
+	  "*-titanium": {
+	   "base": "haft:item/parts/pickaxe/heads/advanced"
+	  },
+	  "*-zinc": {
+	   "base": "haft:item/parts/pickaxe/heads/simple"
+	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/pickaxehead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/pickaxehead.json",
+	 "value": {
+	  "base": "haft:item/parts/pickaxe/heads/simple"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/prospectingpickhead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "haft:item/parts/prospectingpick/heads/simple"
+	  },
+	  "*-brass": {
+	   "base": "haft:item/parts/prospectingpick/heads/simple"
+	  },
+	  "*-chromium": {
+	   "base": "haft:item/parts/prospectingpick/heads/advanced"
+	  },
+	  "*-cupronickel": {
+	   "base": "haft:item/parts/prospectingpick/heads/simple"
+	  },
+	  "*-electrum": {
+	   "base": "haft:item/parts/prospectingpick/heads/advanced"
+	  },
+	  "*-lead": {
+	   "base": "haft:item/parts/prospectingpick/heads/simple"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "haft:item/parts/prospectingpick/heads/simple"
+	  },
+	  "*-nickel": {
+	   "base": "haft:item/parts/prospectingpick/heads/advanced"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "haft:item/parts/prospectingpick/heads/advanced"
+	  },
+	  "*-tin": {
+	   "base": "haft:item/parts/prospectingpick/heads/simple"
+	  },
+	  "*-titanium": {
+	   "base": "haft:item/parts/prospectingpick/heads/advanced"
+	  },
+	  "*-zinc": {
+	   "base": "haft:item/parts/prospectingpick/heads/simple"
+	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/prospectingpickhead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/prospectingpickhead.json",
+	 "value": {
+	  "base": "haft:item/parts/prospectingpick/heads/simple"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/sawblade.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "haft:item/parts/saw/heads/simple"
+	  },
+	  "*-brass": {
+	   "base": "haft:item/parts/saw/heads/simple"
+	  },
+	  "*-chromium": {
+	   "base": "haft:item/parts/saw/heads/advanced"
+	  },
+	  "*-cupronickel": {
+	   "base": "haft:item/parts/saw/heads/simple"
+	  },
+	  "*-electrum": {
+	   "base": "haft:item/parts/saw/heads/advanced"
+	  },
+	  "*-lead": {
+	   "base": "haft:item/parts/saw/heads/simple"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "haft:item/parts/saw/heads/simple"
+	  },
+	  "*-nickel": {
+	   "base": "haft:item/parts/saw/heads/advanced"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "haft:item/parts/saw/heads/advanced"
+	  },
+	  "*-tin": {
+	   "base": "haft:item/parts/saw/heads/simple"
+	  },
+	  "*-titanium": {
+	   "base": "haft:item/parts/saw/heads/advanced"
+	  },
+	  "*-zinc": {
+	   "base": "haft:item/parts/saw/heads/simple"
+	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/sawblade.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/sawblade.json",
+	 "value": {
+	  "base": "haft:item/parts/saw/heads/simple"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/scythehead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "haft:item/parts/scythe/heads/simple"
+	  },
+	  "*-brass": {
+	   "base": "haft:item/parts/scythe/heads/simple"
+	  },
+	  "*-chromium": {
+	   "base": "haft:item/parts/scythe/heads/advanced"
+	  },
+	  "*-cupronickel": {
+	   "base": "haft:item/parts/scythe/heads/simple"
+	  },
+	  "*-electrum": {
+	   "base": "haft:item/parts/scythe/heads/advanced"
+	  },
+	  "*-lead": {
+	   "base": "haft:item/parts/scythe/heads/simple"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "haft:item/parts/scythe/heads/simple"
+	  },
+	  "*-nickel": {
+	   "base": "haft:item/parts/scythe/heads/advanced"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "haft:item/parts/scythe/heads/advanced"
+	  },
+	  "*-tin": {
+	   "base": "haft:item/parts/scythe/heads/simple"
+	  },
+	  "*-titanium": {
+	   "base": "haft:item/parts/scythe/heads/advanced"
+	  },
+	  "*-zinc": {
+	   "base": "haft:item/parts/scythe/heads/simple"
+	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/scythehead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/scythehead.json",
+	 "value": {
+	  "base": "haft:item/parts/scythe/heads/simple"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType",
+	 "file": "game:itemtypes/toolhead/shovelhead.json",
+	 "value": {
+	  "*-bismuth": {
+	   "base": "haft:item/parts/shovel/heads/simple"
+	  },
+	  "*-brass": {
+	   "base": "haft:item/parts/shovel/heads/simple"
+	  },
+	  "*-chromium": {
+	   "base": "haft:item/parts/shovel/heads/advanced"
+	  },
+	  "*-cupronickel": {
+	   "base": "haft:item/parts/shovel/heads/simple"
+	  },
+	  "*-electrum": {
+	   "base": "haft:item/parts/shovel/heads/advanced"
+	  },
+	  "*-lead": {
+	   "base": "haft:item/parts/shovel/heads/simple"
+	  },
+	  "*-molybdochalkos": {
+	   "base": "haft:item/parts/shovel/heads/simple"
+	  },
+	  "*-nickel": {
+	   "base": "haft:item/parts/shovel/heads/advanced"
+	  },
+	  "*-stainlesssteel": {
+	   "base": "haft:item/parts/shovel/heads/advanced"
+	  },
+	  "*-tin": {
+	   "base": "haft:item/parts/shovel/heads/simple"
+	  },
+	  "*-titanium": {
+	   "base": "haft:item/parts/shovel/heads/advanced"
+	  },
+	  "*-zinc": {
+	   "base": "haft:item/parts/shovel/heads/simple"
+	  }
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "remove",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/shovelhead.json",
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/shapeByType/*",
+	 "file": "game:itemtypes/toolhead/shovelhead.json",
+	 "value": {
+	  "base": "haft:item/parts/shovel/heads/nonmetal"
+	 },
+	 "condition": {
+	  "when": "Haft_MultiPartRendering",
+	  "isValue": "true"
+	 }
+	},
+	{
+	 "comment": "Durability for the new metals. Vanilla's durabilitybytype lists one key per metal and ships NO '*' fallback, so every metal added above was created with durability 0 - and with no durability there is nothing for Haft to derive its part stats from, which is why none of the new tools carried stats. Values come from a least-squares power-law fit of durability against each metal's hardness in config/haft/stats/materials/metals-vanilla.json, fitted per tool against that tool's OWN vanilla metals so each stays on its own scale. Gold and silver are excluded from the fit: both sit at hardness 0.55 yet vanilla gives scythe-gold 15 and scythe-silver 187, so they are priced by rarity rather than hardness and including them flattened the curve enough to put titanium below steel. No vanilla value is modified - only the new keys are added.",
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/axe-metal.json",
+	 "value": {
+	  "axe-felling-bismuth": 450,
+	  "axe-felling-brass": 350,
+	  "axe-felling-chromium": 1100,
+	  "axe-felling-cupronickel": 550,
+	  "axe-felling-electrum": 175,
+	  "axe-felling-lead": 150,
+	  "axe-felling-molybdochalkos": 300,
+	  "axe-felling-nickel": 700,
+	  "axe-felling-stainlesssteel": 2350,
+	  "axe-felling-tin": 275,
+	  "axe-felling-titanium": 2750,
+	  "axe-felling-zinc": 90
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/blade.json",
+	 "value": {
+	  "blade-falx-bismuth": 450,
+	  "blade-falx-brass": 350,
+	  "blade-falx-chromium": 1100,
+	  "blade-falx-cupronickel": 550,
+	  "blade-falx-electrum": 175,
+	  "blade-falx-lead": 150,
+	  "blade-falx-molybdochalkos": 300,
+	  "blade-falx-nickel": 700,
+	  "blade-falx-stainlesssteel": 2250,
+	  "blade-falx-tin": 275,
+	  "blade-falx-titanium": 2650,
+	  "blade-falx-zinc": 90
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/chisel.json",
+	 "value": {
+	  "chisel-bismuth": 1100,
+	  "chisel-brass": 850,
+	  "chisel-chromium": 2900,
+	  "chisel-cupronickel": 1400,
+	  "chisel-electrum": 375,
+	  "chisel-lead": 325,
+	  "chisel-molybdochalkos": 700,
+	  "chisel-nickel": 1750,
+	  "chisel-stainlesssteel": 6550,
+	  "chisel-tin": 650,
+	  "chisel-titanium": 7850,
+	  "chisel-zinc": 175
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/cleaver.json",
+	 "value": {
+	  "cleaver-bismuth": 375,
+	  "cleaver-brass": 275,
+	  "cleaver-chromium": 1000,
+	  "cleaver-cupronickel": 500,
+	  "cleaver-electrum": 125,
+	  "cleaver-lead": 125,
+	  "cleaver-molybdochalkos": 250,
+	  "cleaver-nickel": 600,
+	  "cleaver-stainlesssteel": 2300,
+	  "cleaver-tin": 200,
+	  "cleaver-titanium": 2750,
+	  "cleaver-zinc": 60
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/crowbar.json",
+	 "value": {
+	  "*-bismuth": 450,
+	  "*-brass": 350,
+	  "*-chromium": 1100,
+	  "*-cupronickel": 550,
+	  "*-electrum": 175,
+	  "*-lead": 150,
+	  "*-molybdochalkos": 300,
+	  "*-nickel": 700,
+	  "*-stainlesssteel": 2350,
+	  "*-tin": 275,
+	  "*-titanium": 2750,
+	  "*-zinc": 90
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/hammer.json",
+	 "value": {
+	  "hammer-bismuth": 900,
+	  "hammer-brass": 650,
+	  "hammer-chromium": 2250,
+	  "hammer-cupronickel": 1100,
+	  "hammer-electrum": 300,
+	  "hammer-lead": 275,
+	  "hammer-molybdochalkos": 550,
+	  "hammer-nickel": 1350,
+	  "hammer-stainlesssteel": 5000,
+	  "hammer-tin": 500,
+	  "hammer-titanium": 5950,
+	  "hammer-zinc": 150
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/hoe.json",
+	 "value": {
+	  "hoe-bismuth": 300,
+	  "hoe-brass": 250,
+	  "hoe-chromium": 650,
+	  "hoe-cupronickel": 350,
+	  "hoe-electrum": 125,
+	  "hoe-lead": 125,
+	  "hoe-molybdochalkos": 200,
+	  "hoe-nickel": 450,
+	  "hoe-stainlesssteel": 1250,
+	  "hoe-tin": 200,
+	  "hoe-titanium": 1450,
+	  "hoe-zinc": 70
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/knife.json",
+	 "value": {
+	  "knife-generic-bismuth": 500,
+	  "knife-generic-brass": 375,
+	  "knife-generic-chromium": 1150,
+	  "knife-generic-cupronickel": 600,
+	  "knife-generic-electrum": 175,
+	  "knife-generic-lead": 175,
+	  "knife-generic-molybdochalkos": 325,
+	  "knife-generic-nickel": 750,
+	  "knife-generic-stainlesssteel": 2450,
+	  "knife-generic-tin": 300,
+	  "knife-generic-titanium": 2900,
+	  "knife-generic-zinc": 100
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/pickaxe.json",
+	 "value": {
+	  "pickaxe-bismuth": 500,
+	  "pickaxe-brass": 375,
+	  "pickaxe-chromium": 1250,
+	  "pickaxe-cupronickel": 650,
+	  "pickaxe-electrum": 175,
+	  "pickaxe-lead": 150,
+	  "pickaxe-molybdochalkos": 325,
+	  "pickaxe-nickel": 750,
+	  "pickaxe-stainlesssteel": 2800,
+	  "pickaxe-tin": 300,
+	  "pickaxe-titanium": 3300,
+	  "pickaxe-zinc": 90
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/prospectingpick.json",
+	 "value": {
+	  "prospectingpick-bismuth": 300,
+	  "prospectingpick-brass": 225,
+	  "prospectingpick-chromium": 850,
+	  "prospectingpick-cupronickel": 375,
+	  "prospectingpick-electrum": 90,
+	  "prospectingpick-lead": 80,
+	  "prospectingpick-molybdochalkos": 175,
+	  "prospectingpick-nickel": 450,
+	  "prospectingpick-stainlesssteel": 2050,
+	  "prospectingpick-tin": 150,
+	  "prospectingpick-titanium": 2500,
+	  "prospectingpick-zinc": 40
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/punchset.json",
+	 "value": {
+	  "*-bismuth": 1100,
+	  "*-brass": 850,
+	  "*-chromium": 2900,
+	  "*-cupronickel": 1400,
+	  "*-electrum": 375,
+	  "*-lead": 325,
+	  "*-molybdochalkos": 700,
+	  "*-nickel": 1750,
+	  "*-stainlesssteel": 6550,
+	  "*-tin": 650,
+	  "*-titanium": 7850,
+	  "*-zinc": 175
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/saw.json",
+	 "value": {
+	  "saw-bismuth": 450,
+	  "saw-brass": 325,
+	  "saw-chromium": 1150,
+	  "saw-cupronickel": 550,
+	  "saw-electrum": 150,
+	  "saw-lead": 125,
+	  "saw-molybdochalkos": 275,
+	  "saw-nickel": 700,
+	  "saw-stainlesssteel": 2600,
+	  "saw-tin": 250,
+	  "saw-titanium": 3100,
+	  "saw-zinc": 70
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/scythe.json",
+	 "value": {
+	  "scythe-bismuth": 750,
+	  "scythe-brass": 550,
+	  "scythe-chromium": 1750,
+	  "scythe-cupronickel": 900,
+	  "scythe-electrum": 275,
+	  "scythe-lead": 250,
+	  "scythe-molybdochalkos": 500,
+	  "scythe-nickel": 1100,
+	  "scythe-stainlesssteel": 3750,
+	  "scythe-tin": 450,
+	  "scythe-titanium": 4400,
+	  "scythe-zinc": 150
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/shears.json",
+	 "value": {
+	  "shears-bismuth": 1850,
+	  "shears-brass": 1450,
+	  "shears-chromium": 4800,
+	  "shears-cupronickel": 2350,
+	  "shears-electrum": 650,
+	  "shears-lead": 600,
+	  "shears-molybdochalkos": 1200,
+	  "shears-nickel": 2900,
+	  "shears-stainlesssteel": 10800,
+	  "shears-tin": 1050,
+	  "shears-titanium": 12900,
+	  "shears-zinc": 325
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/shovel.json",
+	 "value": {
+	  "shovel-bismuth": 650,
+	  "shovel-brass": 500,
+	  "shovel-chromium": 1500,
+	  "shovel-cupronickel": 800,
+	  "shovel-electrum": 250,
+	  "shovel-lead": 225,
+	  "shovel-molybdochalkos": 450,
+	  "shovel-nickel": 950,
+	  "shovel-stainlesssteel": 3100,
+	  "shovel-tin": 400,
+	  "shovel-titanium": 3650,
+	  "shovel-zinc": 125
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/spear.json",
+	 "value": {
+	  "spear-generic-bismuth": 225,
+	  "spear-generic-brass": 200,
+	  "spear-generic-chromium": 450,
+	  "spear-generic-cupronickel": 275,
+	  "spear-generic-electrum": 100,
+	  "spear-generic-lead": 100,
+	  "spear-generic-molybdochalkos": 175,
+	  "spear-generic-nickel": 325,
+	  "spear-generic-stainlesssteel": 850,
+	  "spear-generic-tin": 150,
+	  "spear-generic-titanium": 950,
+	  "spear-generic-zinc": 70
+	 }
+	},
+	{
+	 "op": "addmerge",
+	 "path": "/durabilitybytype",
+	 "file": "game:itemtypes/tool/wrench.json",
+	 "value": {
+	  "wrench-bismuth": 900,
+	  "wrench-brass": 650,
+	  "wrench-chromium": 2250,
+	  "wrench-cupronickel": 1100,
+	  "wrench-electrum": 300,
+	  "wrench-lead": 275,
+	  "wrench-molybdochalkos": 550,
+	  "wrench-nickel": 1350,
+	  "wrench-stainlesssteel": 5000,
+	  "wrench-tin": 500,
+	  "wrench-titanium": 5950,
+	  "wrench-zinc": 150
 	 }
 	}
 ]

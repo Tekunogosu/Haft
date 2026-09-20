@@ -1,0 +1,823 @@
+[
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/axe-metal.json",
+		"path": "/tooltierbytype",
+		"comment": "Derived from the durability ranking already set in fullmetalparity.json: each metal takes the stats of the vanilla structural metal it sits level with, scaled by where it falls between them. Gold and silver are never used as anchors - vanilla rates them faster but far more fragile than copper, which would invert the ranking. stainlesssteel and titanium are tier 6, one step past steel. Values are clamped so no metal ever rates below one it out-lasts.",
+		"value": {
+			"*-zinc": 1,
+			"*-lead": 2,
+			"*-electrum": 2,
+			"*-tin": 2,
+			"*-molybdochalkos": 2,
+			"*-brass": 2,
+			"*-bismuth": 3,
+			"*-cupronickel": 3,
+			"*-nickel": 3,
+			"*-chromium": 4,
+			"*-stainlesssteel": 6,
+			"*-titanium": 6
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/axe-metal.json",
+		"path": "/miningspeedbytype",
+		"value": {
+			"axe-felling-zinc": {
+				"wood": 3.1,
+				"plant": 1.7,
+				"leaves": 1.45
+			},
+			"axe-felling-lead": {
+				"wood": 3.65,
+				"plant": 1.95,
+				"leaves": 1.7
+			},
+			"axe-felling-electrum": {
+				"wood": 4.15,
+				"plant": 2.25,
+				"leaves": 1.9
+			},
+			"axe-felling-tin": {
+				"wood": 4.95,
+				"plant": 2.65,
+				"leaves": 2.3
+			},
+			"axe-felling-molybdochalkos": {
+				"wood": 5.2,
+				"plant": 2.8,
+				"leaves": 2.4
+			},
+			"axe-felling-brass": {
+				"wood": 5.45,
+				"plant": 2.95,
+				"leaves": 2.5
+			},
+			"axe-felling-bismuth": {
+				"wood": 5.8,
+				"plant": 3.5,
+				"leaves": 2.6
+			},
+			"axe-felling-cupronickel": {
+				"wood": 6.95,
+				"plant": 4.2,
+				"leaves": 3.25
+			},
+			"axe-felling-nickel": {
+				"wood": 7.25,
+				"plant": 4.4,
+				"leaves": 3.4
+			},
+			"axe-felling-chromium": {
+				"wood": 9.25,
+				"plant": 5.5,
+				"leaves": 3.5
+			},
+			"axe-felling-stainlesssteel": {
+				"wood": 12.1,
+				"plant": 6.6,
+				"leaves": 4.4
+			},
+			"axe-felling-titanium": {
+				"wood": 13.2,
+				"plant": 7.2,
+				"leaves": 4.8
+			}
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/axe-metal.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"axe-felling-zinc": 1.2,
+			"axe-felling-lead": 1.4,
+			"axe-felling-electrum": 1.6,
+			"axe-felling-tin": 1.9,
+			"axe-felling-molybdochalkos": 2.0,
+			"axe-felling-brass": 2.1,
+			"axe-felling-bismuth": 2.5,
+			"axe-felling-cupronickel": 3.15,
+			"axe-felling-nickel": 3.3,
+			"axe-felling-chromium": 3.3,
+			"axe-felling-stainlesssteel": 4.4,
+			"axe-felling-titanium": 4.8
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/pickaxe.json",
+		"path": "/tooltierbytype",
+		"value": {
+			"*-zinc": 1,
+			"*-lead": 2,
+			"*-electrum": 2,
+			"*-tin": 2,
+			"*-molybdochalkos": 2,
+			"*-brass": 2,
+			"*-bismuth": 3,
+			"*-cupronickel": 3,
+			"*-nickel": 3,
+			"*-chromium": 4,
+			"*-stainlesssteel": 6,
+			"*-titanium": 6
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/pickaxe.json",
+		"path": "/miningspeedbytype",
+		"value": {
+			"pickaxe-zinc": {
+				"ceramic": 0.9,
+				"stone": 2.4,
+				"ore": 2.4,
+				"metal": 2.4,
+				"ice": 1.05
+			},
+			"pickaxe-lead": {
+				"ceramic": 1.05,
+				"stone": 2.8,
+				"ore": 2.8,
+				"metal": 2.8,
+				"ice": 1.2
+			},
+			"pickaxe-electrum": {
+				"ceramic": 1.2,
+				"stone": 3.2,
+				"ore": 3.2,
+				"metal": 3.2,
+				"ice": 1.4
+			},
+			"pickaxe-tin": {
+				"ceramic": 1.4,
+				"stone": 3.8,
+				"ore": 3.8,
+				"metal": 3.8,
+				"ice": 1.65
+			},
+			"pickaxe-molybdochalkos": {
+				"ceramic": 1.5,
+				"stone": 4.0,
+				"ore": 4.0,
+				"metal": 4.0,
+				"ice": 1.75
+			},
+			"pickaxe-brass": {
+				"ceramic": 1.6,
+				"stone": 4.2,
+				"ore": 4.2,
+				"metal": 4.2,
+				"ice": 1.85
+			},
+			"pickaxe-bismuth": {
+				"ceramic": 2.0,
+				"stone": 5.5,
+				"ore": 5.5,
+				"metal": 5.5,
+				"ice": 2.2
+			},
+			"pickaxe-cupronickel": {
+				"ceramic": 2.6,
+				"stone": 6.8,
+				"ore": 6.8,
+				"metal": 6.8,
+				"ice": 2.95
+			},
+			"pickaxe-nickel": {
+				"ceramic": 2.75,
+				"stone": 7.15,
+				"ore": 7.15,
+				"metal": 7.15,
+				"ice": 3.1
+			},
+			"pickaxe-chromium": {
+				"ceramic": 3.05,
+				"stone": 8.25,
+				"ore": 8.25,
+				"metal": 8.25,
+				"ice": 3.85
+			},
+			"pickaxe-stainlesssteel": {
+				"ceramic": 3.6,
+				"stone": 9.9,
+				"ore": 9.9,
+				"metal": 9.9,
+				"ice": 4.7
+			},
+			"pickaxe-titanium": {
+				"ceramic": 3.9,
+				"stone": 10.8,
+				"ore": 10.8,
+				"metal": 10.8,
+				"ice": 5.1
+			}
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/pickaxe.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"pickaxe-zinc": 0.75,
+			"pickaxe-lead": 0.9,
+			"pickaxe-electrum": 1.0,
+			"pickaxe-tin": 1.2,
+			"pickaxe-molybdochalkos": 1.25,
+			"pickaxe-brass": 1.3,
+			"pickaxe-bismuth": 1.5,
+			"pickaxe-cupronickel": 2.1,
+			"pickaxe-nickel": 2.2,
+			"pickaxe-chromium": 2.5,
+			"pickaxe-stainlesssteel": 2.75,
+			"pickaxe-titanium": 3.0
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/prospectingpick.json",
+		"path": "/tooltierbytype",
+		"value": {
+			"*-zinc": 1,
+			"*-lead": 2,
+			"*-electrum": 2,
+			"*-tin": 2,
+			"*-molybdochalkos": 2,
+			"*-brass": 2,
+			"*-bismuth": 3,
+			"*-cupronickel": 3,
+			"*-nickel": 3,
+			"*-chromium": 4,
+			"*-stainlesssteel": 6,
+			"*-titanium": 6
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/prospectingpick.json",
+		"path": "/miningspeedbytype",
+		"value": {
+			"prospectingpick-zinc": {
+				"stone": 1.5,
+				"ore": 1.5
+			},
+			"prospectingpick-lead": {
+				"stone": 1.75,
+				"ore": 1.75
+			},
+			"prospectingpick-electrum": {
+				"stone": 2.0,
+				"ore": 2.0
+			},
+			"prospectingpick-tin": {
+				"stone": 2.4,
+				"ore": 2.4
+			},
+			"prospectingpick-molybdochalkos": {
+				"stone": 2.5,
+				"ore": 2.5
+			},
+			"prospectingpick-brass": {
+				"stone": 2.6,
+				"ore": 2.6
+			},
+			"prospectingpick-bismuth": {
+				"stone": 3.0,
+				"ore": 3.0
+			},
+			"prospectingpick-cupronickel": {
+				"stone": 3.7,
+				"ore": 3.7
+			},
+			"prospectingpick-nickel": {
+				"stone": 3.85,
+				"ore": 3.85
+			},
+			"prospectingpick-chromium": {
+				"stone": 4.95,
+				"ore": 4.95
+			},
+			"prospectingpick-stainlesssteel": {
+				"stone": 6.05,
+				"ore": 6.05
+			},
+			"prospectingpick-titanium": {
+				"stone": 6.6,
+				"ore": 6.6
+			}
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/prospectingpick.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"prospectingpick-zinc": 0.75,
+			"prospectingpick-lead": 0.9,
+			"prospectingpick-electrum": 1.0,
+			"prospectingpick-tin": 1.2,
+			"prospectingpick-molybdochalkos": 1.25,
+			"prospectingpick-brass": 1.3,
+			"prospectingpick-bismuth": 1.5,
+			"prospectingpick-cupronickel": 2.1,
+			"prospectingpick-nickel": 2.2,
+			"prospectingpick-chromium": 2.5,
+			"prospectingpick-stainlesssteel": 2.75,
+			"prospectingpick-titanium": 3.0
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/saw.json",
+		"path": "/tooltierbytype",
+		"value": {
+			"*-zinc": 1,
+			"*-lead": 2,
+			"*-electrum": 2,
+			"*-tin": 2,
+			"*-molybdochalkos": 2,
+			"*-brass": 2,
+			"*-bismuth": 3,
+			"*-cupronickel": 3,
+			"*-nickel": 3,
+			"*-chromium": 4,
+			"*-stainlesssteel": 6,
+			"*-titanium": 6
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/saw.json",
+		"path": "/miningspeedbytype",
+		"value": {
+			"saw-zinc": {
+				"wood": 2.4,
+				"leaves": 1.45
+			},
+			"saw-lead": {
+				"wood": 2.8,
+				"leaves": 1.7
+			},
+			"saw-electrum": {
+				"wood": 3.2,
+				"leaves": 1.9
+			},
+			"saw-tin": {
+				"wood": 3.8,
+				"leaves": 2.3
+			},
+			"saw-molybdochalkos": {
+				"wood": 4.0,
+				"leaves": 2.4
+			},
+			"saw-brass": {
+				"wood": 4.2,
+				"leaves": 2.5
+			},
+			"saw-bismuth": {
+				"wood": 4.4,
+				"leaves": 2.6
+			},
+			"saw-cupronickel": {
+				"wood": 4.95,
+				"leaves": 3.25
+			},
+			"saw-nickel": {
+				"wood": 5.15,
+				"leaves": 3.4
+			},
+			"saw-chromium": {
+				"wood": 5.5,
+				"leaves": 3.5
+			},
+			"saw-stainlesssteel": {
+				"wood": 6.6,
+				"leaves": 4.4
+			},
+			"saw-titanium": {
+				"wood": 7.2,
+				"leaves": 4.8
+			}
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/hoe.json",
+		"path": "/miningspeedbytype",
+		"value": {
+			"hoe-zinc": {
+				"soil": 1.8
+			},
+			"hoe-lead": {
+				"soil": 2.1
+			},
+			"hoe-electrum": {
+				"soil": 2.4
+			},
+			"hoe-tin": {
+				"soil": 2.85
+			},
+			"hoe-molybdochalkos": {
+				"soil": 3.0
+			},
+			"hoe-brass": {
+				"soil": 3.15
+			},
+			"hoe-bismuth": {
+				"soil": 3.6
+			},
+			"hoe-cupronickel": {
+				"soil": 4.4
+			},
+			"hoe-nickel": {
+				"soil": 4.6
+			},
+			"hoe-chromium": {
+				"soil": 4.95
+			},
+			"hoe-stainlesssteel": {
+				"soil": 5.5
+			},
+			"hoe-titanium": {
+				"soil": 6.0
+			}
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/hoe.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"hoe-zinc": 0.75,
+			"hoe-lead": 0.9,
+			"hoe-electrum": 1.0,
+			"hoe-tin": 1.2,
+			"hoe-molybdochalkos": 1.25,
+			"hoe-brass": 1.3,
+			"hoe-bismuth": 1.5,
+			"hoe-cupronickel": 2.1,
+			"hoe-nickel": 2.2,
+			"hoe-chromium": 2.5,
+			"hoe-stainlesssteel": 2.75,
+			"hoe-titanium": 3.0
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/knife.json",
+		"path": "/miningspeedbytype",
+		"value": {
+			"knife-generic-zinc": {
+				"plant": 0.9
+			},
+			"knife-generic-lead": {
+				"plant": 1.05
+			},
+			"knife-generic-electrum": {
+				"plant": 1.2
+			},
+			"knife-generic-tin": {
+				"plant": 1.4
+			},
+			"knife-generic-molybdochalkos": {
+				"plant": 1.5
+			},
+			"knife-generic-brass": {
+				"plant": 1.6
+			},
+			"knife-generic-bismuth": {
+				"plant": 1.7
+			},
+			"knife-generic-cupronickel": {
+				"plant": 2.0
+			},
+			"knife-generic-nickel": {
+				"plant": 2.1
+			},
+			"knife-generic-chromium": {
+				"plant": 2.2
+			},
+			"knife-generic-stainlesssteel": {
+				"plant": 2.65
+			},
+			"knife-generic-titanium": {
+				"plant": 2.9
+			}
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/knife.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"knife-generic-zinc": 0.9,
+			"knife-generic-lead": 1.05,
+			"knife-generic-electrum": 1.2,
+			"knife-generic-tin": 1.4,
+			"knife-generic-molybdochalkos": 1.5,
+			"knife-generic-brass": 1.6,
+			"knife-generic-bismuth": 2.0,
+			"knife-generic-cupronickel": 3.15,
+			"knife-generic-nickel": 3.3,
+			"knife-generic-chromium": 3.85,
+			"knife-generic-stainlesssteel": 4.4,
+			"knife-generic-titanium": 4.8
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/shovel.json",
+		"path": "/miningspeedbytype",
+		"value": {
+			"shovel-zinc": {
+				"soil": 2.4,
+				"sand": 2.4,
+				"gravel": 1.55,
+				"snow": 1.55
+			},
+			"shovel-lead": {
+				"soil": 2.8,
+				"sand": 2.8,
+				"gravel": 1.8,
+				"snow": 1.8
+			},
+			"shovel-electrum": {
+				"soil": 3.2,
+				"sand": 3.2,
+				"gravel": 2.1,
+				"snow": 2.1
+			},
+			"shovel-tin": {
+				"soil": 3.8,
+				"sand": 3.8,
+				"gravel": 2.45,
+				"snow": 2.45
+			},
+			"shovel-molybdochalkos": {
+				"soil": 4.0,
+				"sand": 4.0,
+				"gravel": 2.6,
+				"snow": 2.6
+			},
+			"shovel-brass": {
+				"soil": 4.2,
+				"sand": 4.2,
+				"gravel": 2.75,
+				"snow": 2.75
+			},
+			"shovel-bismuth": {
+				"soil": 5.0,
+				"sand": 5.0,
+				"gravel": 3.2,
+				"snow": 3.2
+			},
+			"shovel-cupronickel": {
+				"soil": 5.8,
+				"sand": 5.8,
+				"gravel": 3.9,
+				"snow": 3.9
+			},
+			"shovel-nickel": {
+				"soil": 6.05,
+				"sand": 6.05,
+				"gravel": 4.05,
+				"snow": 4.05
+			},
+			"shovel-chromium": {
+				"soil": 6.6,
+				"sand": 6.6,
+				"gravel": 4.4,
+				"snow": 4.4
+			},
+			"shovel-stainlesssteel": {
+				"soil": 7.7,
+				"sand": 7.7,
+				"gravel": 4.85,
+				"snow": 4.85
+			},
+			"shovel-titanium": {
+				"soil": 8.4,
+				"sand": 8.4,
+				"gravel": 5.3,
+				"snow": 5.3
+			}
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/shovel.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"shovel-zinc": 0.75,
+			"shovel-lead": 0.9,
+			"shovel-electrum": 1.0,
+			"shovel-tin": 1.2,
+			"shovel-molybdochalkos": 1.25,
+			"shovel-brass": 1.3,
+			"shovel-bismuth": 1.5,
+			"shovel-cupronickel": 2.1,
+			"shovel-nickel": 2.2,
+			"shovel-chromium": 2.5,
+			"shovel-stainlesssteel": 2.75,
+			"shovel-titanium": 3.0
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/hammer.json",
+		"path": "/tooltierbytype",
+		"value": {
+			"*-zinc": 1,
+			"*-lead": 2,
+			"*-electrum": 2,
+			"*-tin": 2,
+			"*-molybdochalkos": 2,
+			"*-brass": 2,
+			"*-bismuth": 3,
+			"*-cupronickel": 3,
+			"*-nickel": 3,
+			"*-chromium": 4,
+			"*-stainlesssteel": 6,
+			"*-titanium": 6
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/hammer.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"hammer-zinc": 0.75,
+			"hammer-lead": 0.9,
+			"hammer-electrum": 1.0,
+			"hammer-tin": 1.2,
+			"hammer-molybdochalkos": 1.25,
+			"hammer-brass": 1.3,
+			"hammer-bismuth": 1.5,
+			"hammer-cupronickel": 2.1,
+			"hammer-nickel": 2.2,
+			"hammer-chromium": 2.5,
+			"hammer-stainlesssteel": 2.75,
+			"hammer-titanium": 3.0
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/wrench.json",
+		"path": "/tooltierbytype",
+		"value": {
+			"*-zinc": 1,
+			"*-lead": 2,
+			"*-electrum": 2,
+			"*-tin": 2,
+			"*-molybdochalkos": 2,
+			"*-brass": 2,
+			"*-bismuth": 3,
+			"*-cupronickel": 3,
+			"*-nickel": 3,
+			"*-chromium": 4,
+			"*-stainlesssteel": 6,
+			"*-titanium": 6
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/wrench.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"wrench-zinc": 0.75,
+			"wrench-lead": 0.9,
+			"wrench-electrum": 1.0,
+			"wrench-tin": 1.2,
+			"wrench-molybdochalkos": 1.25,
+			"wrench-brass": 1.3,
+			"wrench-bismuth": 1.5,
+			"wrench-cupronickel": 2.1,
+			"wrench-nickel": 2.2,
+			"wrench-chromium": 2.5,
+			"wrench-stainlesssteel": 2.75,
+			"wrench-titanium": 3.0
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/blade.json",
+		"path": "/tooltierbytype",
+		"value": {
+			"*-zinc": 1,
+			"*-lead": 2,
+			"*-electrum": 2,
+			"*-tin": 2,
+			"*-molybdochalkos": 2,
+			"*-brass": 2,
+			"*-bismuth": 3,
+			"*-cupronickel": 3,
+			"*-nickel": 3,
+			"*-chromium": 4,
+			"*-stainlesssteel": 6,
+			"*-titanium": 6
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/blade.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"blade-falx-zinc": 2.25,
+			"blade-falx-lead": 2.6,
+			"blade-falx-electrum": 3.0,
+			"blade-falx-tin": 3.55,
+			"blade-falx-molybdochalkos": 3.75,
+			"blade-falx-brass": 3.95,
+			"blade-falx-bismuth": 4.25,
+			"blade-falx-cupronickel": 5.0,
+			"blade-falx-nickel": 5.2,
+			"blade-falx-chromium": 5.5,
+			"blade-falx-stainlesssteel": 5.8,
+			"blade-falx-titanium": 6.3
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/cleaver.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"cleaver-zinc": 0.75,
+			"cleaver-lead": 0.9,
+			"cleaver-electrum": 1.0,
+			"cleaver-tin": 1.2,
+			"cleaver-molybdochalkos": 1.25,
+			"cleaver-brass": 1.3,
+			"cleaver-bismuth": 1.5,
+			"cleaver-cupronickel": 2.1,
+			"cleaver-nickel": 2.2,
+			"cleaver-chromium": 2.75,
+			"cleaver-stainlesssteel": 3.05,
+			"cleaver-titanium": 3.3
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/shears.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"shears-zinc": 0.6,
+			"shears-lead": 0.7,
+			"shears-electrum": 0.8,
+			"shears-tin": 0.95,
+			"shears-molybdochalkos": 1.0,
+			"shears-brass": 1.05,
+			"shears-bismuth": 1.05,
+			"shears-cupronickel": 2.6,
+			"shears-nickel": 2.75,
+			"shears-chromium": 3.3,
+			"shears-stainlesssteel": 3.85,
+			"shears-titanium": 4.2
+		},
+		"enabled": true
+	},
+	{
+		"op": "addmerge",
+		"file": "game:itemtypes/tool/spear.json",
+		"path": "/attackpowerbytype",
+		"value": {
+			"spear-generic-zinc": 1.65,
+			"spear-generic-lead": 1.9,
+			"spear-generic-electrum": 2.2,
+			"spear-generic-tin": 2.6,
+			"spear-generic-molybdochalkos": 2.75,
+			"spear-generic-brass": 2.9,
+			"spear-generic-bismuth": 3.25,
+			"spear-generic-cupronickel": 4.2,
+			"spear-generic-nickel": 4.4,
+			"spear-generic-chromium": 4.6,
+			"spear-generic-stainlesssteel": 4.85,
+			"spear-generic-titanium": 5.3
+		},
+		"enabled": true
+	}
+]

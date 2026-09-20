@@ -58,22 +58,61 @@ namespace Haft.Client.Behaviors {
             if (HaftModSystem.ClientConfig.DisableMultiPartRendering) {
                 return;
             }
-            
-            int meshrefID = itemstack.TempAttributes.GetInt(HaftAttributes.HaftMeshID);
-            if (api != null && (meshrefID == 0 || !meshrefs.TryGetValue(meshrefID, out renderinfo.ModelRef))) { //This checks if it has already been rendered and cached, and if so, send that again - otherwise generate one.
-                int id = meshrefs.Count + 1;
 
-                ItemSlot dummySlot = new DummySlot(itemstack);
-                var mesh = GenMesh(dummySlot, capi.ItemTextureAtlas, null);
-                if (mesh != null) {
-                    MultiTextureMeshRef modelref = capi.Render.UploadMultiTextureMesh(mesh);
-                    renderinfo.ModelRef = meshrefs[id] = modelref;
-                } else {
-                    meshrefs[id] = renderinfo.ModelRef;
-                }
-
-                itemstack.TempAttributes.SetInt(HaftAttributes.HaftMeshID, id);
+            if (api == null) {
+                return;
             }
+
+            //The cache key is the render tree's own content hash, not a counter.
+            //
+            //A counter made the key a function of how many meshes had been built rather than of what was being
+            //drawn, which cost two things. Nothing could ever be reused, so an item whose tree was rewritten
+            //uploaded a fresh mesh and abandoned the previous one, and the dictionary was only ever emptied
+            //wholesale in OnUnloaded. And the key collided, because Count + 1 repeats as soon as anything is
+            //removed.
+            //
+            //Hashing the tree fixes both at once: two stacks whose parts and textures match share one upload, and
+            //an item returning to a tree it has rendered before reuses that mesh. TreeAttribute's
+            //own GetHashCode is what does it - it recurses into subtrees and is content-based, so every part's
+            //shape path and texture paths feed the key.
+            int id = MeshCacheKey(itemstack);
+            if (meshrefs.TryGetValue(id, out var cached)) {
+                renderinfo.ModelRef = cached;
+                return;
+            }
+
+            ItemSlot dummySlot = new DummySlot(itemstack);
+            var mesh = GenMesh(dummySlot, capi.ItemTextureAtlas, null);
+            if (mesh != null) {
+                MultiTextureMeshRef modelref = capi.Render.UploadMultiTextureMesh(mesh);
+                renderinfo.ModelRef = meshrefs[id] = modelref;
+            } else {
+                meshrefs[id] = renderinfo.ModelRef;
+            }
+        }
+
+        //The cache key for a stack's composed mesh: what it is, plus the tree it is drawn from.
+        //
+        //The item id is mixed in because the render tree alone does not identify the mesh. GenMesh falls back to
+        //the item's own defaults whenever a stack carries no tree, so every treeless stack in the game would
+        //otherwise hash alike and the first one rendered would supply every other one's mesh.
+        //
+        //Both tree shapes GenMesh accepts are read here, and in the order GenMesh checks them, so the key is
+        //derived from whichever tree will actually be drawn. Neither is read through the Get* accessors: those
+        //CREATE the tree as a side effect of reading it, which on a stave is the bug that made it render as a
+        //plain bow. Asking Has* first keeps this read-only.
+        private int MeshCacheKey(ItemStack itemstack) {
+            int key = itemstack.Collectible?.Id ?? 0;
+
+            if (itemstack.HasMultiPartRenderTree()) {
+                return key ^ itemstack.GetMultiPartRenderTree().GetHashCode();
+            }
+
+            if (itemstack.HasPartRenderTree()) {
+                return key ^ itemstack.GetPartRenderTree().GetHashCode();
+            }
+
+            return key;
         }
 
         public MeshData GenMesh(ItemSlot itemslot, ITextureAtlasAPI targetAtlas, BlockPos atBlockPos) {

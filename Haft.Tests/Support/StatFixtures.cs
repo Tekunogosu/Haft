@@ -54,8 +54,12 @@ public static class StatFixtures {
 
     public static BindingStatDefines NoBinding() => Binding(1.0f, 0.0f, 0.0f);
 
-    public static GripStatDefines Grip(float speedBonus, float chanceToDamage) =>
-        new() { speedBonus = speedBonus, chanceToDamage = chanceToDamage };
+    public static GripStatDefines Grip(float speedBonus, float chanceToDamage, float steadyBonus = 0.0f) =>
+        new() { speedBonus = speedBonus, chanceToDamage = chanceToDamage, steadyBonus = steadyBonus };
 
     public static GripStatDefines PlainGrip() => Grip(0.0f, 1.0f);
+
+    //A grip carrying only the bow axes. speedBonus and chanceToDamage are tool stats and are not read on a bow, so
+    //they are left at their neutral values rather than given numbers a reader might take for meaningful.
+    public static GripStatDefines BowGrip(float steadyBonus) => Grip(0.0f, 1.0f, steadyBonus);
 }

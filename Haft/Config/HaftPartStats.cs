@@ -312,6 +312,23 @@ namespace Haft.Config {
             return Math.Clamp(fromLimb * (1.0f + fromTreatment), 0.0f, BowLimbRefundCap);
         }
 
+        //How much of an aim penalty the grip hands back, in the units the engine subtracted it.
+        //
+        //Vanilla's penalty modifiers each subtract `penalty / max(1, rangedWeaponsAcc)`, so the refund divides by
+        //the same term rather than by the raw penalty: a refund computed any other way would drift from what was
+        //actually taken the moment the archer's accuracy stat moved.
+        //
+        //A penalty of zero, an ungripped bow, or a grip with no steadiness all refund nothing, so the caller can
+        //apply this unconditionally.
+        public static float CalculateGripAccuracyRefund(GripStatDefines gripStats, float penalty, float rangedAccuracy) {
+            var steady = gripStats?.steadyBonus ?? 0.0f;
+            if (steady <= 0.0f || penalty <= 0.0f) {
+                return 0.0f;
+            }
+
+            return penalty * steady / Math.Max(1.0f, rangedAccuracy);
+        }
+
         //Whether a material can be a limb at all. flexibility and density are left unset (-1.0) rather than defaulted
         //precisely so this question has an answer: a material nobody has given a bow value to reads as "no bow data"
         //instead of silently rating as well as oak. Callers check this before offering a bow recipe.
@@ -330,8 +347,8 @@ namespace Haft.Config {
             return new HandleStatBundle {
                 Handle = handleStats,
                 Binding = bindingStats,
-                Grip = HaftModSystem.Stats.GripStats.Get(handle.HasHandleGripTag() ? handle.GetHandleGripTag() : HaftConstants.DefaultGripTag),
-                Treatment = HaftModSystem.Stats.TreatmentStats.Get(handle.HasHandleTreatmentTag() ? handle.GetHandleTreatmentTag() : HaftConstants.DefaultTreatmentTag),
+                Grip = handle.GetGripStatsOrDefault(),
+                Treatment = handle.GetTreatmentStatsOrDefault(),
                 Material = handle.GetHandleMaterialStats()
             };
         }

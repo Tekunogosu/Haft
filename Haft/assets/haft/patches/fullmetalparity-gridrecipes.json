@@ -1,0 +1,65 @@
+[
+	{
+		"op": "addeach",
+		"file": "game:recipes/grid/tool/axe.json",
+		"path": "/0/ingredients/T/allowedVariants/-",
+		"value": [
+			"bismuth",
+			"brass",
+			"chromium",
+			"cupronickel",
+			"electrum",
+			"lead",
+			"molybdochalkos",
+			"nickel",
+			"stainlesssteel",
+			"tin",
+			"titanium",
+			"zinc"
+		],
+		"comment": "Recipe 0 is the metal felling axe; recipes 1 and 2 are the stone and bone variants and are deliberately left alone. Without this the new metals smith into an axehead that no grid recipe consumes, so Haft never grants it CollectibleBehaviorToolHead and the head has no stats and cannot be tinkered.",
+		"enabled": true
+	},
+	{
+		"op": "addeach",
+		"file": "game:recipes/grid/tool/blade.json",
+		"path": "/0/ingredients/T/allowedVariants/-",
+		"value": [
+			"bismuth",
+			"brass",
+			"chromium",
+			"cupronickel",
+			"electrum",
+			"lead",
+			"molybdochalkos",
+			"nickel",
+			"stainlesssteel",
+			"tin",
+			"titanium",
+			"zinc"
+		],
+		"comment": "Recipe 0 is the falx. Recipes 1-3 are the blackguard and the gold/silver plated falx, all pinned to a specific metal, and are left alone.",
+		"enabled": true
+	},
+	{
+		"op": "addeach",
+		"file": "game:recipes/grid/tool/spear.json",
+		"path": "/ingredients/T/allowedVariants/-",
+		"value": [
+			"bismuth",
+			"brass",
+			"chromium",
+			"cupronickel",
+			"electrum",
+			"lead",
+			"molybdochalkos",
+			"nickel",
+			"stainlesssteel",
+			"tin",
+			"titanium",
+			"zinc"
+		],
+		"comment": "spear.json is a single recipe object, not an array, so the path carries no index. Its allowedVariants already lists the stone metals; these append to it.",
+		"enabled": true
+	}
+]

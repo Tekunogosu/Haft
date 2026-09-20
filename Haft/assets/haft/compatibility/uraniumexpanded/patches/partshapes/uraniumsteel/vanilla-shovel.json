@@ -2,23 +2,19 @@
 	{
 		"op": "addmerge",
 		"path": "/shapeByType/*-uraniumsteel",
-		"value": {
-			"base": "haft:item/parts/shovel/heads/advanced"
-		},
-		"file": "game:itemtypes/toolhead/shovelhead.json",
-		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
-	},
-	{
-		"op": "remove",
-		"path": "/shapeByType/*",
+		"value": { "base": "haft:item/parts/shovel/heads/advanced" },
 		"file": "game:itemtypes/toolhead/shovelhead.json",
 		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
 	},
 	{
 		"op": "addmerge",
-		"path": "/shapeByType/*",
+		"path": "/guiTransformByType/@*-(uraniumsteel)",
+		"comment": "Uranium Expanded sets its own shovelhead gui transform for this metal, tuned for the vanilla shovelhead-copper model it assigns. Haft replaces the shape with its own advanced head but loads after that transform, so without this the head renders with vanilla's origin and scale and sits outside the icon. Values match Haft's own metal shovel heads.",
 		"value": {
-			"base": "haft:item/parts/shovel/heads/nonmetal"
+			"translation": { "x": 0, "y": 0, "z": 0 },
+			"rotation": { "x": 141, "y": 33, "z": -38 },
+			"origin": { "x": 1.22, "y": 0, "z": 0.6 },
+			"scale": 2.45
 		},
 		"file": "game:itemtypes/toolhead/shovelhead.json",
 		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
@@ -35,42 +31,8 @@
 		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
 	},
 	{
-		"op": "remove",
-		"path": "/tpHandTransformByType/*",
-		"file": "game:itemtypes/toolhead/shovelhead.json",
-		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
-	},
-	{
-		"op": "addmerge",
-		"path": "/tpHandTransformByType/*",
-		"value": {
-			"translation": { "x": 0, "y": -0.4, "z": -0.1 },
-			"rotation": { "x": 90, "y": 20, "z": 0 },
-			"scale": 0.85
-		},
-		"file": "game:itemtypes/toolhead/shovelhead.json",
-		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
-	},
-	{
 		"op": "addmerge",
 		"path": "/attributes/groundStorageTransformByType/@shovel-(uraniumsteel)",
-		"value": {
-			"translation": { "x": 0, "y": 0.5, "z": -0.15 },
-			"rotation": { "x": 13, "y": 88, "z": -87 },
-			"scale": 0.88
-		},
-		"file": "game:itemtypes/tool/shovel.json",
-		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
-	},
-	{
-		"op": "remove",
-		"path": "/attributes/groundStorageTransformByType/*",
-		"file": "game:itemtypes/tool/shovel.json",
-		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
-	},
-	{
-		"op": "addmerge",
-		"path": "/attributes/groundStorageTransformByType/*",
 		"value": {
 			"translation": { "x": 0, "y": 0.5, "z": -0.15 },
 			"rotation": { "x": 13, "y": 88, "z": -87 },

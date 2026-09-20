@@ -2,53 +2,19 @@
 	{
 		"op": "addmerge",
 		"path": "/shapeByType/*-ferrousuranium",
-		"value": {
-			"base": "haft:item/parts/axe/heads/advanced"
-		},
-		"file": "game:itemtypes/toolhead/axehead.json",
-		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
-	},
-	{
-		"op": "remove",
-		"path": "/shapeByType/*",
-		"file": "game:itemtypes/toolhead/axehead.json",
-		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
-	},
-	{
-		"op": "addmerge",
-		"path": "/shapeByType/*",
-		"value": {
-			"base": "haft:item/parts/axe/heads/nonmetal"
-		},
+		"value": { "base": "haft:item/parts/axe/heads/advanced" },
 		"file": "game:itemtypes/toolhead/axehead.json",
 		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
 	},
 	{
 		"op": "addmerge",
 		"path": "/guiTransformByType/@*-(ferrousuranium)",
+		"comment": "Matches vanilla axehead.json's own metal-head orientation. Haft's advanced heads use a different handedness, which read as a horizontally mirrored icon next to a base-game axe.",
 		"value": {
 			"translation": { "x": 0, "y": 0, "z": 0 },
-			"rotation": { "x": -70, "y": 70, "z": -50 },
-			"origin": { "x": 1.07, "y": 0, "z": 0.4 },
-			"scale": 3.2
-		},
-		"file": "game:itemtypes/toolhead/axehead.json",
-		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
-	},
-	{
-		"op": "remove",
-		"path": "/guiTransformByType/*",
-		"file": "game:itemtypes/toolhead/axehead.json",
-		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }
-	},
-	{
-		"op": "addmerge",
-		"path": "/guiTransformByType/*",
-		"value": {
-			"translation": { "x": 0, "y": 0, "z": 0 },
-			"rotation": { "x": -70, "y": 70, "z": -50 },
-			"origin": { "x": 1.07, "y": 0, "z": 0.43 },
-			"scale": 3.55
+			"rotation": { "x": -57, "y": -119, "z": -172 },
+			"origin": { "x": 0.97, "y": -0.07, "z": 0.5 },
+			"scale": 2.8
 		},
 		"file": "game:itemtypes/toolhead/axehead.json",
 		"condition": { "when": "Haft_MultiPartRendering", "isValue": "true" }

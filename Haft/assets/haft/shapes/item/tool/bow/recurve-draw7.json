@@ -430,79 +430,155 @@
 											},
 											"children": [
 												{
-													"name": "BowNock",
+													"name": "BowStringUp2",
 													"from": [
-														-1.58,
-														-0.1,
-														-0.1
+														-5.2,
+														0.0,
+														0.0
 													],
 													"to": [
-														0.42,
-														0.3,
-														0.3
+														-5.2,
+														0.0,
+														0.0
 													],
 													"rotationOrigin": [
-														-0.58,
+														-3.0,
 														0.1,
 														0.1
 													],
-													"rotationY": -25.0,
 													"faces": {
 														"north": {
-															"texture": "#leather",
+															"texture": "#string",
 															"uv": [
-																2.5,
-																2.0,
-																4.5,
-																2.5
+																2.25,
+																0.0,
+																7.25,
+																0.25
 															]
 														},
 														"east": {
-															"texture": "#leather",
+															"texture": "#string",
 															"uv": [
-																4.0,
-																1.0,
-																4.5,
-																1.5
+																3.25,
+																0.0,
+																3.5,
+																0.25
 															]
 														},
 														"south": {
-															"texture": "#leather",
+															"texture": "#string",
 															"uv": [
 																2.0,
-																1.0,
-																4.0,
-																1.5
+																0.0,
+																7.0,
+																0.25
 															]
 														},
 														"west": {
-															"texture": "#leather",
+															"texture": "#string",
 															"uv": [
-																1.5,
-																1.0,
-																2.0,
-																1.5
+																4.25,
+																0.0,
+																4.5,
+																0.25
 															]
 														},
 														"up": {
-															"texture": "#leather",
+															"texture": "#string",
 															"uv": [
-																4.5,
-																0.5,
-																6.5,
-																1.0
+																1.75,
+																0.0,
+																6.75,
+																0.25
 															]
 														},
 														"down": {
-															"texture": "#leather",
+															"texture": "#string",
 															"uv": [
-																4.0,
-																1.0,
-																6.0,
-																1.5
+																2.75,
+																0.0,
+																7.75,
+																0.25
 															]
 														}
-													}
+													},
+													"children": [
+														{
+															"name": "BowNock",
+															"from": [
+																0.8,
+																-0.1,
+																-0.1
+															],
+															"to": [
+																0.8,
+																-0.1,
+																-0.1
+															],
+															"rotationOrigin": [
+																1.8,
+																0.1,
+																0.1
+															],
+															"rotationY": -3.0,
+															"faces": {
+																"north": {
+																	"texture": "#leather",
+																	"uv": [
+																		2.25,
+																		1.75,
+																		4.25,
+																		2.0
+																	]
+																},
+																"east": {
+																	"texture": "#leather",
+																	"uv": [
+																		4.0,
+																		0.75,
+																		4.25,
+																		1.0
+																	]
+																},
+																"south": {
+																	"texture": "#leather",
+																	"uv": [
+																		1.75,
+																		0.75,
+																		3.75,
+																		1.0
+																	]
+																},
+																"west": {
+																	"texture": "#leather",
+																	"uv": [
+																		1.5,
+																		1.0,
+																		1.75,
+																		1.25
+																	]
+																},
+																"up": {
+																	"texture": "#leather",
+																	"uv": [
+																		4.5,
+																		0.5,
+																		6.5,
+																		0.75
+																	]
+																},
+																"down": {
+																	"texture": "#leather",
+																	"uv": [
+																		4.0,
+																		1.0,
+																		6.0,
+																		1.25
+																	]
+																}
+															}
+														}
+													]
 												}
 											]
 										},
@@ -1032,7 +1108,83 @@
 														0.25
 													]
 												}
-											}
+											},
+											"children": [
+												{
+													"name": "BowStringDown2",
+													"from": [
+														8.2,
+														0.0,
+														0.0
+													],
+													"to": [
+														8.2,
+														0.0,
+														0.0
+													],
+													"rotationOrigin": [
+														8.2,
+														0.0,
+														0.0
+													],
+													"faces": {
+														"north": {
+															"texture": "#string",
+															"uv": [
+																2.0,
+																0.0,
+																7.0,
+																0.25
+															]
+														},
+														"east": {
+															"texture": "#string",
+															"uv": [
+																2.75,
+																0.0,
+																3.0,
+																0.25
+															]
+														},
+														"south": {
+															"texture": "#string",
+															"uv": [
+																2.75,
+																0.0,
+																7.75,
+																0.25
+															]
+														},
+														"west": {
+															"texture": "#string",
+															"uv": [
+																3.5,
+																0.0,
+																3.75,
+																0.25
+															]
+														},
+														"up": {
+															"texture": "#string",
+															"uv": [
+																1.75,
+																0.0,
+																6.75,
+																0.25
+															]
+														},
+														"down": {
+															"texture": "#string",
+															"uv": [
+																1.0,
+																0.0,
+																6.0,
+																0.25
+															]
+														}
+													}
+												}
+											]
 										},
 										{
 											"name": "BowNotchDown",

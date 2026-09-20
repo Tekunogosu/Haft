@@ -212,28 +212,54 @@ namespace Haft {
             base.AssetsFinalize(api);
 
             if (api.Side.IsClient()) {
-                //Init these Clientside as well, in the case of Multiplayer
-                api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftHeadTag, ["haft-head"]);
-                api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftHandleTag, ["haft-handle"]);
-                api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftBindingTag, ["haft-binding"]);
-                api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftMaintenanceItemTag, ["haft-maintenance"]);
-                api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftPartTag, ["haft-part"]);
-
-                if (BindingTiers == null) {
-                    BindingTiers = new Dictionary<string, int>();
-                }
-                CalculateBindingTiers();
-                CacheAlternateWorkbenchSlots(api as ICoreClientAPI);
-
+                RegisterTagSetsClientSide(api);
                 return;
             }
 
             ProcessJsonPartsAndStats(api);
+            RegisterTagSetsServerSide(api);
 
-            var handleDict = Stats.BaseHandleParts;
-            var bindingDict = Stats.BindingParts;
-            var gripDict = Stats.GripParts;
-            var treatmentDict = Stats.TreatmentParts;
+            var singlePartTools = AllocateRecipeRegistrationLists();
+            ClassifyCollectibles(api, singlePartTools);
+
+            SaveToWorldData(api, HaftConstants.HaftWoodInToolBindingsData, ToolsWithWoodInBindingShapes);
+            PrintParsedToolsAndParts(singlePartTools);
+        }
+
+        //The tag sets the client needs in order to read the same items the server does, plus the two caches that
+        //only make sense once the client has an item list to build them from. A multiplayer client never runs the
+        //server branch, so these have to be created here as well rather than shared with it.
+        private void RegisterTagSetsClientSide(ICoreAPI api) {
+            //Init these Clientside as well, in the case of Multiplayer
+            api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftHeadTag, ["haft-head"]);
+            api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftHandleTag, ["haft-handle"]);
+            api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftBindingTag, ["haft-binding"]);
+            api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftMaintenanceItemTag, ["haft-maintenance"]);
+            api.CollectibleTagRegistry.TryCreateTagSet(out HaftConstants.HaftPartTag, ["haft-part"]);
+
+            if (BindingTiers == null) {
+                BindingTiers = new Dictionary<string, int>();
+            }
+            CalculateBindingTiers();
+            CacheAlternateWorkbenchSlots(api as ICoreClientAPI);
+        }
+
+        //Server-side tag sets. Kept apart from the client's because the server creates several the client has no
+        //use for, and because CreateTagSet throws where the client's TryCreateTagSet returns false.
+        private void RegisterTagSetsServerSide(ICoreAPI api) {
+            var bindingTags = api.CollectibleTagRegistry.CreateTagSet(["haft-part", "haft-binding"]);
+            var handleTags = api.CollectibleTagRegistry.CreateTagSet(["haft-part", "haft-handle"]);
+
+            HaftConstants.HaftHeadTag = api.CollectibleTagRegistry.CreateTagSet(["haft-head"]);
+            HaftConstants.HaftHandleTag = api.CollectibleTagRegistry.CreateTagSet(["haft-handle"]);
+            HaftConstants.HaftBindingTag = api.CollectibleTagRegistry.CreateTagSet(["haft-binding"]);
+            HaftConstants.HaftMaintenanceItemTag = api.CollectibleTagRegistry.CreateTagSet(["haft-maintenance"]);
+            HaftConstants.HaftPartTag = api.CollectibleTagRegistry.CreateTagSet(["haft-part"]);
+        }
+
+        //Allocates the lists RecipeRegisterModSystem fills and then frees. Returns the single-part tool list, which
+        //is only built when the debug dump is on and is therefore the one that can legitimately be null.
+        private List<CollectibleObject> AllocateRecipeRegistrationLists() {
             RecipeRegisterModSystem.HandleList = new List<CollectibleObject>();
             RecipeRegisterModSystem.BindingList = new List<CollectibleObject>();
             RecipeRegisterModSystem.GripList = new List<CollectibleObject>();
@@ -246,15 +272,23 @@ namespace Haft {
             if (Config.PrintAllParsedToolsAndParts) {
                 SinglePartToolsList = new List<CollectibleObject>();
             }
+            return SinglePartToolsList;
+        }
 
+        //Walks every collectible in the game once and decides what, if anything, Haft makes of it: a tinkerable
+        //tool, a smithed tool, a handle, a binding, a grip, a treatment, a bow or a liquid container. Each arm adds
+        //the behaviors that kind needs and records it in the list its recipes will be generated from.
+        //
+        //One pass with an if/else chain rather than one pass per kind: a collectible should be exactly one of
+        //these, and the chain is what enforces it - falling through to a second arm would give an item two
+        //identities and two sets of recipes.
+        private void ClassifyCollectibles(ICoreAPI api, List<CollectibleObject> SinglePartToolsList) {
+            var handleDict = Stats.BaseHandleParts;
+            var bindingDict = Stats.BindingParts;
+            var gripDict = Stats.GripParts;
+            var treatmentDict = Stats.TreatmentParts;
             var bindingTags = api.CollectibleTagRegistry.CreateTagSet(["haft-part", "haft-binding"]);
             var handleTags = api.CollectibleTagRegistry.CreateTagSet(["haft-part", "haft-handle"]);
-
-            HaftConstants.HaftHeadTag = api.CollectibleTagRegistry.CreateTagSet(["haft-head"]);
-            HaftConstants.HaftHandleTag = api.CollectibleTagRegistry.CreateTagSet(["haft-handle"]);
-            HaftConstants.HaftBindingTag = api.CollectibleTagRegistry.CreateTagSet(["haft-binding"]);
-            HaftConstants.HaftMaintenanceItemTag = api.CollectibleTagRegistry.CreateTagSet(["haft-maintenance"]);
-            HaftConstants.HaftPartTag = api.CollectibleTagRegistry.CreateTagSet(["haft-part"]);
 
             foreach (var t in api.World.Collectibles.Where(t => t?.Code != null)) { //A tool/part should likely be only one of these!
                 if (ConfigUtility.IsTinkerableTool(t.Code.ToString()) && !(ConfigUtility.IsToolHead(t.Code.ToString())) && !(ConfigUtility.IsOnBlacklist(t.Code.ToString()))) { //Any tool that you actually craft from a Tool Head to create!
@@ -334,11 +368,11 @@ namespace Haft {
                 if (ConfigUtility.IsValidGripMaterial(t.Code.Path, gripDict)) {
                     RecipeRegisterModSystem.GripList.Add(t);
                 }
-                //Asked through IsComposedFromParts rather than by the BowLimb behavior alone, because a bowstave
+                //Asked through IsHaftBow rather than by the BowLimb behavior alone, because a bowstave
                 //declares that behavior too and a stave is not a bow - it is a toolhead that dries into a different
                 //item and is then consumed. The behavior-only test put staves in this list, which generated grip
                 //recipes for them.
-                if (CollectibleBehaviorBowLimb.IsComposedFromParts(t) && t.Variant?["type"] != null) {
+                if (CollectibleBehaviorBowLimb.IsHaftBow(t) && t.Variant?["type"] != null) {
                     RecipeRegisterModSystem.BowList.Add(t);
                 }
                 if (ConfigUtility.IsValidTreatmentMaterial(t.Code.Path, treatmentDict)) {
@@ -352,8 +386,11 @@ namespace Haft {
                 }
             }
 
-            SaveToWorldData(api, HaftConstants.HaftWoodInToolBindingsData, ToolsWithWoodInBindingShapes);
+        }
 
+        //The debug dump of everything the pass above classified. Off by default; useful mainly when another mod's
+        //items are not being picked up and the question is whether Haft saw them at all.
+        private void PrintParsedToolsAndParts(List<CollectibleObject> SinglePartToolsList) {
             if (Config.PrintAllParsedToolsAndParts) { //Mainly left in for debugging purposes since it's kinda useful to just let it run through everything and see what might be going wrong and where... Especially when adding other mods
                 Logger.Debug("Single Part Tools:");
                 foreach (var t in SinglePartToolsList) {

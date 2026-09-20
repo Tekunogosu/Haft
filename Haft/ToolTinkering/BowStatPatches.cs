@@ -94,6 +94,10 @@ namespace Haft.ToolTinkering {
         //so the bow selected shapes that did not exist and rendered the missing-asset placeholder.
         public const int DrawPoseCount = 11;
 
+        //The highest pose index that has a shape behind it. Poses are numbered from 0, so this is one less than
+        //the count, and it - not the count - is what a pose calculation scales to and clamps against.
+        public const int DrawPoseMaxIndex = DrawPoseCount - 1;
+
         //How the poses are distributed across the draw. The exponent biases them later, matching an arm animation
         //whose own keyframes load late, and 1.1 is deliberately close to linear: the steeper p^2 used when there
         //were only three stages held the first pose for a third of the draw, which on a slow limb is half a second
@@ -124,8 +128,7 @@ namespace Haft.ToolTinkering {
                 return false;
             }
 
-            var treatmentStats = HaftModSystem.Stats.TreatmentStats.Get(
-                bowStack.HasHandleTreatmentTag() ? bowStack.GetHandleTreatmentTag() : HaftConstants.DefaultTreatmentTag);
+            var treatmentStats = bowStack.GetTreatmentStatsOrDefault();
             var refundChance = HaftPartStatsHelpers.CalculateBowLimbRefundChance(materialStats, treatmentStats);
 
             return refundChance > 0.0f && world.Rand.NextDouble() < refundChance;
@@ -294,6 +297,77 @@ namespace Haft.ToolTinkering {
         }
     }
 
+    //The grip's steadiness: how much of a disturbance to the aim it absorbs.
+    //
+    //Vanilla builds aim accuracy from four independent modifiers that each subtract their own penalty - moving
+    //costs up to 0.2, sprinting 0.3, and being hit 0.4, every one of them divided by max(1, rangedWeaponsAcc).
+    //This hands back steadyBonus of whatever the three PENALTY modifiers took, so a grip reduces the cost of
+    //moving, sprinting and being hurt without touching how steady the bow is when none of those apply.
+    //
+    //All three, not a chosen subset, because a grip is the archer's grasp on the bow and a grasp resists any
+    //disturbance. Being hit still costs accuracy; a good grip means less of it is lost.
+    //
+    //The penalty is read back through Harmony rather than recomputed. Each modifier accumulates it in a private
+    //field across ticks, ramping over 0.75s and decaying over 2s, so the value at any instant depends on how long
+    //the archer has been moving - not something a postfix could derive from dt. Reading the field is also what
+    //keeps this correct if the ceilings or ramp rates ever change: the amount given back is always a fraction of
+    //what was actually taken, never a constant this file would have to keep in step.
+    //
+    //Deliberately NOT done by raising rangedWeaponsAcc. That stat divides every penalty, but it also feeds
+    //BaseAimingAccuracy's own ceiling of 1 - 0.075/acc, so using it here would make steadyBonus and accuracyBonus
+    //the same knob under two names. Patching the penalty modifiers keeps the two axes genuinely independent.
+    [HarmonyPatchCategory(HaftModSystem.ToolTinkeringBowPatchCategory)]
+    public static class BowGripSteadinessPatches {
+
+        //A grip only steadies the bow it is wrapped around. Anything else in hand - a sling, a thrown spear, a
+        //vanilla bow with no grip - resolves to null and leaves vanilla's penalty exactly as it was.
+        private static GripStatDefines GripStatsFor(EntityAgent entity) {
+            var stack = entity?.RightHandItemSlot?.Itemstack;
+            if (stack?.Collectible is not ItemBow) {
+                return null;
+            }
+
+            return stack.GetBowGripStats();
+        }
+
+        //Refunds the share of the penalty the grip absorbs. The arithmetic lives in HaftPartStatsHelpers with the
+        //other bow calculations, so it is testable without an entity to hand.
+        private static void Refund(EntityAgent entity, float penalty, ref float accuracy) {
+            var gripStats = GripStatsFor(entity);
+            if (gripStats == null) {
+                return;
+            }
+
+            accuracy += HaftPartStatsHelpers.CalculateGripAccuracyRefund(
+                gripStats, penalty, entity.Stats.GetBlended("rangedWeaponsAcc"));
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(MovingAimingAccuracy), nameof(MovingAimingAccuracy.Update))]
+        private static void MovingUpdatePostfix(EntityAgent ___entity, float ___accuracyPenalty, ref float accuracy) {
+            Refund(___entity, ___accuracyPenalty, ref accuracy);
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(SprintAimingAccuracy), nameof(SprintAimingAccuracy.Update))]
+        private static void SprintUpdatePostfix(EntityAgent ___entity, float ___accuracyPenalty, ref float accuracy) {
+            Refund(___entity, ___accuracyPenalty, ref accuracy);
+        }
+
+        //Being hurt is NOT refunded here, because in this version of the engine it costs nothing to refund.
+        //
+        //OnHurtAimingAccuracy.OnHurt sets accuracyPenalty to a NEGATIVE value, -0.4/acc, and its Update then runs
+        //GameMath.Clamp(accuracyPenalty - dt/3, 0, 0.4f), whose lower bound of 0 discards that negative on the very
+        //next tick. Update never reads or writes `accuracy` at all. The modifier is registered and ticked and has
+        //no effect on the shot: taking a hit mid-draw does not currently move the aim.
+        //
+        //So there is nothing for a grip to absorb. Refunding a share of a penalty that is always zero would be
+        //dead code that looks like a working feature, and patching around the engine's bug to invent the penalty
+        //first would be this mod deciding that being shot should hurt the player's aim more than the base game
+        //does. If a later engine version fixes the clamp, add an OnHurt postfix here in the same shape as the two
+        //above and the axis starts working with no other change.
+    }
+
     //The aiming reticle, retimed to the limb.
     //
     //BaseAimingAccuracy converges the reticle on SecondsSinceAimStart * rangedWeaponsSpeed * rangedWeaponsSpeedMul
@@ -403,8 +477,13 @@ namespace Haft.ToolTinkering {
             //The prefix already squared the progress for vanilla's coarse three stages; undo that before applying
             //the gentler curve these finer poses want, or the two compound into the bunching this replaced.
             var linear = (float)Math.Sqrt(progress);
-            var pose = (int)Math.Ceiling(Math.Pow(linear, BowStatHelper.DrawPoseCurve) * BowStatHelper.DrawPoseCount);
-            pose = GameMath.Clamp(pose, 0, BowStatHelper.DrawPoseCount);
+            //Scaled to the highest pose INDEX, not to the count. The poses are numbered from 0, so 11 poses run
+            //draw0 to draw10 and asking for draw11 resolves to a file that does not exist - which does not merely
+            //lose that pose. A part whose shape fails to load returns a null mesh, and GenMesh abandons the whole
+            //composed bow for the vanilla one-piece fallback the moment any single part fails, so the bow stopped
+            //drawing back and lost its arrow for the entire draw rather than only at the top of it.
+            var pose = (int)Math.Ceiling(Math.Pow(linear, BowStatHelper.DrawPoseCurve) * BowStatHelper.DrawPoseMaxIndex);
+            pose = GameMath.Clamp(pose, 0, BowStatHelper.DrawPoseMaxIndex);
 
             var previous = stack.Attributes.GetInt("renderVariant", 0);
             if (previous == pose) {
@@ -416,13 +495,6 @@ namespace Haft.ToolTinkering {
             }
 
             stack.Attributes.SetInt("renderVariant", pose);
-
-            //A composed bow renders from its part tree rather than from a shape alternate, so the tree has to be
-            //repointed at this pose's part shapes. A bow without the rendering behavior ignores this and is drawn
-            //by the alternate the attribute above already selected.
-            if (CollectibleBehaviorBowLimb.IsComposedFromParts(stack)) {
-                CollectibleBehaviorBowLimb.ApplyBowPartRenderTree(stack, pose);
-            }
 
             //Vanilla broadcasts the slot when its own stage changes; the finer stages change more often and need the
             //same broadcast or other players see the bow lag behind its owner.

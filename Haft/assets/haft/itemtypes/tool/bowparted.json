@@ -25,7 +25,42 @@
 		"bowparted-recurve": 600
 	},
 	"shape": {
-		"base": "game:item/tool/bow/{type}"
+	 "base": "game:item/tool/bow/{type}",
+	 "alternates": [
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw0"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw1"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw2"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw3"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw4"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw5"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw6"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw7"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw8"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw9"
+	  },
+	  {
+	   "base": "haft:item/tool/bow/{type}-draw10"
+	  }
+	 ]
 	},
 	"tool": "bow",
 	"creativeinventory": {
@@ -228,12 +263,6 @@
 		}
 	},
 	"behaviors": [
-		{
-			"name": "haft:ModularPartRenderingFromAttributes",
-			"properties": {
-				"skipCreativeInventoryAdditions": false
-			}
-		},
 		{
 			"name": "haft:BowLimb"
 		}

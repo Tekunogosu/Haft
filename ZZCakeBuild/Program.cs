@@ -97,9 +97,13 @@ namespace CakeBuild
     {
         public override void Run(BuildContext context)
         {
+            //Only the staging folder is cleaned, not Releases itself. Cleaning Releases deleted every
+            //previously packaged zip, so a build could not be rolled back to and an overwritten install
+            //had nothing to restore from. The staging folder still has to be emptied, or a file dropped
+            //by an earlier build - an asset since renamed or removed - would be packaged into this zip.
             context.EnsureDirectoryExists("../Releases");
-            context.CleanDirectory("../Releases");
             context.EnsureDirectoryExists($"../Releases/{context.Name}");
+            context.CleanDirectory($"../Releases/{context.Name}");
             context.CopyFiles($"../{BuildContext.ProjectName}/bin/{context.BuildConfiguration}/Mods/mod/publish/*", $"../Releases/{context.Name}");
             if (context.DirectoryExists($"../{BuildContext.ProjectName}/assets"))
             {
